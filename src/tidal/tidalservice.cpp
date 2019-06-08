@@ -52,6 +52,7 @@
 #include "tidalservice.h"
 #include "tidalurlhandler.h"
 #include "tidalrequest.h"
+#include "tidalfavoriterequest.h"
 #include "tidalstreamurlrequest.h"
 #include "settings/tidalsettingspage.h"
 
@@ -76,17 +77,18 @@ TidalService::TidalService(Application *app, QObject *parent)
       app_(app),
       network_(new NetworkAccessManager(this)),
       url_handler_(new TidalUrlHandler(app, this)),
-      artists_collection_backend_(new CollectionBackend()),
-      albums_collection_backend_(new CollectionBackend()),
-      songs_collection_backend_(new CollectionBackend()),
-      artists_collection_model_(new CollectionModel(artists_collection_backend_, app_, this)),
-      albums_collection_model_(new CollectionModel(albums_collection_backend_, app_, this)),
-      songs_collection_model_(new CollectionModel(songs_collection_backend_, app_, this)),
+      artists_collection_backend_(nullptr),
+      albums_collection_backend_(nullptr),
+      songs_collection_backend_(nullptr),
+      artists_collection_model_(nullptr),
+      albums_collection_model_(nullptr),
+      songs_collection_model_(nullptr),
       artists_collection_sort_model_(new QSortFilterProxyModel(this)),
       albums_collection_sort_model_(new QSortFilterProxyModel(this)),
       songs_collection_sort_model_(new QSortFilterProxyModel(this)),
       timer_search_delay_(new QTimer(this)),
       timer_login_attempt_(new QTimer(this)),
+      favorite_request_(new TidalFavoriteRequest(this, network_, this)),
       search_delay_(1500),
       artistssearchlimit_(1),
       albumssearchlimit_(1),
@@ -105,14 +107,21 @@ TidalService::TidalService(Application *app, QObject *parent)
 
   // Backends
 
+  artists_collection_backend_ = new CollectionBackend();
   artists_collection_backend_->moveToThread(app_->database()->thread());
   artists_collection_backend_->Init(app_->database(), kArtistsSongsTable, QString(), QString(), kArtistsSongsFtsTable);
 
+  albums_collection_backend_ = new CollectionBackend();
   albums_collection_backend_->moveToThread(app_->database()->thread());
   albums_collection_backend_->Init(app_->database(), kAlbumsSongsTable, QString(), QString(), kAlbumsSongsFtsTable);
 
+  songs_collection_backend_ = new CollectionBackend();
   songs_collection_backend_->moveToThread(app_->database()->thread());
   songs_collection_backend_->Init(app_->database(), kSongsTable, QString(), QString(), kSongsFtsTable);
+
+  artists_collection_model_ = new CollectionModel(artists_collection_backend_, app_, this);
+  albums_collection_model_ = new CollectionModel(albums_collection_backend_, app_, this);
+  songs_collection_model_ = new CollectionModel(songs_collection_backend_, app_, this);
 
   artists_collection_sort_model_->setSourceModel(artists_collection_model_);
   artists_collection_sort_model_->setSortRole(CollectionModel::Role_SortText);
@@ -143,12 +152,36 @@ TidalService::TidalService(Application *app, QObject *parent)
   connect(this, SIGNAL(Login()), SLOT(SendLogin()));
   connect(this, SIGNAL(Login(QString, QString, QString)), SLOT(SendLogin(QString, QString, QString)));
 
+  connect(this, SIGNAL(AddArtists(const SongList&)), favorite_request_, SLOT(AddArtists(const SongList&)));
+  connect(this, SIGNAL(AddAlbums(const SongList&)), favorite_request_, SLOT(AddAlbums(const SongList&)));
+  connect(this, SIGNAL(AddSongs(const SongList&)), favorite_request_, SLOT(AddSongs(const SongList&)));
+
+  connect(this, SIGNAL(RemoveArtists(const SongList&)), favorite_request_, SLOT(RemoveArtists(const SongList&)));
+  connect(this, SIGNAL(RemoveAlbums(const SongList&)), favorite_request_, SLOT(RemoveAlbums(const SongList&)));
+  connect(this, SIGNAL(RemoveSongs(const SongList&)), favorite_request_, SLOT(RemoveSongs(const SongList&)));
+
+  connect(favorite_request_, SIGNAL(ArtistsAdded(const SongList&)), artists_collection_backend_, SLOT(AddOrUpdateSongs(const SongList&)));
+  connect(favorite_request_, SIGNAL(AlbumsAdded(const SongList&)), albums_collection_backend_, SLOT(AddOrUpdateSongs(const SongList&)));
+  connect(favorite_request_, SIGNAL(SongsAdded(const SongList&)), songs_collection_backend_, SLOT(AddOrUpdateSongs(const SongList&)));
+
+  connect(favorite_request_, SIGNAL(ArtistsRemoved(const SongList&)), artists_collection_backend_, SLOT(DeleteSongs(const SongList&)));
+  connect(favorite_request_, SIGNAL(AlbumsRemoved(const SongList&)), albums_collection_backend_, SLOT(DeleteSongs(const SongList&)));
+  connect(favorite_request_, SIGNAL(SongsRemoved(const SongList&)), songs_collection_backend_, SLOT(DeleteSongs(const SongList&)));
+
   ReloadSettings();
   LoadSessionID();
 
 }
 
-TidalService::~TidalService() {}
+TidalService::~TidalService() {
+
+  while (!stream_url_requests_.isEmpty()) {
+    TidalStreamURLRequest *stream_url_req = stream_url_requests_.takeFirst();
+    disconnect(stream_url_req, 0, nullptr, 0);
+    delete stream_url_req;
+  }
+
+}
 
 void TidalService::ShowConfig() {
   app_->OpenSettingsDialogAtPage(SettingsDialog::Page_Tidal);
@@ -365,62 +398,122 @@ void TidalService::TryLogin() {
 
 }
 
+void TidalService::ResetArtistsRequest() {
+
+  if (artists_request_.get()) {
+    disconnect(artists_request_.get(), 0, nullptr, 0);
+    disconnect(this, 0, artists_request_.get(), 0);
+    artists_request_.reset();
+  }
+
+}
+
 void TidalService::GetArtists() {
+
+  ResetArtistsRequest();
 
   artists_request_.reset(new TidalRequest(this, url_handler_, network_, TidalBaseRequest::QueryType_Artists, this));
 
-  connect(artists_request_.get(), SIGNAL(ErrorSignal(QString)), SIGNAL(ArtistsError(QString)));
+  connect(artists_request_.get(), SIGNAL(ErrorSignal(QString)), SLOT(ArtistsErrorReceived(QString)));
+  connect(artists_request_.get(), SIGNAL(Results(SongList)), SLOT(ArtistsResultsReceived(SongList)));
   connect(artists_request_.get(), SIGNAL(UpdateStatus(QString)), SIGNAL(ArtistsUpdateStatus(QString)));
   connect(artists_request_.get(), SIGNAL(ProgressSetMaximum(int)), SIGNAL(ArtistsProgressSetMaximum(int)));
   connect(artists_request_.get(), SIGNAL(UpdateProgress(int)), SIGNAL(ArtistsUpdateProgress(int)));
-  connect(artists_request_.get(), SIGNAL(Results(SongList)), SIGNAL(ArtistsResults(SongList)));
   connect(this, SIGNAL(LoginComplete(bool, QString)), artists_request_.get(), SLOT(LoginComplete(bool, QString)));
 
   artists_request_->Process();
 
 }
 
-void TidalService::UpdateArtists(SongList songs) {
+void TidalService::ArtistsResultsReceived(SongList songs) {
 
-  artists_collection_backend_->DeleteAll();
-  artists_collection_backend_->AddOrUpdateSongs(songs);
-  artists_collection_model_->Reset();
+  emit ArtistsResults(songs);
+  ResetArtistsRequest();
+
+}
+
+void TidalService::ArtistsErrorReceived(QString error) {
+
+  emit ArtistsError(error);
+  ResetArtistsRequest();
+
+}
+
+void TidalService::ResetAlbumsRequest() {
+
+  if (albums_request_.get()) {
+    disconnect(albums_request_.get(), 0, nullptr, 0);
+    disconnect(this, 0, albums_request_.get(), 0);
+    albums_request_.reset();
+  }
 
 }
 
 void TidalService::GetAlbums() {
 
+  ResetAlbumsRequest();
   albums_request_.reset(new TidalRequest(this, url_handler_, network_, TidalBaseRequest::QueryType_Albums, this));
-  connect(albums_request_.get(), SIGNAL(ErrorSignal(QString)), SIGNAL(AlbumsError(QString)));
+  connect(albums_request_.get(), SIGNAL(ErrorSignal(QString)), SLOT(AlbumsErrorReceived(QString)));
+  connect(albums_request_.get(), SIGNAL(Results(SongList)), SLOT(AlbumsResultsReceived(SongList)));
   connect(albums_request_.get(), SIGNAL(UpdateStatus(QString)), SIGNAL(AlbumsUpdateStatus(QString)));
   connect(albums_request_.get(), SIGNAL(ProgressSetMaximum(int)), SIGNAL(AlbumsProgressSetMaximum(int)));
   connect(albums_request_.get(), SIGNAL(UpdateProgress(int)), SIGNAL(AlbumsUpdateProgress(int)));
-  connect(albums_request_.get(), SIGNAL(Results(SongList)), SIGNAL(AlbumsResults(SongList)));
   connect(this, SIGNAL(LoginComplete(bool, QString)), albums_request_.get(), SLOT(LoginComplete(bool, QString)));
 
   albums_request_->Process();
 
 }
 
-void TidalService::UpdateAlbums(SongList songs) {
+void TidalService::AlbumsResultsReceived(SongList songs) {
 
-  albums_collection_backend_->DeleteAll();
-  albums_collection_backend_->AddOrUpdateSongs(songs);
-  albums_collection_model_->Reset();
+  emit AlbumsResults(songs);
+  ResetAlbumsRequest();
+
+}
+
+void TidalService::AlbumsErrorReceived(QString error) {
+
+  emit AlbumsError(error);
+  ResetAlbumsRequest();
+
+}
+
+void TidalService::ResetSongsRequest() {
+
+  if (songs_request_.get()) {
+    disconnect(songs_request_.get(), 0, nullptr, 0);
+    disconnect(this, 0, songs_request_.get(), 0);
+    songs_request_.reset();
+  }
 
 }
 
 void TidalService::GetSongs() {
 
+  ResetSongsRequest();
   songs_request_.reset(new TidalRequest(this, url_handler_, network_, TidalBaseRequest::QueryType_Songs, this));
-  connect(songs_request_.get(), SIGNAL(ErrorSignal(QString)), SIGNAL(SongsError(QString)));
+  connect(songs_request_.get(), SIGNAL(ErrorSignal(QString)), SLOT(SongsErrorReceived(QString)));
+  connect(songs_request_.get(), SIGNAL(Results(SongList)), SLOT(SongsResultsReceived(SongList)));
   connect(songs_request_.get(), SIGNAL(UpdateStatus(QString)), SIGNAL(SongsUpdateStatus(QString)));
   connect(songs_request_.get(), SIGNAL(ProgressSetMaximum(int)), SIGNAL(SongsProgressSetMaximum(int)));
   connect(songs_request_.get(), SIGNAL(UpdateProgress(int)), SIGNAL(SongsUpdateProgress(int)));
-  connect(songs_request_.get(), SIGNAL(Results(SongList)), SIGNAL(SongsResults(SongList)));
   connect(this, SIGNAL(LoginComplete(bool, QString)), songs_request_.get(), SLOT(LoginComplete(bool, QString)));
 
   songs_request_->Process();
+
+}
+
+void TidalService::SongsResultsReceived(SongList songs) {
+
+  emit SongsResults(songs);
+  ResetSongsRequest();
+
+}
+
+void TidalService::SongsErrorReceived(QString error) {
+
+  emit SongsError(error);
+  ResetSongsRequest();
 
 }
 
@@ -498,12 +591,24 @@ void TidalService::SendSearch() {
 void TidalService::GetStreamURL(const QUrl &url) {
 
   TidalStreamURLRequest *stream_url_req = new TidalStreamURLRequest(this, network_, url, this);
+  stream_url_requests_ << stream_url_req;
 
   connect(stream_url_req, SIGNAL(TryLogin()), this, SLOT(TryLogin()));
-  connect(stream_url_req, SIGNAL(StreamURLFinished(QUrl, QUrl, Song::FileType, QString)), this, SIGNAL(StreamURLFinished(QUrl, QUrl, Song::FileType, QString)));
+  connect(stream_url_req, SIGNAL(StreamURLFinished(QUrl, QUrl, Song::FileType, QString)), this, SLOT(HandleStreamURLFinished(QUrl, QUrl, Song::FileType, QString)));
   connect(this, SIGNAL(LoginComplete(bool, QString)), stream_url_req, SLOT(LoginComplete(bool, QString)));
 
   stream_url_req->Process();
+
+}
+
+void TidalService::HandleStreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error) {
+
+  TidalStreamURLRequest *stream_url_req = qobject_cast<TidalStreamURLRequest*>(sender());
+  if (!stream_url_req || !stream_url_requests_.contains(stream_url_req)) return;
+  delete stream_url_req;
+  stream_url_requests_.removeAll(stream_url_req);
+
+  emit StreamURLFinished(original_url, stream_url, filetype, error);
 
 }
 

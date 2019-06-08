@@ -43,6 +43,8 @@ class Application;
 class NetworkAccessManager;
 class TidalUrlHandler;
 class TidalRequest;
+class TidalFavoriteRequest;
+class TidalStreamURLRequest;
 class CollectionBackend;
 class CollectionModel;
 
@@ -118,14 +120,22 @@ class TidalService : public InternetService {
   void GetArtists();
   void GetAlbums();
   void GetSongs();
+  void ResetArtistsRequest();
+  void ResetAlbumsRequest();
+  void ResetSongsRequest();
 
  private slots:
   void SendLogin();
   void HandleAuthReply(QNetworkReply *reply);
   void ResetLoginAttempts();
   void StartSearch();
-  void UpdateArtists(SongList songs);
-  void UpdateAlbums(SongList songs);
+  void ArtistsResultsReceived(SongList songs);
+  void ArtistsErrorReceived(QString error);
+  void AlbumsResultsReceived(SongList songs);
+  void AlbumsErrorReceived(QString error);
+  void SongsResultsReceived(SongList songs);
+  void SongsErrorReceived(QString error);
+  void HandleStreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
 
  private:
   typedef QPair<QString, QString> Param;
@@ -171,6 +181,7 @@ class TidalService : public InternetService {
   std::shared_ptr<TidalRequest> albums_request_;
   std::shared_ptr<TidalRequest> songs_request_;
   std::shared_ptr<TidalRequest> search_request_;
+  TidalFavoriteRequest *favorite_request_;
 
   QString token_;
   QString username_;
@@ -197,6 +208,8 @@ class TidalService : public InternetService {
   QString search_text_;
   bool login_sent_;
   int login_attempts_;
+
+  QList<TidalStreamURLRequest*> stream_url_requests_;
 
 };
 

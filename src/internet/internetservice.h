@@ -67,6 +67,9 @@ class InternetService : public QObject {
   virtual void GetArtists() = 0;
   virtual void GetAlbums() = 0;
   virtual void GetSongs() = 0;
+  virtual void ResetArtistsRequest() = 0;
+  virtual void ResetAlbumsRequest() = 0;
+  virtual void ResetSongsRequest() = 0;
 
  signals:
   void Login();
@@ -106,7 +109,15 @@ class InternetService : public QObject {
   void SearchProgressSetMaximum(int max);
   void SearchUpdateProgress(int max);
 
-  void StreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType, QString error = QString());
+  void AddArtists(const SongList& songs);
+  void AddAlbums(const SongList& songs);
+  void AddSongs(const SongList& songs);
+
+  void RemoveArtists(const SongList& songs);
+  void RemoveAlbums(const SongList& songs);
+  void RemoveSongs(const SongList& songs);
+
+  void StreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
 
  protected:
   Application *app_;

@@ -670,7 +670,8 @@ QVariant CollectionModel::data(const CollectionItem *item, int role) const {
             }
           }
           return true;
-        } else {
+        }
+        else {
           return false;
         }
       }
@@ -840,7 +841,7 @@ void CollectionModel::InitQuery(GroupBy type, CollectionQuery *q) {
       q->SetColumnSpec("DISTINCT artist");
       break;
     case GroupBy_Album:
-      q->SetColumnSpec("DISTINCT album");
+      q->SetColumnSpec("DISTINCT album, album_id");
       break;
     case GroupBy_Composer:
       q->SetColumnSpec("DISTINCT composer");
@@ -916,6 +917,7 @@ void CollectionModel::FilterQuery(GroupBy type, CollectionItem *item, Collection
       break;
     case GroupBy_Album:
       q->AddWhere("album", item->key);
+      q->AddWhere("album_id", item->metadata.album_id());
       break;
     case GroupBy_YearAlbum:
       q->AddWhere("year", item->metadata.year());
@@ -996,7 +998,6 @@ CollectionItem *CollectionModel::ItemFromQuery(GroupBy type, bool signal, bool c
   switch (type) {
     case GroupBy_AlbumArtist:
     case GroupBy_Artist:
-    case GroupBy_Album:
     case GroupBy_Composer:
     case GroupBy_Performer:
     case GroupBy_Grouping:
@@ -1004,6 +1005,13 @@ CollectionItem *CollectionModel::ItemFromQuery(GroupBy type, bool signal, bool c
       item->key = row.value(0).toString();
       item->display_text = TextOrUnknown(item->key);
       item->sort_text = SortTextForArtist(item->key);
+      break;
+
+    case GroupBy_Album:
+      item->key = row.value(0).toString();
+      item->display_text = TextOrUnknown(item->key);
+      item->sort_text = SortTextForArtist(item->key);
+      item->metadata.set_album_id(row.value(1).toInt());
       break;
 
     case GroupBy_OriginalYear:{
@@ -1103,12 +1111,22 @@ CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool cr
   CollectionItem *item = InitItem(type, signal, parent, container_level);
 
   switch (type) {
+    case GroupBy_AlbumArtist:
+      item->key = s.effective_albumartist();
+      item->display_text = TextOrUnknown(item->key);
+      item->sort_text = SortTextForArtist(item->key);
+      break;
     case GroupBy_Artist:
       item->key = s.artist();
       item->display_text = TextOrUnknown(item->key);
       item->sort_text = SortTextForArtist(item->key);
       break;
-
+    case GroupBy_Album:
+      item->key = s.album();
+      item->display_text = TextOrUnknown(item->key);
+      item->sort_text = SortTextForArtist(item->key);
+      item->metadata.set_album_id(s.album_id());
+      break;
     case GroupBy_YearAlbum:{
       int year = qMax(0, s.year());
       item->metadata.set_year(year);
@@ -1140,26 +1158,21 @@ CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool cr
       item->sort_text = SortTextForNumber(year) + " ";
       break;
     }
-  case GroupBy_Composer:                            item->key = s.composer();
-  case GroupBy_Performer:                           item->key = s.performer();
-  case GroupBy_Grouping:                            item->key = s.grouping();
-  case GroupBy_Genre: if (item->key.isNull())       item->key = s.genre();
-  case GroupBy_Album: if (item->key.isNull())       item->key = s.album();
-  case GroupBy_AlbumArtist: if (item->key.isNull()) item->key = s.effective_albumartist();
+    case GroupBy_Composer:  if (item->key.isNull()) item->key = s.composer();
+    case GroupBy_Performer: if (item->key.isNull()) item->key = s.performer();
+    case GroupBy_Grouping:  if (item->key.isNull()) item->key = s.grouping();
+    case GroupBy_Genre:     if (item->key.isNull()) item->key = s.genre();
       item->display_text = TextOrUnknown(item->key);
       item->sort_text = SortTextForArtist(item->key);
       break;
-
     case GroupBy_Disc:
       item->key = QString::number(s.disc());
       item->sort_text = SortTextForNumber(s.disc());
       break;
-
     case GroupBy_FileType:
       item->metadata.set_filetype(s.filetype());
       item->key = s.TextForFiletype();
       break;
-
     case GroupBy_Bitrate:{
       int bitrate = qMax(0, s.bitrate());
       item->key = QString::number(bitrate);

@@ -110,12 +110,15 @@ InternetSearchView::InternetSearchView(QWidget *parent)
 
 InternetSearchView::~InternetSearchView() { delete ui_; }
 
-void InternetSearchView::Init(Application *app, InternetSearch *engine, QString settings_group, SettingsDialog::Page settings_page) {
+void InternetSearchView::Init(Application *app, InternetSearch *engine, QString settings_group, SettingsDialog::Page settings_page, const bool artists, const bool albums, const bool songs) {
 
   app_ = app;
   engine_ = engine;
   settings_group_ = settings_group;
   settings_page_ = settings_page;
+  artists_ = artists;
+  albums_ = albums;
+  songs_ = songs;
 
   front_model_ = new InternetSearchModel(engine_, this);
   back_model_ = new InternetSearchModel(engine_, this);
@@ -203,9 +206,9 @@ void InternetSearchView::ReloadSettings() {
   }
 
   SetGroupBy(CollectionModel::Grouping(
-      CollectionModel::GroupBy(s.value("group_by1", int(CollectionModel::GroupBy_AlbumArtist)).toInt()),
-      CollectionModel::GroupBy(s.value("group_by2", int(CollectionModel::GroupBy_Album)).toInt()),
-      CollectionModel::GroupBy(s.value("group_by3", int(CollectionModel::GroupBy_None)).toInt())));
+      CollectionModel::GroupBy(s.value("search_group_by1", int(CollectionModel::GroupBy_AlbumArtist)).toInt()),
+      CollectionModel::GroupBy(s.value("search_group_by2", int(CollectionModel::GroupBy_Album)).toInt()),
+      CollectionModel::GroupBy(s.value("search_group_by3", int(CollectionModel::GroupBy_None)).toInt())));
   s.endGroup();
 
 }
@@ -435,6 +438,16 @@ bool InternetSearchView::ResultsContextMenuEvent(QContextMenuEvent *event) {
 
   context_menu_->addSeparator();
 
+  if (artists_ || albums_ || songs_) {
+    if (artists_)
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to artists"), this, SLOT(AddArtists()));
+    if (albums_)
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to albums"), this, SLOT(AddAlbums()));
+    if (songs_)
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to songs"), this, SLOT(AddSongs()));
+    context_menu_->addSeparator();
+  }
+
   if (ui_->results->selectionModel() && ui_->results->selectionModel()->selectedRows().length() == 1) {
     context_actions_ << context_menu_->addAction(IconLoader::Load("search"), tr("Search for this"), this, SLOT(SearchForThis()));
   }
@@ -540,9 +553,9 @@ void InternetSearchView::SetGroupBy(const CollectionModel::Grouping &g) {
   // Save the setting
   QSettings s;
   s.beginGroup(settings_group_);
-  s.setValue("group_by1", int(g.first));
-  s.setValue("group_by2", int(g.second));
-  s.setValue("group_by3", int(g.third));
+  s.setValue("search_group_by1", int(g.first));
+  s.setValue("search_group_by2", int(g.second));
+  s.setValue("search_group_by3", int(g.third));
   s.endGroup();
 
   // Make sure the correct action is checked.
@@ -592,4 +605,34 @@ void InternetSearchView::ProgressSetMaximum(int max) {
 
 void InternetSearchView::UpdateProgress(int progress) {
   ui_->progressbar->setValue(progress);
+}
+
+void InternetSearchView::AddArtists() {
+
+  MimeData *data = SelectedMimeData();
+  if (!data) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+    emit AddArtistsSignal(internet_song_data->songs);
+  }
+
+}
+
+void InternetSearchView::AddAlbums() {
+
+  MimeData *data = SelectedMimeData();
+  if (!data) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+    emit AddAlbumsSignal(internet_song_data->songs);
+  }
+
+}
+
+void InternetSearchView::AddSongs() {
+
+  MimeData *data = SelectedMimeData();
+  if (!data) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+    emit AddSongsSignal(internet_song_data->songs);
+  }
+
 }

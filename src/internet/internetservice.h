@@ -47,6 +47,8 @@ class InternetService : public QObject {
   virtual void InitialLoadSettings() {}
   virtual void ReloadSettings() {}
   virtual QIcon Icon() { return Song::IconForSource(source_); }
+  virtual const bool oauth() = 0;
+  virtual const bool authenticated() = 0;
   virtual int Search(const QString &query, InternetSearch::SearchType type) = 0;
   virtual void CancelSearch() = 0;
 
@@ -67,6 +69,9 @@ class InternetService : public QObject {
   virtual void GetArtists() = 0;
   virtual void GetAlbums() = 0;
   virtual void GetSongs() = 0;
+  virtual void ResetArtistsRequest() = 0;
+  virtual void ResetAlbumsRequest() = 0;
+  virtual void ResetSongsRequest() = 0;
 
  signals:
   void Login();
@@ -106,7 +111,15 @@ class InternetService : public QObject {
   void SearchProgressSetMaximum(int max);
   void SearchUpdateProgress(int max);
 
-  void StreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType, QString error = QString());
+  void AddArtists(const SongList& songs);
+  void AddAlbums(const SongList& songs);
+  void AddSongs(const SongList& songs);
+
+  void RemoveArtists(const SongList& songs);
+  void RemoveAlbums(const SongList& songs);
+  void RemoveSongs(const SongList& songs);
+
+  void StreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
 
  protected:
   Application *app_;

@@ -37,12 +37,15 @@
 #include "core/song.h"
 #include "internet/internetservice.h"
 #include "internet/internetsearch.h"
+#include "settings/tidalsettingspage.h"
 
 class QSortFilterProxyModel;
 class Application;
 class NetworkAccessManager;
 class TidalUrlHandler;
 class TidalRequest;
+class TidalFavoriteRequest;
+class TidalStreamURLRequest;
 class CollectionBackend;
 class CollectionModel;
 
@@ -66,7 +69,11 @@ class TidalService : public InternetService {
 
   const int max_login_attempts() { return kLoginAttempts; }
 
-  QString token() { return token_; }
+  const bool oauth() { return oauth_; }
+  QString client_id() { return client_id_; }
+  QString api_token() { return api_token_; }
+  quint64 user_id() { return user_id_; }
+  QString country_code() { return country_code_; }
   QString username() { return username_; }
   QString password() { return password_; }
   QString quality() { return quality_; }
@@ -77,12 +84,12 @@ class TidalService : public InternetService {
   bool fetchalbums() { return fetchalbums_; }
   QString coversize() { return coversize_; }
   bool cache_album_covers() { return cache_album_covers_; }
+  TidalSettingsPage::StreamUrlMethod stream_url_method() { return stream_url_method_; }
 
+  QString access_token() { return access_token_; }
   QString session_id() { return session_id_; }
-  quint64 user_id() { return user_id_; }
-  QString country_code() { return country_code_; }
 
-  const bool authenticated() { return (!session_id_.isEmpty() && !country_code_.isEmpty()); }
+  const bool authenticated() { return (!access_token_.isEmpty() || !session_id_.isEmpty()); }
   const bool login_sent() { return login_sent_; }
   const bool login_attempts() { return login_attempts_; }
 
@@ -118,25 +125,42 @@ class TidalService : public InternetService {
   void GetArtists();
   void GetAlbums();
   void GetSongs();
+  void ResetArtistsRequest();
+  void ResetAlbumsRequest();
+  void ResetSongsRequest();
 
  private slots:
+  void StartAuthorisation();
+  void AuthorisationUrlReceived(const QUrl &url);
+  void AccessTokenRequestFinished(QNetworkReply *reply);
   void SendLogin();
   void HandleAuthReply(QNetworkReply *reply);
   void ResetLoginAttempts();
   void StartSearch();
-  void UpdateArtists(SongList songs);
-  void UpdateAlbums(SongList songs);
+  void ArtistsResultsReceived(SongList songs);
+  void ArtistsErrorReceived(QString error);
+  void AlbumsResultsReceived(SongList songs);
+  void AlbumsErrorReceived(QString error);
+  void SongsResultsReceived(SongList songs);
+  void SongsErrorReceived(QString error);
+  void HandleStreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
 
  private:
   typedef QPair<QString, QString> Param;
   typedef QList<Param> ParamList;
 
-  void LoadSessionID();
+  typedef QPair<QByteArray, QByteArray> EncodedParam;
+  typedef QList<EncodedParam> EncodedParamList;
+
   void SendSearch();
   QString LoginError(QString error, QVariant debug = QVariant());
 
-  static const char *kAuthUrl;
+  static const char *kClientIdB64;
   static const char *kApiTokenB64;
+  static const char *kOAuthUrl;
+  static const char *kOAuthAccessTokenUrl;
+  static const char *kOAuthRedirectUrl;
+  static const char *kAuthUrl;
   static const int kLoginAttempts;
   static const int kTimeResetLoginAttempts;
 
@@ -171,8 +195,13 @@ class TidalService : public InternetService {
   std::shared_ptr<TidalRequest> albums_request_;
   std::shared_ptr<TidalRequest> songs_request_;
   std::shared_ptr<TidalRequest> search_request_;
+  TidalFavoriteRequest *favorite_request_;
 
-  QString token_;
+  bool oauth_;
+  QString client_id_;
+  QString api_token_;
+  quint64 user_id_;
+  QString country_code_;
   QString username_;
   QString password_;
   QString quality_;
@@ -183,10 +212,12 @@ class TidalService : public InternetService {
   bool fetchalbums_;
   QString coversize_;
   bool cache_album_covers_;
+  TidalSettingsPage::StreamUrlMethod stream_url_method_;
 
+  QString access_token_;
+  QString refresh_token_;
   QString session_id_;
-  quint64 user_id_;
-  QString country_code_;
+  QDateTime expiry_time_;
 
   int pending_search_id_;
   int next_pending_search_id_;
@@ -197,6 +228,8 @@ class TidalService : public InternetService {
   QString search_text_;
   bool login_sent_;
   int login_attempts_;
+
+  QList<TidalStreamURLRequest*> stream_url_requests_;
 
 };
 

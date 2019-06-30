@@ -52,7 +52,7 @@ SystemTrayIcon::SystemTrayIcon(QObject *parent)
     : QSystemTrayIcon(parent),
       menu_(new QMenu),
       app_name_(QCoreApplication::applicationName()),
-      icon_(":/icons/48x48/strawberry.png"),
+      icon_(IconLoader::Load("strawberry")),
       normal_icon_(icon_.pixmap(48, QIcon::Normal)),
       grey_icon_(icon_.pixmap(48, QIcon::Disabled)),
       playing_icon_(":/pictures/tiny-play.png"),
@@ -131,7 +131,7 @@ QPixmap SystemTrayIcon::CreateIcon(const QPixmap &icon, const QPixmap &grey_icon
 
 }
 
-void SystemTrayIcon::SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *quit) {
+void SystemTrayIcon::SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit) {
 
   // Creating new actions and connecting them to old ones.
   // This allows us to use old actions without displaying shortcuts that can not be used when Strawberry's window is hidden
@@ -147,6 +147,9 @@ void SystemTrayIcon::SetupMenu(QAction *previous, QAction *play, QAction *stop, 
   action_mute_->setChecked(mute->isChecked());
 
   menu_->addSeparator();
+  action_love_ = menu_->addAction(love->icon(), love->text(), love, SLOT(trigger()));
+  action_love_->setVisible(love->isVisible());
+  action_love_->setEnabled(love->isEnabled());
   menu_->addSeparator();
   menu_->addAction(quit->icon(), quit->text(), quit, SLOT(trigger()));
 
@@ -223,6 +226,8 @@ void SystemTrayIcon::SetStopped() {
   action_play_pause_->setText(tr("Play"));
 
   action_play_pause_->setEnabled(true);
+
+  action_love_->setEnabled(false);
 
 }
 
@@ -321,4 +326,12 @@ bool SystemTrayIcon::event(QEvent *event) {
 
   return QSystemTrayIcon::event(event);
 
+}
+
+void QtSystemTrayIcon::LoveVisibilityChanged(bool value) {
+  action_love_->setVisible(value);
+}
+
+void QtSystemTrayIcon::LoveStateChanged(bool value) {
+  action_love_->setEnabled(value);
 }

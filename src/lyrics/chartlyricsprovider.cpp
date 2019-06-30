@@ -45,37 +45,31 @@ const int ChartLyricsProvider::kMaxLength = 6000;
 
 ChartLyricsProvider::ChartLyricsProvider(QObject *parent) : LyricsProvider("ChartLyrics", parent), network_(new NetworkAccessManager(this)) {}
 
-bool ChartLyricsProvider::StartSearch(const QString &artist, const QString &album, const QString &title, quint64 id) {
+bool ChartLyricsProvider::StartSearch(const QString &artist, const QString &album, const QString &title, const quint64 id) {
 
-  typedef QPair<QString, QString> Param;
-  typedef QList<Param> ParamList;
-
-  typedef QPair<QByteArray, QByteArray> EncodedParam;
-  typedef QList<EncodedParam> EncodedParamList;
-
-  ParamList params = ParamList() << Param("artist", artist)
-                                 << Param("song", title);
+  const ParamList params = ParamList() << Param("artist", artist)
+                                       << Param("song", title);
 
   QUrlQuery url_query;
-  QUrl url(kUrlSearch);
-
   for (const Param &param : params) {
-    EncodedParam encoded_param(QUrl::toPercentEncoding(param.first), QUrl::toPercentEncoding(param.second));
-    url_query.addQueryItem(encoded_param.first, encoded_param.second);
+    url_query.addQueryItem(QUrl::toPercentEncoding(param.first), QUrl::toPercentEncoding(param.second));
   }
 
+  QUrl url(kUrlSearch);
   url.setQuery(url_query);
   QNetworkReply *reply = network_->get(QNetworkRequest(url));
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, quint64, QString, QString)), reply, id, artist, title);
+  NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, const quint64, const QString&, const QString&)), reply, id, artist, title);
+
+  //qLog(Debug) << "ChartLyrics: Sending request for" << url;
 
   return true;
 
 }
 
-void ChartLyricsProvider::CancelSearch(quint64 id) {
+void ChartLyricsProvider::CancelSearch(const quint64 id) {
 }
 
-void ChartLyricsProvider::HandleSearchReply(QNetworkReply *reply, quint64 id, const QString artist, const QString title) {
+void ChartLyricsProvider::HandleSearchReply(QNetworkReply *reply, const quint64 id, const QString &artist, const QString &title) {
 
   reply->deleteLater();
 
@@ -128,7 +122,7 @@ void ChartLyricsProvider::HandleSearchReply(QNetworkReply *reply, quint64 id, co
 
 }
 
-void ChartLyricsProvider::Error(quint64 id, QString error, QVariant debug) {
+void ChartLyricsProvider::Error(const quint64 id, const QString &error, QVariant debug) {
   qLog(Error) << "ChartLyrics:" << error;
   if (debug.isValid()) qLog(Debug) << debug;
   LyricsSearchResults results;

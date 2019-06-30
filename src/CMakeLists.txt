@@ -262,6 +262,7 @@ set(SOURCES
   internet/internetsearchsortmodel.cpp
   internet/internetsearchitemdelegate.cpp
   internet/localredirectserver.cpp
+  internet/internetsongsview.cpp
   internet/internettabsview.cpp
   internet/internetcollectionview.cpp
   internet/internetcollectionviewcontainer.cpp
@@ -439,6 +440,7 @@ set(HEADERS
   internet/internetsearchview.h
   internet/internetsearchmodel.h
   internet/localredirectserver.h
+  internet/internetsongsview.h
   internet/internettabsview.h
   internet/internetcollectionview.h
   internet/internetcollectionviewcontainer.h
@@ -903,6 +905,44 @@ optional_source(HAVE_TIDAL
     covermanager/tidalcoverprovider.h
   UI
     settings/tidalsettingspage.ui
+)
+
+optional_source(HAVE_QOBUZ
+  SOURCES
+    qobuz/qobuzservice.cpp
+    qobuz/qobuzurlhandler.cpp
+    qobuz/qobuzbaserequest.cpp
+    qobuz/qobuzrequest.cpp
+    qobuz/qobuzstreamurlrequest.cpp
+    qobuz/qobuzfavoriterequest.cpp
+    settings/qobuzsettingspage.cpp
+  HEADERS
+    qobuz/qobuzservice.h
+    qobuz/qobuzurlhandler.h
+    qobuz/qobuzbaserequest.h
+    qobuz/qobuzrequest.h
+    qobuz/qobuzstreamurlrequest.h
+    qobuz/qobuzfavoriterequest.h
+    settings/qobuzsettingspage.h
+  UI
+    settings/qobuzsettingspage.ui
+)
+
+optional_source(HAVE_SUBSONIC
+  SOURCES
+    subsonic/subsonicservice.cpp
+    subsonic/subsonicurlhandler.cpp
+    subsonic/subsonicbaserequest.cpp
+    subsonic/subsonicrequest.cpp
+    settings/subsonicsettingspage.cpp
+  HEADERS
+    subsonic/subsonicservice.h
+    subsonic/subsonicurlhandler.h
+    subsonic/subsonicbaserequest.h
+    subsonic/subsonicrequest.h
+    settings/subsonicsettingspage.h
+  UI
+    settings/subsonicsettingspage.ui
 )
 
 # Moodbar

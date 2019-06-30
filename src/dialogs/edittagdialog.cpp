@@ -111,7 +111,7 @@ EditTagDialog::EditTagDialog(Application *app, QWidget *parent)
 
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   connect(tag_fetcher_, SIGNAL(ResultAvailable(Song, SongList)), results_dialog_, SLOT(FetchTagFinished(Song, SongList)), Qt::QueuedConnection);
-  connect(tag_fetcher_, SIGNAL(Progress(Song,QString)), results_dialog_, SLOT(FetchTagProgress(Song,QString)));
+  connect(tag_fetcher_, SIGNAL(Progress(Song, QString)), results_dialog_, SLOT(FetchTagProgress(Song, QString)));
   connect(results_dialog_, SIGNAL(SongChosen(Song, Song)), SLOT(FetchTagSongChosen(Song, Song)));
   connect(results_dialog_, SIGNAL(finished(int)), tag_fetcher_, SLOT(Cancel()));
 #endif
@@ -894,8 +894,6 @@ void EditTagDialog::FetchTagSongChosen(const Song &original_song, const Song &ne
 
 void EditTagDialog::SongSaveComplete(TagReaderReply *reply, const QString filename, const Song song) {
 
-  reply->deleteLater();
-
   pending_--;
 
   if (!reply->message().save_file_response().success()) {
@@ -909,5 +907,7 @@ void EditTagDialog::SongSaveComplete(TagReaderReply *reply, const QString filena
   }
 
   if (pending_ <= 0) AcceptFinished();
+
+  metaObject()->invokeMethod(reply, "deleteLater", Qt::QueuedConnection);
 
 }

@@ -53,31 +53,20 @@ const int AuddLyricsProvider::kMaxLength = 6000;
 
 AuddLyricsProvider::AuddLyricsProvider(QObject *parent) : LyricsProvider("AudD", parent), network_(new NetworkAccessManager(this)) {}
 
-bool AuddLyricsProvider::StartSearch(const QString &artist, const QString &album, const QString &title, quint64 id) {
+bool AuddLyricsProvider::StartSearch(const QString &artist, const QString &album, const QString &title, const quint64 id) {
 
-  QString search(artist + " " + title);
-
-  typedef QPair<QString, QString> Arg;
-  typedef QList<Arg> ArgList;
-
-  typedef QPair<QByteArray, QByteArray> EncodedArg;
-  typedef QList<EncodedArg> EncodedArgList;
-
-  ArgList args = ArgList();
-  args.append(Arg("api_token", QByteArray::fromBase64(kAPITokenB64)));
-  args.append(Arg("q", search));
+  const ParamList params = ParamList() << Param("api_token", QByteArray::fromBase64(kAPITokenB64))
+                                       << Param("q", QString(artist + " " + title));
 
   QUrlQuery url_query;
-  QUrl url(kUrlSearch);
-
-  for (const Arg &arg : args) {
-    EncodedArg encoded_arg(QUrl::toPercentEncoding(arg.first), QUrl::toPercentEncoding(arg.second));
-    url_query.addQueryItem(encoded_arg.first, encoded_arg.second);
+  for (const Param &param : params) {
+    url_query.addQueryItem(QUrl::toPercentEncoding(param.first), QUrl::toPercentEncoding(param.second));
   }
 
+  QUrl url(kUrlSearch);
   url.setQuery(url_query);
   QNetworkReply *reply = network_->get(QNetworkRequest(url));
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, quint64, QString, QString)), reply, id, artist, title);
+  NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, const quint64, const QString&, const QString&)), reply, id, artist, title);
 
   //qLog(Debug) << "AudDLyrics: Sending request for" << url;
 
@@ -88,7 +77,7 @@ bool AuddLyricsProvider::StartSearch(const QString &artist, const QString &album
 void AuddLyricsProvider::CancelSearch(quint64 id) {
 }
 
-void AuddLyricsProvider::HandleSearchReply(QNetworkReply *reply, quint64 id, const QString artist, const QString title) {
+void AuddLyricsProvider::HandleSearchReply(QNetworkReply *reply, const quint64 id, const QString &artist, const QString &title) {
 
   reply->deleteLater();
 
@@ -138,7 +127,7 @@ void AuddLyricsProvider::HandleSearchReply(QNetworkReply *reply, quint64 id, con
 
 }
 
-QJsonObject AuddLyricsProvider::ExtractJsonObj(QNetworkReply *reply, quint64 id) {
+QJsonObject AuddLyricsProvider::ExtractJsonObj(QNetworkReply *reply, const quint64 id) {
 
   if (reply->error() != QNetworkReply::NoError) {
     QString failure_reason = QString("%1 (%2)").arg(reply->errorString()).arg(reply->error());
@@ -217,7 +206,7 @@ QJsonArray AuddLyricsProvider::ExtractResult(QNetworkReply *reply, const quint64
 
 }
 
-void AuddLyricsProvider::Error(quint64 id, QString error, QVariant debug) {
+void AuddLyricsProvider::Error(const quint64 id, const QString &error, QVariant debug) {
   qLog(Error) << "AudDLyrics:" << error;
   if (debug.isValid()) qLog(Debug) << debug;
   LyricsSearchResults results;

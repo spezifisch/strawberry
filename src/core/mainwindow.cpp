@@ -137,9 +137,18 @@
 #  include "tidal/tidalservice.h"
 #  include "settings/tidalsettingspage.h"
 #endif
+#ifdef HAVE_QOBUZ
+#  include "qobuz/qobuzservice.h"
+#  include "settings/qobuzsettingspage.h"
+#endif
+#ifdef HAVE_SUBSONIC
+#  include "subsonic/subsonicservice.h"
+#  include "settings/subsonicsettingspage.h"
+#endif
 
 #include "internet/internetservices.h"
 #include "internet/internetservice.h"
+#include "internet/internetsongsview.h"
 #include "internet/internettabsview.h"
 
 #include "scrobbler/audioscrobbler.h"
@@ -212,6 +221,12 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #ifdef HAVE_TIDAL
       tidal_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Tidal), app_->tidal_search(), TidalSettingsPage::kSettingsGroup, SettingsDialog::Page_Tidal, this)),
 #endif
+#ifdef HAVE_QOBUZ
+      qobuz_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Qobuz), app_->qobuz_search(), QobuzSettingsPage::kSettingsGroup, SettingsDialog::Page_Qobuz, this)),
+#endif
+#ifdef HAVE_SUBSONIC
+      subsonic_view_(new InternetSongsView(app_, app->internet_services()->ServiceBySource(Song::Source_Subsonic), SubsonicSettingsPage::kSettingsGroup, SettingsDialog::Page_Subsonic, this)),
+#endif
       playlist_menu_(new QMenu(this)),
       playlist_add_to_another_(nullptr),
       playlistitem_actions_separator_(nullptr),
@@ -265,6 +280,12 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
 #ifdef HAVE_TIDAL
   ui_->tabs->AddTab(tidal_view_, "tidal", IconLoader::Load("tidal"), tr("Tidal"));
+#endif
+#ifdef HAVE_QOBUZ
+  ui_->tabs->AddTab(qobuz_view_, "qobuz", IconLoader::Load("qobuz"), tr("Qobuz"));
+#endif
+#ifdef HAVE_SUBSONIC
+  ui_->tabs->AddTab(subsonic_view_, "subsonic", IconLoader::Load("subsonic"), tr("Subsonic"));
 #endif
 
   // Add the playing widget to the fancy tab widget
@@ -360,7 +381,8 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   // Scrobble
 
-  ui_->action_toggle_scrobbling->setIcon(IconLoader::Load("scrobble-disabled", 22));
+  ui_->action_toggle_scrobbling->setIcon(IconLoader::Load("scrobble-disabled"));
+  ui_->action_love->setIcon(IconLoader::Load("love"));
 
   // File view connections
   connect(file_view_, SIGNAL(AddToPlaylist(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
@@ -389,6 +411,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(ui_->action_remove_unavailable, SIGNAL(triggered()), app_->playlist_manager(), SLOT(RemoveUnavailableCurrent()));
   connect(ui_->action_remove_from_playlist, SIGNAL(triggered()), SLOT(PlaylistRemoveCurrent()));
   connect(ui_->action_edit_track, SIGNAL(triggered()), SLOT(EditTracks()));
+  connect(ui_->action_rescan_songs, SIGNAL(triggered()), SLOT(RescanSongs()));
   connect(ui_->action_renumber_tracks, SIGNAL(triggered()), SLOT(RenumberTracks()));
   connect(ui_->action_selection_set_value, SIGNAL(triggered()), SLOT(SelectionSetValue()));
   connect(ui_->action_edit_value, SIGNAL(triggered()), SLOT(EditValue()));
@@ -413,6 +436,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(ui_->action_jump, SIGNAL(triggered()), ui_->playlist->view(), SLOT(JumpToCurrentlyPlayingTrack()));
   connect(ui_->action_update_collection, SIGNAL(triggered()), app_->collection(), SLOT(IncrementalScan()));
   connect(ui_->action_full_collection_scan, SIGNAL(triggered()), app_->collection(), SLOT(FullScan()));
+  connect(ui_->action_abort_collection_scan, SIGNAL(triggered()), app_->collection(), SLOT(AbortScan()));
 #if defined(HAVE_GSTREAMER)
   connect(ui_->action_add_files_to_transcoder, SIGNAL(triggered()), SLOT(AddFilesToTranscoder()));
 #else
@@ -420,6 +444,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
 
   connect(ui_->action_toggle_scrobbling, SIGNAL(triggered()), app_->scrobbler(), SLOT(ToggleScrobbling()));
+  connect(ui_->action_love, SIGNAL(triggered()), SLOT(Love()));
   connect(app_->scrobbler(), SIGNAL(ErrorMessage(QString)), SLOT(ShowErrorDialog(QString)));
 
   // Playlist view actions
@@ -436,6 +461,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   ui_->pause_play_button->setDefaultAction(ui_->action_play_pause);
   ui_->stop_button->setDefaultAction(ui_->action_stop);
   ui_->button_scrobble->setDefaultAction(ui_->action_toggle_scrobbling);
+  ui_->button_love->setDefaultAction(ui_->action_love);
 
   ui_->playlist->SetActions(ui_->action_new_playlist, ui_->action_load_playlist, ui_->action_save_playlist, ui_->action_clear_playlist, ui_->action_next_playlist,    /* These two actions aren't associated */ ui_->action_previous_playlist /* to a button but to the main window */ );
 
@@ -469,6 +495,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(app_->player(), SIGNAL(Stopped()), ui_->playlist, SLOT(ActiveStopped()));
 
   connect(app_->player(), SIGNAL(Paused()), osd_, SLOT(Paused()));
+  connect(app_->player(), SIGNAL(Resumed()), osd_, SLOT(Resumed()));
   connect(app_->player(), SIGNAL(Stopped()), osd_, SLOT(Stopped()));
   connect(app_->player(), SIGNAL(PlaylistFinished()), osd_, SLOT(PlaylistFinished()));
   connect(app_->player(), SIGNAL(VolumeChanged(int)), osd_, SLOT(VolumeChanged(int)));
@@ -553,7 +580,17 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   TidalService *tidalservice = qobject_cast<TidalService*> (app_->internet_services()->ServiceBySource(Song::Source_Tidal));
   if (tidalservice)
     connect(this, SIGNAL(AuthorisationUrlReceived(const QUrl&)), tidalservice, SLOT(AuthorisationUrlReceived(const QUrl&)));
+#endif
 
+#ifdef HAVE_QOBUZ
+  connect(qobuz_view_->artists_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(qobuz_view_->albums_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(qobuz_view_->songs_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(qobuz_view_->search_view(), SIGNAL(AddToPlaylist(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+#endif
+
+#ifdef HAVE_SUBSONIC
+  connect(subsonic_view_->view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
 #endif
 
   // Playlist menu
@@ -580,6 +617,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   playlist_menu_->addAction(ui_->action_renumber_tracks);
   playlist_menu_->addAction(ui_->action_selection_set_value);
   playlist_menu_->addAction(ui_->action_auto_complete_tags);
+  playlist_menu_->addAction(ui_->action_rescan_songs);
 #ifdef HAVE_GSTREAMER
   playlist_menu_->addAction(ui_->action_add_files_to_transcoder);
 #endif
@@ -616,12 +654,13 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   connect(app_->scrobbler(), SIGNAL(ScrobblingEnabledChanged(bool)), SLOT(ScrobblingEnabledChanged(bool)));
   connect(app_->scrobbler(), SIGNAL(ScrobbleButtonVisibilityChanged(bool)), SLOT(ScrobbleButtonVisibilityChanged(bool)));
+  connect(app_->scrobbler(), SIGNAL(LoveButtonVisibilityChanged(bool)), SLOT(LoveButtonVisibilityChanged(bool)));
 
 #ifdef Q_OS_MACOS
   mac::SetApplicationHandler(this);
 #endif
   // Tray icon
-  tray_icon_->SetupMenu(ui_->action_previous_track, ui_->action_play_pause, ui_->action_stop, ui_->action_stop_after_this_track, ui_->action_next_track, ui_->action_mute, ui_->action_quit);
+    tray_icon_->SetupMenu(ui_->action_previous_track, ui_->action_play_pause, ui_->action_stop, ui_->action_stop_after_this_track, ui_->action_next_track, ui_->action_mute, ui_->action_love, ui_->action_quit);
   connect(tray_icon_, SIGNAL(PlayPause()), app_->player(), SLOT(PlayPause()));
   connect(tray_icon_, SIGNAL(SeekForward()), app_->player(), SLOT(SeekForward()));
   connect(tray_icon_, SIGNAL(SeekBackward()), app_->player(), SLOT(SeekBackward()));
@@ -631,7 +670,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(tray_icon_, SIGNAL(ChangeVolume(int)), SLOT(VolumeWheelEvent(int)));
 
   // Windows 7 thumbbar buttons
-  thumbbar_->SetActions(QList<QAction*>() << ui_->action_previous_track << ui_->action_play_pause << ui_->action_stop << ui_->action_next_track << nullptr); // spacer
+  thumbbar_->SetActions(QList<QAction*>() << ui_->action_previous_track << ui_->action_play_pause << ui_->action_stop << ui_->action_next_track << nullptr << ui_->action_love);
 
 #if (defined(Q_OS_MACOS) && defined(HAVE_SPARKLE))
   // Add check for updates item to application menu.
@@ -658,6 +697,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(global_shortcuts_, SIGNAL(ShowOSD()), app_->player(), SLOT(ShowOSD()));
   connect(global_shortcuts_, SIGNAL(TogglePrettyOSD()), app_->player(), SLOT(TogglePrettyOSD()));
   connect(global_shortcuts_, SIGNAL(ToggleScrobbling()), app_->scrobbler(), SLOT(ToggleScrobbling()));
+  connect(global_shortcuts_, SIGNAL(Love()), app_->scrobbler(), SLOT(Love()));
 #endif
 
   // Fancy tabs
@@ -724,6 +764,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(app_->playlist_manager()->sequence(), SIGNAL(ShuffleModeChanged(PlaylistSequence::ShuffleMode)), osd_, SLOT(ShuffleModeChanged(PlaylistSequence::ShuffleMode)));
 
   ScrobbleButtonVisibilityChanged(app_->scrobbler()->ScrobbleButton());
+  LoveButtonVisibilityChanged(app_->scrobbler()->LoveButton());
   ScrobblingEnabledChanged(app_->scrobbler()->IsEnabled());
 
   // Load settings
@@ -867,6 +908,26 @@ void MainWindow::ReloadSettings() {
     ui_->tabs->DisableTab(tidal_view_);
 #endif
 
+#ifdef HAVE_QOBUZ
+  settings.beginGroup(QobuzSettingsPage::kSettingsGroup);
+  bool enable_qobuz = settings.value("enabled", false).toBool();
+  settings.endGroup();
+  if (enable_qobuz)
+    ui_->tabs->EnableTab(qobuz_view_);
+  else
+    ui_->tabs->DisableTab(qobuz_view_);
+#endif
+
+#ifdef HAVE_SUBSONIC
+  settings.beginGroup(SubsonicSettingsPage::kSettingsGroup);
+  bool enable_subsonic = settings.value("enabled", false).toBool();
+  settings.endGroup();
+  if (enable_subsonic)
+    ui_->tabs->EnableTab(subsonic_view_);
+  else
+    ui_->tabs->DisableTab(subsonic_view_);
+#endif
+
 }
 
 void MainWindow::ReloadAllSettings() {
@@ -884,6 +945,12 @@ void MainWindow::ReloadAllSettings() {
   if (cover_manager_.get()) cover_manager_->ReloadSettings();
 #ifdef HAVE_TIDAL
   tidal_view_->ReloadSettings();
+#endif
+#ifdef HAVE_QOBUZ
+  qobuz_view_->ReloadSettings();
+#endif
+#ifdef HAVE_SUBSONIC
+  subsonic_view_->ReloadSettings();
 #endif
 
 }
@@ -912,6 +979,10 @@ void MainWindow::MediaStopped() {
 
   ui_->action_play_pause->setEnabled(true);
 
+  ui_->action_love->setEnabled(false);
+  ui_->button_love->setEnabled(false);
+  f (tray_icon_->IsAvailable()) tray_icon_->LoveStateChanged(false);
+
   track_position_timer_->stop();
   track_slider_timer_->stop();
   ui_->track_slider->SetStopped();
@@ -923,6 +994,8 @@ void MainWindow::MediaStopped() {
   song_playing_ = Song();
   song_ = Song();
   image_original_ = QImage();
+
+  app_->scrobbler()->ClearPlaying();
 
 }
 
@@ -970,6 +1043,9 @@ void MainWindow::MediaPlaying() {
   if (app_->scrobbler()->IsEnabled() && playlist && !playlist->nowplaying() && item->Metadata().is_metadata_good() && item->Metadata().length_nanosec() > 0) {
     app_->scrobbler()->UpdateNowPlaying(item->Metadata());
     playlist->set_nowplaying(true);
+    ui_->action_love->setEnabled(true);
+    ui_->button_love->setEnabled(true);
+    if (tray_icon_->isAvailable()) tray_icon_->LoveStateChanged(true);
   }
 
 }
@@ -1436,6 +1512,10 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   ui_->action_auto_complete_tags->setEnabled(false);
   ui_->action_auto_complete_tags->setVisible(false);
 #endif
+
+  ui_->action_rescan_songs->setEnabled(editable);
+  ui_->action_rescan_songs->setVisible(editable);
+
   // the rest of the read / write actions work only when there are no CUEs involved
   if (cue_selected) editable = 0;
 
@@ -1583,6 +1663,25 @@ void MainWindow::PlaylistStopAfter() {
   app_->playlist_manager()->current()->StopAfter(playlist_menu_index_.row());
 }
 
+void MainWindow::RescanSongs() {
+
+  SongList songs;
+  PlaylistItemList items;
+
+  for (const QModelIndex& index : ui_->playlist->view()->selectionModel()->selection().indexes()) {
+    if (index.column() != 0) continue;
+    int row = app_->playlist_manager()->current()->proxy()->mapToSource(index).row();
+    PlaylistItemPtr item(app_->playlist_manager()->current()->item_at(row));
+    Song song = item->Metadata();
+
+    songs << song;
+    items << item;
+  }
+
+  app_->collection()->Rescan(songs);
+
+}
+
 void MainWindow::EditTracks() {
 
   SongList songs;
@@ -1653,10 +1752,12 @@ void MainWindow::RenumberTracks() {
 }
 
 void MainWindow::SongSaveComplete(TagReaderReply *reply, const QPersistentModelIndex &index) {
+
   if (reply->is_successful() && index.isValid()) {
     app_->playlist_manager()->current()->ReloadItems(QList<int>()<< index.row());
   }
-  reply->deleteLater();
+  metaObject()->invokeMethod(reply, "deleteLater", Qt::QueuedConnection);
+
 }
 
 void MainWindow::SelectionSetValue() {
@@ -2043,6 +2144,7 @@ void MainWindow::PlaylistOpenInBrowser() {
   }
 
   Utilities::OpenInFileBrowser(urls);
+
 }
 
 void MainWindow::PlaylistQueue() {
@@ -2260,7 +2362,7 @@ void MainWindow::AutoCompleteTags() {
     track_selection_dialog_->set_save_on_close(true);
 
     connect(tag_fetcher_.get(), SIGNAL(ResultAvailable(Song, SongList)), track_selection_dialog_.get(), SLOT(FetchTagFinished(Song, SongList)), Qt::QueuedConnection);
-    connect(tag_fetcher_.get(), SIGNAL(Progress(Song, QString)), track_selection_dialog_.get(), SLOT(FetchTagProgress(Song,QString)));
+    connect(tag_fetcher_.get(), SIGNAL(Progress(Song, QString)), track_selection_dialog_.get(), SLOT(FetchTagProgress(Song, QString)));
     connect(track_selection_dialog_.get(), SIGNAL(accepted()), SLOT(AutoCompleteTagsAccepted()));
     connect(track_selection_dialog_.get(), SIGNAL(finished(int)), tag_fetcher_.get(), SLOT(Cancel()));
     connect(track_selection_dialog_.get(), SIGNAL(Error(QString)), SLOT(ShowErrorDialog(QString)));
@@ -2408,9 +2510,21 @@ void MainWindow::ScrobblingEnabledChanged(bool value) {
 }
 
 void MainWindow::ScrobbleButtonVisibilityChanged(bool value) {
+
   ui_->button_scrobble->setVisible(value);
   ui_->action_toggle_scrobbling->setVisible(value);
   if (value) SetToggleScrobblingIcon(app_->scrobbler()->IsEnabled());
+
+}
+
+void MainWindow::LoveButtonVisibilityChanged(bool value) {
+
+  if (value)
+    ui_->widget_love->show();
+  else
+    ui_->widget_love->hide();
+
+  if (tray_icon_->isAvailable()) tray_icon_->LoveVisibilityChanged(value);
 
 }
 
@@ -2425,5 +2539,14 @@ void MainWindow::SetToggleScrobblingIcon(bool value) {
   else {
     ui_->action_toggle_scrobbling->setIcon(IconLoader::Load("scrobble-disabled", 22));
   }
+
+}
+
+void MainWindow::Love() {
+
+  app_->scrobbler()->Love();
+  ui_->button_love->setEnabled(false);
+  ui_->action_love->setEnabled(false);
+  if (tray_icon_->isAvailable()) tray_icon_->LoveStateChanged(false);
 
 }

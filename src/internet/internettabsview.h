@@ -44,7 +44,7 @@ class InternetTabsView : public QWidget {
   Q_OBJECT
 
  public:
-  InternetTabsView(Application *app, InternetService *service, InternetSearch *engine, QString settings_group, SettingsDialog::Page settings_page, QWidget *parent = nullptr);
+  InternetTabsView(Application *app, InternetService *service, InternetSearch *engine, const QString &settings_group, const SettingsDialog::Page settings_page, QWidget *parent = nullptr);
   ~InternetTabsView();
 
   void ReloadSettings();
@@ -62,12 +62,9 @@ class InternetTabsView : public QWidget {
   void AbortGetArtists();
   void AbortGetAlbums();
   void AbortGetSongs();
-  void ArtistsError(QString error);
-  void AlbumsError(QString error);
-  void SongsError(QString error);
-  void ArtistsFinished(SongList songs);
-  void AlbumsFinished(SongList songs);
-  void SongsFinished(SongList songs);
+  void ArtistsFinished(const SongList &songs, const QString &error);
+  void AlbumsFinished(const SongList &songs, const QString &error);
+  void SongsFinished(const SongList &songs, const QString &error);
 
  private:
   Application *app_;

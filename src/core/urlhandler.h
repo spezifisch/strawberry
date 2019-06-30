@@ -57,7 +57,7 @@ class UrlHandler : public QObject {
       Error,
     };
 
-    LoadResult(const QUrl &original_url = QUrl(), Type type = NoMoreTracks, const QUrl &media_url = QUrl(), const Song::FileType &filetype = Song::FileType_Stream, const qint64 length_nanosec_ = -1, const QString error = QString());
+    LoadResult(const QUrl &original_url = QUrl(), const Type type = NoMoreTracks, const QUrl &media_url = QUrl(), const Song::FileType filetype = Song::FileType_Stream, const int samplerate = -1, const int bitdepth = -1, const qint64 length_nanosec_ = -1, const QString error = QString());
 
     // The url that the playlist item has in Url().
     // Might be something unplayable like lastfm://...
@@ -71,7 +71,13 @@ class UrlHandler : public QObject {
     // The type of the stream
     Song::FileType filetype_;
 
-    // Track length, if we are able to get it only now
+    // Track sample rate
+    int samplerate_;
+
+    // Track bit depth
+    int bit_depth_;
+
+    // Track length
     qint64 length_nanosec_;
 
     // Error message, if any
@@ -80,13 +86,6 @@ class UrlHandler : public QObject {
 
   // Called by the Player when a song starts loading - gives the handler a chance to do something clever to get a playable track.
   virtual LoadResult StartLoading(const QUrl &url) { return LoadResult(url); }
-
-  // Called by the player when a song finishes - gives the handler a chance to get another track to play.
-  virtual LoadResult LoadNext(const QUrl &url) { return LoadResult(url); }
-
-  // Functions to be warned when something happen to a track handled by UrlHandler.
-  virtual void TrackAboutToEnd() {};
-  virtual void TrackSkipped() {};
 
  signals:
   void AsyncLoadComplete(const UrlHandler::LoadResult &result);

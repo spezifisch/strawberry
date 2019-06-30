@@ -104,6 +104,8 @@ class PlayerInterface : public QObject {
  signals:
   void Playing();
   void Paused();
+  // Emitted only when playback is manually resumed
+  void Resumed();
   void Stopped();
   void Error();
   void PlaylistFinished();
@@ -232,7 +234,7 @@ class Player : public PlayerInterface {
 
   QMap<QString, UrlHandler*> url_handlers_;
 
-  QUrl loading_async_;
+  QList<QUrl> loading_async_;
   int volume_before_mute_;
   QDateTime last_pressed_previous_;
 

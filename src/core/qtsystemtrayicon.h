@@ -51,7 +51,7 @@ class SystemTrayIcon : public QSystemTrayIcon {
   bool IsVisible() const { return isVisible(); }
   void SetVisible(bool visible) { setVisible(visible); }
 
-  void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *quit);
+  void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
   void ShowPopup(const QString &summary, const QString &message, int timeout);
 
   void UpdateIcon();
@@ -66,6 +66,8 @@ class SystemTrayIcon : public QSystemTrayIcon {
   bool MuteEnabled() { return action_mute_->isVisible(); }
   void SetMuteEnabled(bool enabled) { action_mute_->setVisible(enabled); }
   void MuteButtonStateChanged(bool value);
+  void LoveVisibilityChanged(bool value);
+  void LoveStateChanged(bool value);
 
  public slots:
   void SetProgress(int percentage);
@@ -101,6 +103,7 @@ class SystemTrayIcon : public QSystemTrayIcon {
   QAction *action_stop_;
   QAction *action_stop_after_this_track_;
   QAction *action_mute_;
+  QAction *action_love_;
 
 #ifndef Q_OS_WIN
   QString de_;

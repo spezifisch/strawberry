@@ -24,11 +24,11 @@
 #include <QString>
 #include <QUrl>
 #include <QIcon>
+#include <QSortFilterProxyModel>
 
 #include "core/song.h"
 #include "internetsearch.h"
 
-class QSortFilterProxyModel;
 class Application;
 class CollectionBackend;
 class CollectionModel;
@@ -38,6 +38,7 @@ class InternetService : public QObject {
 
  public:
   InternetService(Song::Source source, const QString &name, const QString &url_scheme, Application *app, QObject *parent = nullptr);
+
   virtual ~InternetService() {}
 
   virtual Song::Source source() const { return source_; }
@@ -47,69 +48,70 @@ class InternetService : public QObject {
   virtual void InitialLoadSettings() {}
   virtual void ReloadSettings() {}
   virtual QIcon Icon() { return Song::IconForSource(source_); }
-  virtual const bool oauth() = 0;
-  virtual const bool authenticated() = 0;
-  virtual int Search(const QString &query, InternetSearch::SearchType type) = 0;
-  virtual void CancelSearch() = 0;
+  virtual const bool oauth() { return false; }
+  virtual const bool authenticated() { return false; }
+  virtual int Search(const QString &query, InternetSearch::SearchType type) { return 0; }
+  virtual void CancelSearch() {}
 
-  virtual CollectionBackend *artists_collection_backend() = 0;
-  virtual CollectionBackend *albums_collection_backend() = 0;
-  virtual CollectionBackend *songs_collection_backend() = 0;
+  virtual CollectionBackend *artists_collection_backend() { return nullptr; }
+  virtual CollectionBackend *albums_collection_backend() { return nullptr; }
+  virtual CollectionBackend *songs_collection_backend() { return nullptr; }
 
-  virtual CollectionModel *artists_collection_model() = 0;
-  virtual CollectionModel *albums_collection_model() = 0;
-  virtual CollectionModel *songs_collection_model() = 0;
+  virtual CollectionModel *artists_collection_model() { return nullptr; }
+  virtual CollectionModel *albums_collection_model() { return nullptr; }
+  virtual CollectionModel *songs_collection_model() { return nullptr; }
 
-  virtual QSortFilterProxyModel *artists_collection_sort_model() = 0;
-  virtual QSortFilterProxyModel *albums_collection_sort_model() = 0;
-  virtual QSortFilterProxyModel *songs_collection_sort_model() = 0;
+  virtual QSortFilterProxyModel *artists_collection_sort_model() { return nullptr; }
+  virtual QSortFilterProxyModel *albums_collection_sort_model() { return nullptr; }
+  virtual QSortFilterProxyModel *songs_collection_sort_model() { return nullptr; }
 
  public slots:
   virtual void ShowConfig() {}
-  virtual void GetArtists() = 0;
-  virtual void GetAlbums() = 0;
-  virtual void GetSongs() = 0;
-  virtual void ResetArtistsRequest() = 0;
-  virtual void ResetAlbumsRequest() = 0;
-  virtual void ResetSongsRequest() = 0;
+  virtual void GetArtists() {}
+  virtual void GetAlbums() {}
+  virtual void GetSongs() {}
+  virtual void ResetArtistsRequest() {}
+  virtual void ResetAlbumsRequest() {}
+  virtual void ResetSongsRequest() {}
 
  signals:
   void Login();
   void Logout();
-  void Login(const QString &username, const QString &password, const QString &token);
+  void Login(const QString &api_token, const QString &username, const QString &password);
+  void Login(const QString &hostname, const int, const QString &username, const QString &password);
   void LoginSuccess();
-  void LoginFailure(QString failure_reason);
-  void LoginComplete(bool success, QString error = QString());
+  void LoginFailure(const QString &failure_reason);
+  void LoginComplete(const bool success, QString error = QString());
 
-  void Error(QString message);
-  void Results(SongList songs);
-  void UpdateStatus(QString text);
-  void ProgressSetMaximum(int max);
-  void UpdateProgress(int max);
+  void TestSuccess();
+  void TestFailure(const QString &failure_reason);
+  void TestComplete(const bool success, QString error = QString());
 
-  void ArtistsError(QString message);
-  void ArtistsResults(SongList songs);
-  void ArtistsUpdateStatus(QString text);
-  void ArtistsProgressSetMaximum(int max);
-  void ArtistsUpdateProgress(int max);
+  void Error(const QString &error);
+  void Results(const SongList &songs, const QString &error);
+  void UpdateStatus(const QString &text);
+  void ProgressSetMaximum(const int max);
+  void UpdateProgress(const int max);
 
-  void AlbumsError(QString message);
-  void AlbumsResults(SongList songs);
-  void AlbumsUpdateStatus(QString text);
-  void AlbumsProgressSetMaximum(int max);
-  void AlbumsUpdateProgress(int max);
+  void ArtistsResults(const SongList &songs, const QString &error);
+  void ArtistsUpdateStatus(const QString &text);
+  void ArtistsProgressSetMaximum(const int max);
+  void ArtistsUpdateProgress(const int max);
 
-  void SongsError(QString message);
-  void SongsResults(SongList songs);
-  void SongsUpdateStatus(QString text);
-  void SongsProgressSetMaximum(int max);
-  void SongsUpdateProgress(int max);
+  void AlbumsResults(const SongList &songs, const QString &error);
+  void AlbumsUpdateStatus(const QString &text);
+  void AlbumsProgressSetMaximum(const int max);
+  void AlbumsUpdateProgress(const int max);
 
-  void SearchResults(int id, SongList songs);
-  void SearchError(int id, QString message);
-  void SearchUpdateStatus(QString text);
-  void SearchProgressSetMaximum(int max);
-  void SearchUpdateProgress(int max);
+  void SongsResults(const SongList &songs, const QString &error);
+  void SongsUpdateStatus(const QString &text);
+  void SongsProgressSetMaximum(const int max);
+  void SongsUpdateProgress(const int max);
+
+  void SearchResults(const int id, const SongList &songs, const QString &error);
+  void SearchUpdateStatus(const int id, const QString &text);
+  void SearchProgressSetMaximum(const int id, const int max);
+  void SearchUpdateProgress(const int id, const int max);
 
   void AddArtists(const SongList& songs);
   void AddAlbums(const SongList& songs);
@@ -119,7 +121,7 @@ class InternetService : public QObject {
   void RemoveAlbums(const SongList& songs);
   void RemoveSongs(const SongList& songs);
 
-  void StreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
+  void StreamURLFinished(const QUrl &original_url, const QUrl &stream_url, const Song::FileType filetype, const int samplerate, const int bit_depth, const qint64 duration, QString error = QString());
 
  protected:
   Application *app_;

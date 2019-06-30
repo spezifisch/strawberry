@@ -28,23 +28,26 @@
 #include <QList>
 #include <QString>
 
-struct LyricsSearchResult;
+#include "lyricsfetcher.h"
 
 class LyricsProvider : public QObject {
   Q_OBJECT
 
-public:
+ public:
   explicit LyricsProvider(const QString &name, QObject *parent);
+
+  typedef QPair<QString, QString> Param;
+  typedef QList<Param> ParamList;
 
   QString name() const { return name_; }
 
-  virtual bool StartSearch(const QString &artist, const QString &album, const QString &title, quint64 id) = 0;
-  virtual void CancelSearch(quint64 id) {}
+  virtual bool StartSearch(const QString &artist, const QString &album, const QString &title, const quint64 id) = 0;
+  virtual void CancelSearch(const quint64 id) {}
 
-signals:
-  void SearchFinished(quint64 id, const QList<LyricsSearchResult>& results);
+ signals:
+  void SearchFinished(const quint64 id, const LyricsSearchResults &results);
 
-private:
+ private:
   QString name_;
 
 };

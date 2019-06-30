@@ -92,6 +92,7 @@ class TranscodeDialog;
 #endif
 class Ui_MainWindow;
 class Windows7ThumbBar;
+class InternetSongsView;
 class InternetTabsView;
 
 class MainWindow : public QMainWindow, public PlatformInterface {
@@ -154,6 +155,7 @@ signals:
   void PlaylistSkip();
   void PlaylistRemoveCurrent();
   void PlaylistEditFinished(const QModelIndex& index);
+  void RescanSongs();
   void EditTracks();
   void EditTagDialogAccepted();
   void RenumberTracks();
@@ -256,6 +258,8 @@ signals:
 
   void ScrobblingEnabledChanged(bool value);
   void ScrobbleButtonVisibilityChanged(bool value);
+  void LoveButtonVisibilityChanged(bool value);
+  void Love();
 
  private:
 
@@ -312,6 +316,8 @@ signals:
 #endif
 
   InternetTabsView *tidal_view_;
+  InternetTabsView *qobuz_view_;
+  InternetSongsView *subsonic_view_;
 
   QAction *collection_show_all_;
   QAction *collection_show_duplicates_;

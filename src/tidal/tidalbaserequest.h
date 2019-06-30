@@ -90,14 +90,11 @@ class TidalBaseRequest : public QObject {
   int artistssearchlimit() { return service_->artistssearchlimit(); }
   int albumssearchlimit() { return service_->albumssearchlimit(); }
   int songssearchlimit() { return service_->songssearchlimit(); }
-  bool fetchalbums() { return service_->fetchalbums(); }
-  QString coversize() { return service_->coversize(); }
 
   QString access_token() { return service_->access_token(); }
   QString session_id() { return service_->session_id(); }
 
   bool authenticated() { return service_->authenticated(); }
-  bool need_login() { return need_login(); }
   bool login_sent() { return service_->login_sent(); }
   int max_login_attempts() { return service_->max_login_attempts(); }
   int login_attempts() { return service_->login_attempts(); }

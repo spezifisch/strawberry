@@ -81,6 +81,7 @@ class OSD : public QObject {
 
   void Playing();
   void Paused();
+  void Resumed();
   void Stopped();
   void StopAfterToggle(bool stop);
   void PlaylistFinished();
@@ -116,6 +117,7 @@ class OSD : public QObject {
   bool show_art_;
   bool show_on_play_mode_change_;
   bool show_on_pause_;
+  bool show_on_resume_;
   bool use_custom_text_;
   QString custom_text1_;
   QString custom_text2_;

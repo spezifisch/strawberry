@@ -348,6 +348,8 @@ optional_component(TRANSLATIONS ON "Translations"
 )
 
 optional_component(TIDAL ON "Tidal support")
+optional_component(QOBUZ ON "Qobuz support")
+optional_component(SUBSONIC ON "Subsonic support")
 
 optional_component(MOODBAR ON "Moodbar"
   DEPENDS "fftw3" FFTW3_FOUND
@@ -396,6 +398,7 @@ endif()
 # Subdirectories
 add_subdirectory(src)
 add_subdirectory(dist)
+add_subdirectory(tests)
 add_subdirectory(ext/libstrawberry-common)
 add_subdirectory(ext/libstrawberry-tagreader)
 add_subdirectory(ext/strawberry-tagreader)

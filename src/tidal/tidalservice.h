@@ -33,13 +33,13 @@
 #include <QUrl>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QSortFilterProxyModel>
 
 #include "core/song.h"
 #include "internet/internetservice.h"
 #include "internet/internetsearch.h"
 #include "settings/tidalsettingspage.h"
 
-class QSortFilterProxyModel;
 class Application;
 class NetworkAccessManager;
 class TidalUrlHandler;
@@ -83,7 +83,7 @@ class TidalService : public InternetService {
   int songssearchlimit() { return songssearchlimit_; }
   bool fetchalbums() { return fetchalbums_; }
   QString coversize() { return coversize_; }
-  bool cache_album_covers() { return cache_album_covers_; }
+  bool download_album_covers() { return download_album_covers_; }
   TidalSettingsPage::StreamUrlMethod stream_url_method() { return stream_url_method_; }
 
   QString access_token() { return access_token_; }
@@ -121,7 +121,7 @@ class TidalService : public InternetService {
  public slots:
   void ShowConfig();
   void TryLogin();
-  void SendLogin(const QString &username, const QString &password, const QString &token);
+  void SendLogin(const QString &api_token, const QString &username, const QString &password);
   void GetArtists();
   void GetAlbums();
   void GetSongs();
@@ -137,13 +137,20 @@ class TidalService : public InternetService {
   void HandleAuthReply(QNetworkReply *reply);
   void ResetLoginAttempts();
   void StartSearch();
-  void ArtistsResultsReceived(SongList songs);
-  void ArtistsErrorReceived(QString error);
-  void AlbumsResultsReceived(SongList songs);
-  void AlbumsErrorReceived(QString error);
-  void SongsResultsReceived(SongList songs);
-  void SongsErrorReceived(QString error);
-  void HandleStreamURLFinished(const QUrl original_url, const QUrl stream_url, const Song::FileType filetype, QString error = QString());
+  void ArtistsResultsReceived(const int id, const SongList &songs, const QString &error);
+  void AlbumsResultsReceived(const int id, const SongList &songs, const QString &error);
+  void SongsResultsReceived(const int id, const SongList &songs, const QString &error);
+  void SearchResultsReceived(const int id, const SongList &songs, const QString &error);
+  void ArtistsUpdateStatusReceived(const int id, const QString &text);
+  void AlbumsUpdateStatusReceived(const int id, const QString &text);
+  void SongsUpdateStatusReceived(const int id, const QString &text);
+  void ArtistsProgressSetMaximumReceived(const int id, const int max);
+  void AlbumsProgressSetMaximumReceived(const int id, const int max);
+  void SongsProgressSetMaximumReceived(const int id, const int max);
+  void ArtistsUpdateProgressReceived(const int id, const int progress);
+  void AlbumsUpdateProgressReceived(const int id, const int progress);
+  void SongsUpdateProgressReceived(const int id, const int progress);
+  void HandleStreamURLFinished(const QUrl &original_url, const QUrl &stream_url, const Song::FileType filetype, const int samplerate, const int bit_depth, const qint64 duration, QString error = QString());
 
  private:
   typedef QPair<QString, QString> Param;
@@ -211,7 +218,7 @@ class TidalService : public InternetService {
   int songssearchlimit_;
   bool fetchalbums_;
   QString coversize_;
-  bool cache_album_covers_;
+  bool download_album_covers_;
   TidalSettingsPage::StreamUrlMethod stream_url_method_;
 
   QString access_token_;

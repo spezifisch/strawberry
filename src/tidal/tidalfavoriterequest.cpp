@@ -109,8 +109,8 @@ void TidalFavoriteRequest::AddFavorites(const FavoriteType type, const SongList 
         id = QString::number(song.artist_id());
         break;
     case FavoriteType_Albums:
-        if (song.album_id() <= 0) continue;
-        id = QString::number(song.album_id());
+        if (song.album_id().isEmpty()) continue;
+        id = song.album_id();
         break;
     case FavoriteType_Songs:
         if (song.song_id() <= 0) continue;
@@ -132,11 +132,9 @@ void TidalFavoriteRequest::AddFavorites(const FavoriteType type, const SongList 
   ParamList params = ParamList() << Param("countryCode", country_code())
                                  << Param(text, ids);
 
-  QStringList query_items;
   QUrlQuery url_query;
   for (const Param& param : params) {
     EncodedParam encoded_param(QUrl::toPercentEncoding(param.first), QUrl::toPercentEncoding(param.second));
-    query_items << QString(encoded_param.first + "=" + encoded_param.second);
     url_query.addQueryItem(encoded_param.first, encoded_param.second);
   }
 
@@ -203,18 +201,18 @@ void TidalFavoriteRequest::RemoveFavorites(const FavoriteType type, const SongLi
 
   if (songs.isEmpty()) return;
 
-  QList<int> ids;
-  QMultiMap<int, Song> songs_map;
+  QList<qint64> ids;
+  QMultiMap<qint64, Song> songs_map;
   for (const Song &song : songs) {
-    int id = -1;
+    qint64 id = -1;
     switch (type) {
       case FavoriteType_Artists:
         if (song.artist_id() <= 0) continue;
         id = song.artist_id();
         break;
     case FavoriteType_Albums:
-        if (song.album_id() <= 0) continue;
-        id = song.album_id();
+        if (song.album_id().isEmpty()) continue;
+        id = song.album_id().toLongLong();
         break;
     case FavoriteType_Songs:
         if (song.song_id() <= 0) continue;
@@ -236,11 +234,9 @@ void TidalFavoriteRequest::RemoveFavorites(const FavoriteType type, const int id
 
   ParamList params = ParamList() << Param("countryCode", country_code());
 
-  QStringList query_items;
   QUrlQuery url_query;
   for (const Param& param : params) {
     EncodedParam encoded_param(QUrl::toPercentEncoding(param.first), QUrl::toPercentEncoding(param.second));
-    query_items << QString(encoded_param.first + "=" + encoded_param.second);
     url_query.addQueryItem(encoded_param.first, encoded_param.second);
   }
 

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 DELETE FROM schema_version;
 
-INSERT INTO schema_version (version) VALUES (5);
+INSERT INTO schema_version (version) VALUES (8);
 
 CREATE TABLE IF NOT EXISTS directories (
   path TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS songs (
   lyrics TEXT NOT NULL,
 
   artist_id INTEGER NOT NULL DEFAULT -1,
-  album_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
   song_id INTEGER NOT NULL DEFAULT -1,
 
   beginning INTEGER NOT NULL DEFAULT 0,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS songs (
 
   source INTEGER NOT NULL DEFAULT 0,
   directory_id INTEGER NOT NULL,
-  filename TEXT NOT NULL,
+  url TEXT NOT NULL,
   filetype INTEGER NOT NULL DEFAULT 0,
   filesize INTEGER NOT NULL DEFAULT 0,
   mtime INTEGER NOT NULL DEFAULT 0,
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS tidal_artists_songs (
   lyrics TEXT NOT NULL,
 
   artist_id INTEGER NOT NULL DEFAULT -1,
-  album_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
   song_id INTEGER NOT NULL DEFAULT -1,
 
   beginning INTEGER NOT NULL DEFAULT 0,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS tidal_artists_songs (
 
   source INTEGER NOT NULL DEFAULT 0,
   directory_id INTEGER NOT NULL,
-  filename TEXT NOT NULL,
+  url TEXT NOT NULL,
   filetype INTEGER NOT NULL DEFAULT 0,
   filesize INTEGER NOT NULL DEFAULT 0,
   mtime INTEGER NOT NULL DEFAULT 0,
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS tidal_albums_songs (
   lyrics TEXT NOT NULL,
 
   artist_id INTEGER NOT NULL DEFAULT -1,
-  album_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
   song_id INTEGER NOT NULL DEFAULT -1,
 
   beginning INTEGER NOT NULL DEFAULT 0,
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS tidal_albums_songs (
 
   source INTEGER NOT NULL DEFAULT 0,
   directory_id INTEGER NOT NULL,
-  filename TEXT NOT NULL,
+  url TEXT NOT NULL,
   filetype INTEGER NOT NULL DEFAULT 0,
   filesize INTEGER NOT NULL DEFAULT 0,
   mtime INTEGER NOT NULL DEFAULT 0,
@@ -207,7 +207,7 @@ CREATE TABLE IF NOT EXISTS tidal_songs (
   lyrics TEXT NOT NULL,
 
   artist_id INTEGER NOT NULL DEFAULT -1,
-  album_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
   song_id INTEGER NOT NULL DEFAULT -1,
 
   beginning INTEGER NOT NULL DEFAULT 0,
@@ -219,7 +219,235 @@ CREATE TABLE IF NOT EXISTS tidal_songs (
 
   source INTEGER NOT NULL DEFAULT 0,
   directory_id INTEGER NOT NULL,
-  filename TEXT NOT NULL,
+  url TEXT NOT NULL,
+  filetype INTEGER NOT NULL DEFAULT 0,
+  filesize INTEGER NOT NULL DEFAULT 0,
+  mtime INTEGER NOT NULL DEFAULT 0,
+  ctime INTEGER NOT NULL DEFAULT 0,
+  unavailable INTEGER DEFAULT 0,
+
+  playcount INTEGER NOT NULL DEFAULT 0,
+  skipcount INTEGER NOT NULL DEFAULT 0,
+  lastplayed INTEGER NOT NULL DEFAULT 0,
+
+  compilation_detected INTEGER DEFAULT 0,
+  compilation_on INTEGER NOT NULL DEFAULT 0,
+  compilation_off INTEGER NOT NULL DEFAULT 0,
+  compilation_effective INTEGER NOT NULL DEFAULT 0,
+
+  art_automatic TEXT,
+  art_manual TEXT,
+
+  effective_albumartist TEXT,
+  effective_originalyear INTEGER NOT NULL DEFAULT 0,
+
+  cue_path TEXT
+
+);
+
+CREATE TABLE IF NOT EXISTS subsonic_songs (
+
+  title TEXT NOT NULL,
+  album TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  albumartist TEXT NOT NULL,
+  track INTEGER NOT NULL DEFAULT -1,
+  disc INTEGER NOT NULL DEFAULT -1,
+  year INTEGER NOT NULL DEFAULT -1,
+  originalyear INTEGER NOT NULL DEFAULT 0,
+  genre TEXT NOT NULL,
+  compilation INTEGER NOT NULL DEFAULT -1,
+  composer TEXT NOT NULL,
+  performer TEXT NOT NULL,
+  grouping TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  lyrics TEXT NOT NULL,
+
+  artist_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
+  song_id INTEGER NOT NULL DEFAULT -1,
+
+  beginning INTEGER NOT NULL DEFAULT 0,
+  length INTEGER NOT NULL DEFAULT 0,
+
+  bitrate INTEGER NOT NULL DEFAULT 0,
+  samplerate INTEGER NOT NULL DEFAULT 0,
+  bitdepth INTEGER NOT NULL DEFAULT 0,
+
+  source INTEGER NOT NULL DEFAULT 0,
+  directory_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  filetype INTEGER NOT NULL DEFAULT 0,
+  filesize INTEGER NOT NULL DEFAULT 0,
+  mtime INTEGER NOT NULL DEFAULT 0,
+  ctime INTEGER NOT NULL DEFAULT 0,
+  unavailable INTEGER DEFAULT 0,
+
+  playcount INTEGER NOT NULL DEFAULT 0,
+  skipcount INTEGER NOT NULL DEFAULT 0,
+  lastplayed INTEGER NOT NULL DEFAULT 0,
+
+  compilation_detected INTEGER DEFAULT 0,
+  compilation_on INTEGER NOT NULL DEFAULT 0,
+  compilation_off INTEGER NOT NULL DEFAULT 0,
+  compilation_effective INTEGER NOT NULL DEFAULT 0,
+
+  art_automatic TEXT,
+  art_manual TEXT,
+
+  effective_albumartist TEXT,
+  effective_originalyear INTEGER NOT NULL DEFAULT 0,
+
+  cue_path TEXT
+
+);
+
+CREATE TABLE IF NOT EXISTS qobuz_artists_songs (
+
+  title TEXT NOT NULL,
+  album TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  albumartist TEXT NOT NULL,
+  track INTEGER NOT NULL DEFAULT -1,
+  disc INTEGER NOT NULL DEFAULT -1,
+  year INTEGER NOT NULL DEFAULT -1,
+  originalyear INTEGER NOT NULL DEFAULT 0,
+  genre TEXT NOT NULL,
+  compilation INTEGER NOT NULL DEFAULT -1,
+  composer TEXT NOT NULL,
+  performer TEXT NOT NULL,
+  grouping TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  lyrics TEXT NOT NULL,
+
+  artist_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
+  song_id INTEGER NOT NULL DEFAULT -1,
+
+  beginning INTEGER NOT NULL DEFAULT 0,
+  length INTEGER NOT NULL DEFAULT 0,
+
+  bitrate INTEGER NOT NULL DEFAULT 0,
+  samplerate INTEGER NOT NULL DEFAULT 0,
+  bitdepth INTEGER NOT NULL DEFAULT 0,
+
+  source INTEGER NOT NULL DEFAULT 0,
+  directory_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  filetype INTEGER NOT NULL DEFAULT 0,
+  filesize INTEGER NOT NULL DEFAULT 0,
+  mtime INTEGER NOT NULL DEFAULT 0,
+  ctime INTEGER NOT NULL DEFAULT 0,
+  unavailable INTEGER DEFAULT 0,
+
+  playcount INTEGER NOT NULL DEFAULT 0,
+  skipcount INTEGER NOT NULL DEFAULT 0,
+  lastplayed INTEGER NOT NULL DEFAULT 0,
+
+  compilation_detected INTEGER DEFAULT 0,
+  compilation_on INTEGER NOT NULL DEFAULT 0,
+  compilation_off INTEGER NOT NULL DEFAULT 0,
+  compilation_effective INTEGER NOT NULL DEFAULT 0,
+
+  art_automatic TEXT,
+  art_manual TEXT,
+
+  effective_albumartist TEXT,
+  effective_originalyear INTEGER NOT NULL DEFAULT 0,
+
+  cue_path TEXT
+
+);
+
+CREATE TABLE IF NOT EXISTS qobuz_albums_songs (
+
+  title TEXT NOT NULL,
+  album TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  albumartist TEXT NOT NULL,
+  track INTEGER NOT NULL DEFAULT -1,
+  disc INTEGER NOT NULL DEFAULT -1,
+  year INTEGER NOT NULL DEFAULT -1,
+  originalyear INTEGER NOT NULL DEFAULT 0,
+  genre TEXT NOT NULL,
+  compilation INTEGER NOT NULL DEFAULT -1,
+  composer TEXT NOT NULL,
+  performer TEXT NOT NULL,
+  grouping TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  lyrics TEXT NOT NULL,
+
+  artist_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
+  song_id INTEGER NOT NULL DEFAULT -1,
+
+  beginning INTEGER NOT NULL DEFAULT 0,
+  length INTEGER NOT NULL DEFAULT 0,
+
+  bitrate INTEGER NOT NULL DEFAULT 0,
+  samplerate INTEGER NOT NULL DEFAULT 0,
+  bitdepth INTEGER NOT NULL DEFAULT 0,
+
+  source INTEGER NOT NULL DEFAULT 0,
+  directory_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  filetype INTEGER NOT NULL DEFAULT 0,
+  filesize INTEGER NOT NULL DEFAULT 0,
+  mtime INTEGER NOT NULL DEFAULT 0,
+  ctime INTEGER NOT NULL DEFAULT 0,
+  unavailable INTEGER DEFAULT 0,
+
+  playcount INTEGER NOT NULL DEFAULT 0,
+  skipcount INTEGER NOT NULL DEFAULT 0,
+  lastplayed INTEGER NOT NULL DEFAULT 0,
+
+  compilation_detected INTEGER DEFAULT 0,
+  compilation_on INTEGER NOT NULL DEFAULT 0,
+  compilation_off INTEGER NOT NULL DEFAULT 0,
+  compilation_effective INTEGER NOT NULL DEFAULT 0,
+
+  art_automatic TEXT,
+  art_manual TEXT,
+
+  effective_albumartist TEXT,
+  effective_originalyear INTEGER NOT NULL DEFAULT 0,
+
+  cue_path TEXT
+
+);
+
+CREATE TABLE IF NOT EXISTS qobuz_songs (
+
+  title TEXT NOT NULL,
+  album TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  albumartist TEXT NOT NULL,
+  track INTEGER NOT NULL DEFAULT -1,
+  disc INTEGER NOT NULL DEFAULT -1,
+  year INTEGER NOT NULL DEFAULT -1,
+  originalyear INTEGER NOT NULL DEFAULT 0,
+  genre TEXT NOT NULL,
+  compilation INTEGER NOT NULL DEFAULT -1,
+  composer TEXT NOT NULL,
+  performer TEXT NOT NULL,
+  grouping TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  lyrics TEXT NOT NULL,
+
+  artist_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
+  song_id INTEGER NOT NULL DEFAULT -1,
+
+  beginning INTEGER NOT NULL DEFAULT 0,
+  length INTEGER NOT NULL DEFAULT 0,
+
+  bitrate INTEGER NOT NULL DEFAULT 0,
+  samplerate INTEGER NOT NULL DEFAULT 0,
+  bitdepth INTEGER NOT NULL DEFAULT 0,
+
+  source INTEGER NOT NULL DEFAULT 0,
+  directory_id INTEGER NOT NULL,
+  url TEXT NOT NULL,
   filetype INTEGER NOT NULL DEFAULT 0,
   filesize INTEGER NOT NULL DEFAULT 0,
   mtime INTEGER NOT NULL DEFAULT 0,
@@ -261,7 +489,7 @@ CREATE TABLE IF NOT EXISTS playlist_items (
   playlist INTEGER NOT NULL,
   type INTEGER NOT NULL DEFAULT 0,
   collection_id INTEGER,
-  url TEXT,
+  playlist_url TEXT,
 
   title TEXT NOT NULL,
   album TEXT NOT NULL,
@@ -280,7 +508,7 @@ CREATE TABLE IF NOT EXISTS playlist_items (
   lyrics TEXT NOT NULL,
 
   artist_id INTEGER NOT NULL DEFAULT -1,
-  album_id INTEGER NOT NULL DEFAULT -1,
+  album_id TEXT NOT NULL,
   song_id INTEGER NOT NULL DEFAULT -1,
 
   beginning INTEGER NOT NULL DEFAULT 0,
@@ -292,7 +520,7 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 
   source INTEGER NOT NULL DEFAULT 0,
   directory_id INTEGER,
-  filename TEXT,
+  url TEXT,
   filetype INTEGER NOT NULL DEFAULT 0,
   filesize INTEGER,
   mtime INTEGER,
@@ -328,7 +556,7 @@ CREATE TABLE IF NOT EXISTS devices (
   transcode_format NOT NULL DEFAULT 5
 );
 
-CREATE INDEX IF NOT EXISTS idx_filename ON songs (filename);
+CREATE INDEX IF NOT EXISTS idx_url ON songs (url);
 
 CREATE INDEX IF NOT EXISTS idx_comp_artist ON songs (compilation_effective, artist);
 
@@ -398,6 +626,66 @@ CREATE VIRTUAL TABLE IF NOT EXISTS tidal_songs_fts USING fts3(
 
 );
 
+CREATE VIRTUAL TABLE IF NOT EXISTS subsonic_songs_fts USING fts3(
+
+  ftstitle,
+  ftsalbum,
+  ftsartist,
+  ftsalbumartist,
+  ftscomposer,
+  ftsperformer,
+  ftsgrouping,
+  ftsgenre,
+  ftscomment,
+  tokenize=unicode
+
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS qobuz_artists_songs_fts USING fts3(
+
+  ftstitle,
+  ftsalbum,
+  ftsartist,
+  ftsalbumartist,
+  ftscomposer,
+  ftsperformer,
+  ftsgrouping,
+  ftsgenre,
+  ftscomment,
+  tokenize=unicode
+
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS qobuz_albums_songs_fts USING fts3(
+
+  ftstitle,
+  ftsalbum,
+  ftsartist,
+  ftsalbumartist,
+  ftscomposer,
+  ftsperformer,
+  ftsgrouping,
+  ftsgenre,
+  ftscomment,
+  tokenize=unicode
+
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS qobuz_songs_fts USING fts3(
+
+  ftstitle,
+  ftsalbum,
+  ftsartist,
+  ftsalbumartist,
+  ftscomposer,
+  ftsperformer,
+  ftsgrouping,
+  ftsgenre,
+  ftscomment,
+  tokenize=unicode
+
+);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS playlist_items_fts_ USING fts3(
 
   ftstitle,
@@ -427,7 +715,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS %allsongstables_fts USING fts3(
   tokenize=unicode
 
 );
-
 
 INSERT INTO songs_fts (ROWID, ftstitle, ftsalbum, ftsartist, ftsalbumartist, ftscomposer, ftsperformer, ftsgrouping, ftsgenre, ftscomment)
 SELECT ROWID, title, album, artist, albumartist, composer, performer, grouping, genre, comment FROM songs;

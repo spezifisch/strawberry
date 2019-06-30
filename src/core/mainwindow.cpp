@@ -981,7 +981,7 @@ void MainWindow::MediaStopped() {
 
   ui_->action_love->setEnabled(false);
   ui_->button_love->setEnabled(false);
-  f (tray_icon_->IsAvailable()) tray_icon_->LoveStateChanged(false);
+  if (tray_icon_->IsAvailable()) tray_icon_->LoveStateChanged(false);
 
   track_position_timer_->stop();
   track_slider_timer_->stop();
@@ -1045,7 +1045,7 @@ void MainWindow::MediaPlaying() {
     playlist->set_nowplaying(true);
     ui_->action_love->setEnabled(true);
     ui_->button_love->setEnabled(true);
-    if (tray_icon_->isAvailable()) tray_icon_->LoveStateChanged(true);
+    if (tray_icon_->IsAvailable()) tray_icon_->LoveStateChanged(true);
   }
 
 }
@@ -2524,7 +2524,7 @@ void MainWindow::LoveButtonVisibilityChanged(bool value) {
   else
     ui_->widget_love->hide();
 
-  if (tray_icon_->isAvailable()) tray_icon_->LoveVisibilityChanged(value);
+  if (tray_icon_->IsAvailable()) tray_icon_->LoveVisibilityChanged(value);
 
 }
 
@@ -2547,6 +2547,6 @@ void MainWindow::Love() {
   app_->scrobbler()->Love();
   ui_->button_love->setEnabled(false);
   ui_->action_love->setEnabled(false);
-  if (tray_icon_->isAvailable()) tray_icon_->LoveStateChanged(false);
+  if (tray_icon_->IsAvailable()) tray_icon_->LoveStateChanged(false);
 
 }

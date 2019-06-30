@@ -328,10 +328,10 @@ bool SystemTrayIcon::event(QEvent *event) {
 
 }
 
-void QtSystemTrayIcon::LoveVisibilityChanged(bool value) {
+void SystemTrayIcon::LoveVisibilityChanged(bool value) {
   action_love_->setVisible(value);
 }
 
-void QtSystemTrayIcon::LoveStateChanged(bool value) {
+void SystemTrayIcon::LoveStateChanged(bool value) {
   action_love_->setEnabled(value);
 }

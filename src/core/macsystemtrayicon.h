@@ -57,7 +57,7 @@ class SystemTrayIcon : public QObject {
 
   bool MuteEnabled() { return true; }
   void SetMuteEnabled(bool enabled) {}
-  void MuteButtonStateChanged(bool value);
+  void MuteButtonStateChanged(bool value) {}
   void LoveVisibilityChanged(bool value) {}
   void LoveStateChanged(bool value) {}
 

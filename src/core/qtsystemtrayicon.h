@@ -51,7 +51,6 @@ class SystemTrayIcon : public QSystemTrayIcon {
   void SetVisible(bool visible) { setVisible(visible); }
 
   void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
-
   void ShowPopup(const QString &summary, const QString &message, int timeout);
 
   void SetNowPlaying(const Song &song, const QString &image_path);

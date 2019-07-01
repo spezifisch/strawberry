@@ -660,7 +660,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   mac::SetApplicationHandler(this);
 #endif
   // Tray icon
-    tray_icon_->SetupMenu(ui_->action_previous_track, ui_->action_play_pause, ui_->action_stop, ui_->action_stop_after_this_track, ui_->action_next_track, ui_->action_mute, ui_->action_love, ui_->action_quit);
+  tray_icon_->SetupMenu(ui_->action_previous_track, ui_->action_play_pause, ui_->action_stop, ui_->action_stop_after_this_track, ui_->action_next_track, ui_->action_mute, ui_->action_love, ui_->action_quit);
   connect(tray_icon_, SIGNAL(PlayPause()), app_->player(), SLOT(PlayPause()));
   connect(tray_icon_, SIGNAL(SeekForward()), app_->player(), SLOT(SeekForward()));
   connect(tray_icon_, SIGNAL(SeekBackward()), app_->player(), SLOT(SeekBackward()));
@@ -1261,7 +1261,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   bool keep_running = settings.value("keeprunning", false).toBool();
   settings.endGroup();
 
-  if (keep_running && event->spontaneous() && QSystemTrayIcon::isSystemTrayAvailable()) {
+  if (keep_running && event->spontaneous() && tray_icon_->IsAvailable()) {
     event->ignore();
     SetHiddenInTray(true);
   }
@@ -1269,6 +1269,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     Exit();
     QApplication::quit();
   }
+
 }
 
 void MainWindow::SetHiddenInTray(bool hidden) {

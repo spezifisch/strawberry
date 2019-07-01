@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,14 +27,14 @@
 #include "song.h"
 
 #include <QApplication>
-#include <QAction>
 #include <QIcon>
+#include <QString>
 #include <QPixmap>
 #include <QPainter>
 #include <QPoint>
-#include <QRect>
 #include <QPolygon>
-#include <QString>
+#include <QRect>
+#include <QAction>
 #include <QtDebug>
 
 #include <AppKit/NSMenu.h>
@@ -170,40 +171,18 @@ class MacSystemTrayIconPrivate {
 
 SystemTrayIcon::SystemTrayIcon(QObject* parent)
     : SystemTrayIcon(parent),
-      icon_(":/icons/48x48/strawberry.png"),
+      icon_(IconLoader::Load("strawberry")),
       normal_icon_(icon_.pixmap(48, QIcon::Normal)),
       grey_icon_(icon_.pixmap(48, QIcon::Disabled)),
       playing_icon_(":/pictures/tiny-play.png"),
-      paused_icon_(":/pictures/tiny-pause.png") {
+      paused_icon_(":/pictures/tiny-pause.png"),
+      percentage_(0) {
 
-  QApplication::setWindowIcon(orange_icon_);
+  QApplication::setWindowIcon(normal_icon_);
 
 }
 
 SystemTrayIcon::~SystemTrayIcon() {}
-
-void SystemTrayIcon::SetupMenu(QAction* previous, QAction* play, QAction* stop, QAction* stop_after, QAction* next, QAction* mute, QAction* love, QAction* quit) {
-
-  p_.reset(new MacSystemTrayIconPrivate());
-  SetupMenuItem(previous);
-  SetupMenuItem(play);
-  SetupMenuItem(stop);
-  SetupMenuItem(stop_after);
-  SetupMenuItem(next);
-  p_->AddSeparator();
-  SetupMenuItem(mute);
-  p_->AddSeparator();
-  SetupMenuItem(love);
-  Q_UNUSED(quit);  // Mac already has a Quit item.
-
-}
-
-void SystemTrayIcon::SetupMenuItem(QAction* action) {
-
-  p_->AddMenuItem(action);
-  connect(action, SIGNAL(changed()), SLOT(ActionChanged()));
-
-}
 
 QPixmap SystemTrayIcon::CreateIcon(const QPixmap &icon, const QPixmap &grey_icon) {
 
@@ -246,17 +225,36 @@ QPixmap SystemTrayIcon::CreateIcon(const QPixmap &icon, const QPixmap &grey_icon
 
 }
 
-void SystemTrayIcon::UpdateIcon() {
+void SystemTrayIcon::SetupMenu(QAction* previous, QAction* play, QAction* stop, QAction* stop_after, QAction* next, QAction* mute, QAction* love, QAction* quit) {
 
-  QApplication::setWindowIcon(CreateIcon(orange_icon_, grey_icon_));
+  p_.reset(new MacSystemTrayIconPrivate());
+  SetupMenuItem(previous);
+  SetupMenuItem(play);
+  SetupMenuItem(stop);
+  SetupMenuItem(stop_after);
+  SetupMenuItem(next);
+  p_->AddSeparator();
+  SetupMenuItem(mute);
+  p_->AddSeparator();
+  SetupMenuItem(love);
+  Q_UNUSED(quit);  // Mac already has a Quit item.
 
 }
 
-void SystemTrayIcon::SetProgress(int percentage) {
+void SystemTrayIcon::SetupMenuItem(QAction* action) {
 
+  p_->AddMenuItem(action);
+  connect(action, SIGNAL(changed()), SLOT(ActionChanged()));
+
+}
+
+void SystemTrayIcon::UpdateIcon() {
+  QApplication::setWindowIcon(CreateIcon(normal_icon_, grey_icon_));
+}
+
+void SystemTrayIcon::SetProgress(int percentage) {
   percentage_ = percentage;
   UpdateIcon();
-
 }
 
 void SystemTrayIcon::ActionChanged() {
@@ -298,3 +296,4 @@ void SystemTrayIcon::ClearNowPlaying() {
   p_->ClearNowPlaying();
 
 }
+

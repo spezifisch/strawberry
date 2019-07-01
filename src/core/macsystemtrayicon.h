@@ -2,6 +2,7 @@
   *Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,10 +27,13 @@
 #include <memory>
 
 #include <QObject>
-#include <QAction>
+#include <QString>
+#include <QIcon>
 #include <QPixmap>
+#include <QAction>
 
 class MacSystemTrayIconPrivate;
+class Song;
 
 class SystemTrayIcon : public QObject {
   Q_OBJECT
@@ -38,12 +42,31 @@ class SystemTrayIcon : public QObject {
   SystemTrayIcon(QObject *parent = nullptr);
   ~SystemTrayIcon();
 
-  bool IsAvailable const { return true; }
+  bool IsAvailable() const { return true; }
 
   void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
 
-  void SetNowPlaying(const Song& song, const QString& image_path);
+  void SetNowPlaying(const Song &song, const QString &image_path);
   void ClearNowPlaying();
+
+  void SetPlaying(bool enable_play_pause = false);
+  void SetPaused();
+  void SetStopped();
+
+  bool MuteEnabled() { return action_mute_->isVisible(); }
+  void SetMuteEnabled(bool enabled) { action_mute_->setVisible(enabled); }
+  void MuteButtonStateChanged(bool value);
+  void LoveVisibilityChanged(bool value) {}
+  void LoveStateChanged(bool value) {}
+
+ private:
+  void SetupMenuItem(QAction *action);
+
+ private slots:
+  void ActionChanged();
+
+ public slots:
+  void SetProgress(int percentage);
 
  signals:
   void ChangeVolume(int delta);
@@ -54,24 +77,19 @@ class SystemTrayIcon : public QObject {
   void ShowHide();
   void PlayPause();
 
- private:
-  void SetupMenuItem(QAction *action);
-
- private slots:
-  void SetProgress(int percentage);
-  void ActionChanged();
-
  protected:
   QPixmap CreateIcon(const QPixmap &icon, const QPixmap &grey_icon);
   void UpdateIcon();
 
  private:
-  int percentage_;
-  QPixmap orange_icon_;
+  QIcon icon_;
+  QPixmap normal_icon_;
   QPixmap grey_icon_;
   QPixmap playing_icon_;
   QPixmap paused_icon_;
   QPixmap current_state_icon_;
+  int percentage_;
+
   std::unique_ptr<MacSystemTrayIconPrivate> p_;
   Q_DISABLE_COPY(SystemTrayIcon);
 

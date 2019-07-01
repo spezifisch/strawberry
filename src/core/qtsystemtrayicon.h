@@ -31,9 +31,8 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QAction>
-#include <QMenu>
-#include <QtEvents>
 
+class QMenu;
 class QEvent;
 class QMouseEvent;
 
@@ -52,9 +51,8 @@ class SystemTrayIcon : public QSystemTrayIcon {
   void SetVisible(bool visible) { setVisible(visible); }
 
   void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
-  void ShowPopup(const QString &summary, const QString &message, int timeout);
 
-  void UpdateIcon();
+  void ShowPopup(const QString &summary, const QString &message, int timeout);
 
   void SetNowPlaying(const Song &song, const QString &image_path);
   void ClearNowPlaying();
@@ -69,7 +67,12 @@ class SystemTrayIcon : public QSystemTrayIcon {
   void LoveVisibilityChanged(bool value);
   void LoveStateChanged(bool value);
 
+ private:
+  void SetupMenuItem(QAction *action);
+
  public slots:
+  void Clicked(QSystemTrayIcon::ActivationReason);
+  bool event(QEvent *event);
   void SetProgress(int percentage);
 
  signals:
@@ -83,10 +86,7 @@ class SystemTrayIcon : public QSystemTrayIcon {
 
  protected:
   QPixmap CreateIcon(const QPixmap &icon, const QPixmap &grey_icon);
-
- private slots:
-  void Clicked(QSystemTrayIcon::ActivationReason);
-  bool event(QEvent *event);
+  void UpdateIcon();
 
  private:
   QMenu *menu_;
@@ -97,13 +97,14 @@ class SystemTrayIcon : public QSystemTrayIcon {
   QPixmap playing_icon_;
   QPixmap paused_icon_;
   QPixmap current_state_icon_;
-  int percentage_;
 
   QAction *action_play_pause_;
   QAction *action_stop_;
   QAction *action_stop_after_this_track_;
   QAction *action_mute_;
   QAction *action_love_;
+
+  int percentage_;
 
 #ifndef Q_OS_WIN
   QString de_;

@@ -25,7 +25,6 @@
 
 #include <QSystemTrayIcon>
 #include <QCoreApplication>
-#include <QAction>
 #include <QIODevice>
 #include <QFile>
 #include <QMenu>
@@ -36,6 +35,7 @@
 #include <QPoint>
 #include <QPolygon>
 #include <QRect>
+#include <QAction>
 #include <QtEvents>
 #include <QSettings>
 
@@ -60,12 +60,10 @@ SystemTrayIcon::SystemTrayIcon(QObject *parent)
       action_play_pause_(nullptr),
       action_stop_(nullptr),
       action_stop_after_this_track_(nullptr),
-      action_mute_(nullptr) {
+      action_mute_(nullptr),
+      percentage_(0) {
 
   app_name_[0] = app_name_[0].toUpper();
-
-  setIcon(normal_icon_);
-  ClearNowPlaying();
 
 #ifndef Q_OS_WIN
   de_ = Utilities::DesktopEnvironment().toLower();
@@ -81,6 +79,11 @@ SystemTrayIcon::SystemTrayIcon(QObject *parent)
   pattern_file.close();
 
 #endif
+
+  if (isSystemTrayAvailable()) {
+    setIcon(normal_icon_);
+    ClearNowPlaying();
+  }
 
   connect(this, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), SLOT(Clicked(QSystemTrayIcon::ActivationReason)));
 

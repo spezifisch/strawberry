@@ -25,6 +25,7 @@
 
 #include "mac_delegate.h"
 #include "song.h"
+#include "iconloader.h"
 
 #include <QApplication>
 #include <QIcon>

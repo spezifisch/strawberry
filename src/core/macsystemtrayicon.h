@@ -43,6 +43,7 @@ class SystemTrayIcon : public QObject {
   ~SystemTrayIcon();
 
   bool IsAvailable() const { return true; }
+  void SetVisible(bool visible) {}
 
   void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
 
@@ -53,8 +54,8 @@ class SystemTrayIcon : public QObject {
   void SetPaused();
   void SetStopped();
 
-  bool MuteEnabled() { return action_mute_->isVisible(); }
-  void SetMuteEnabled(bool enabled) { action_mute_->setVisible(enabled); }
+  bool MuteEnabled() {}
+  void SetMuteEnabled(bool enabled) {}
   void MuteButtonStateChanged(bool value);
   void LoveVisibilityChanged(bool value) {}
   void LoveStateChanged(bool value) {}

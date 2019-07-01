@@ -51,7 +51,11 @@
 #include "core/tagreaderclient.h"
 #include "engine/enginetype.h"
 #include "engine/engine_fwd.h"
-#include "qtsystemtrayicon.h"
+#ifdef Q_OS_MACOS
+#  include "core/macsystemtrayicon.h"
+#else
+#  include "core/qtsystemtrayicon.h"
+#endif
 #include "mac_startup.h"
 #include "widgets/osd.h"
 #include "collection/collectionmodel.h"

@@ -171,7 +171,7 @@ class MacSystemTrayIconPrivate {
 };
 
 SystemTrayIcon::SystemTrayIcon(QObject* parent)
-    : SystemTrayIcon(parent),
+    : QObject(parent),
       icon_(IconLoader::Load("strawberry")),
       normal_icon_(icon_.pixmap(48, QIcon::Normal)),
       grey_icon_(icon_.pixmap(48, QIcon::Disabled)),

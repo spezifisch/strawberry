@@ -126,6 +126,8 @@ class Song {
   static const QRegExp kTitleRemoveMisc;
   static const QRegExp kFilenameRemoveNonFatChars;
 
+  static const QStringList kArticles;
+
   static QString JoinSpec(const QString &table);
 
   static Source SourceFromURL(const QUrl &url);
@@ -184,9 +186,13 @@ class Song {
   int id() const;
 
   const QString &title() const;
+  const QString &title_sortable() const;
   const QString &album() const;
+  const QString &album_sortable() const;
   const QString &artist() const;
+  const QString &artist_sortable() const;
   const QString &albumartist() const;
+  const QString &albumartist_sortable() const;
   int track() const;
   int disc() const;
   int year() const;
@@ -224,8 +230,8 @@ class Song {
   int skipcount() const;
   int lastplayed() const;
 
-  const QString &art_automatic() const;
-  const QString &art_manual() const;
+  const QUrl &art_automatic() const;
+  const QUrl &art_manual() const;
 
   const QString &cue_path() const;
   bool has_cue() const;
@@ -233,11 +239,14 @@ class Song {
   const QString &effective_album() const;
   int effective_originalyear() const;
   const QString &effective_albumartist() const;
+  const QString &effective_albumartist_sortable() const;
 
   bool is_collection_song() const;
   bool is_stream() const;
   bool is_cdda() const;
   bool is_metadata_good() const;
+  bool art_automatic_is_valid() const;
+  bool art_manual_is_valid() const;
 
   // Playlist views are special because you don't want to fill in album artists automatically for compilations, but you do for normal albums:
   const QString &playlist_albumartist() const;
@@ -320,8 +329,8 @@ class Song {
   void set_compilation_on(bool v);
   void set_compilation_off(bool v);
 
-  void set_art_automatic(const QString &v);
-  void set_art_manual(const QString &v);
+  void set_art_automatic(const QUrl &v);
+  void set_art_manual(const QUrl &v);
 
   void set_cue_path(const QString &v);
 
@@ -342,6 +351,8 @@ class Song {
 
  private:
   struct Private;
+
+  QString sortable(const QString &v) const;
 
   QSharedDataPointer<Private> d;
 };

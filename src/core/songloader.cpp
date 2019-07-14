@@ -118,7 +118,7 @@ SongLoader::Result SongLoader::Load(const QUrl &url) {
 
   url_ = url;
 
-  if (url_.scheme() == "file") {
+  if (url_.isLocalFile()) {
     return LoadLocal(url_.toLocalFile());
   }
 
@@ -223,7 +223,7 @@ SongLoader::Result SongLoader::LoadLocal(const QString &filename) {
 
   CollectionQuery query;
   query.SetColumnSpec("%songs_table.ROWID, " + Song::kColumnSpec);
-  query.AddWhere("filename", url.toEncoded());
+  query.AddWhere("url", url.toEncoded());
 
   if (collection_->ExecQuery(&query) && query.Next()) {
     // We may have many results when the file has many sections

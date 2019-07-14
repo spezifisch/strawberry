@@ -174,7 +174,11 @@ void TagReader::ReadFile(const QString &filename, pb::tagreader::SongMetadata *s
   song->set_url(url.constData(), url.size());
   song->set_filesize(info.size());
   song->set_mtime(info.lastModified().toTime_t());
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+  song->set_ctime(info.birthTime().isValid() ? info.birthTime().toTime_t() : info.lastModified().toTime_t());
+#else
   song->set_ctime(info.created().toTime_t());
+#endif
 
   std::unique_ptr<TagLib::FileRef> fileref(factory_->GetFileRef(filename));
   if (fileref->isNull()) {
@@ -273,6 +277,12 @@ void TagReader::ReadFile(const QString &filename, pb::tagreader::SongMetadata *s
         song->set_originalyear(map["TORY"].front()->toString().substr(0, 4).toInt());
       }
 
+      if (!map["USLT"].isEmpty()) {
+        Decode(map["USLT"].front()->toString(), nullptr, song->mutable_lyrics());
+      }
+      else if (!map["SYLT"].isEmpty()) {
+        Decode(map["SYLT"].front()->toString(), nullptr, song->mutable_lyrics());
+      }
 
       if (!map["APIC"].isEmpty()) song->set_art_automatic(kEmbeddedCover);
 

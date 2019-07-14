@@ -117,7 +117,13 @@ void QueuedItemDelegate::DrawBox(QPainter *painter, const QRect &line_rect, cons
   smaller.setPointSize(smaller.pointSize() - 1);
   smaller.setBold(true);
 
-  if (width == -1) width = QFontMetrics(font).width(text + "  ");
+  if (width == -1) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+    width = QFontMetrics(font).horizontalAdvance(text + "  ");
+#else
+    width = QFontMetrics(font).width(text + "  ");
+#endif
+  }
 
   QRect rect(line_rect);
   rect.setLeft(rect.right() - width - kQueueBoxBorder);
@@ -295,7 +301,7 @@ QString LengthItemDelegate::displayText(const QVariant &value, const QLocale&) c
   qint64 nanoseconds = value.toLongLong(&ok);
 
   if (ok && nanoseconds > 0) return Utilities::PrettyTimeNanosec(nanoseconds);
-  return QString::null;
+  return QString();
 
 }
 
@@ -316,7 +322,7 @@ QString DateItemDelegate::displayText(const QVariant &value, const QLocale &loca
   int time = value.toInt(&ok);
 
   if (!ok || time == -1)
-    return QString::null;
+    return QString();
 
   return QDateTime::fromTime_t(time).toString(QLocale::system().dateTimeFormat(QLocale::ShortFormat));
 
@@ -420,7 +426,7 @@ QString NativeSeparatorsDelegate::displayText(const QVariant &value, const QLoca
     return QDir::toNativeSeparators(string_value);
   }
 
-  if (url.scheme() == "file") {
+  if (url.isLocalFile()) {
     return QDir::toNativeSeparators(url.toLocalFile());
   }
   return string_value;

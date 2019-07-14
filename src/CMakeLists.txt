@@ -16,9 +16,9 @@
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -U__STRICT_ANSI__ -Wall -Woverloaded-virtual -Wno-sign-compare -Wno-deprecated-declarations -Wno-unused-local-typedefs -fpermissive")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -U__STRICT_ANSI__ -Wall -Woverloaded-virtual -Wno-sign-compare -fpermissive")
 
-option(BUILD_WERROR "Build with -Werror" ON)
+option(BUILD_WERROR "Build with -Werror" OFF)
 
 if(BUILD_WERROR)
   if (LINUX)
@@ -45,7 +45,6 @@ include_directories(${GLIBCONFIG_INCLUDE_DIRS})
 include_directories(${GOBJECT_INCLUDE_DIRS})
 include_directories(${GNUTLS_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${LIBXML_INCLUDE_DIRS})
 include_directories(${CHROMAPRINT_INCLUDE_DIRS})
 
 if (X11_FOUND)
@@ -194,7 +193,7 @@ set(SOURCES
   covermanager/coversearchstatistics.cpp
   covermanager/coversearchstatisticsdialog.cpp
   covermanager/coverexportrunnable.cpp
-  covermanager/currentartloader.cpp
+  covermanager/currentalbumcoverloader.cpp
   covermanager/coverfromurldialog.cpp
   covermanager/lastfmcoverprovider.cpp
   covermanager/musicbrainzcoverprovider.cpp
@@ -374,7 +373,7 @@ set(HEADERS
   covermanager/coverproviders.h
   covermanager/coversearchstatisticsdialog.h
   covermanager/coverexportrunnable.h
-  covermanager/currentartloader.h
+  covermanager/currentalbumcoverloader.h
   covermanager/coverfromurldialog.h
   covermanager/lastfmcoverprovider.h
   covermanager/musicbrainzcoverprovider.h
@@ -601,10 +600,6 @@ if(UNIX AND HAVE_DBUS)
     SOURCES core/mpris.cpp core/mpris2.cpp core/dbusscreensaver.cpp
     HEADERS core/mpris.h core/mpris2.h
   )
-  optional_source(HAVE_DEVICEKIT
-    SOURCES device/devicekitlister.cpp
-    HEADERS device/devicekitlister.h
-  )
   optional_source(HAVE_UDISKS2
     SOURCES device/udisks2lister.cpp
     HEADERS device/udisks2lister.h
@@ -663,20 +658,6 @@ if(UNIX AND HAVE_DBUS)
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   list(APPEND HEADERS ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.h)
   list(APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.cpp)
-
-  # DeviceKit DBUS interfaces
-  if(HAVE_DEVICEKIT)
-    set_source_files_properties(dbus/org.freedesktop.UDisks.xml
-        PROPERTIES NO_NAMESPACE dbus/udisks)
-    set_source_files_properties(dbus/org.freedesktop.UDisks.Device.xml
-        PROPERTIES NO_NAMESPACE dbus/udisksdevice)
-    qt5_add_dbus_interface(SOURCES
-        dbus/org.freedesktop.UDisks.xml
-        dbus/udisks)
-    qt5_add_dbus_interface(SOURCES
-        dbus/org.freedesktop.UDisks.Device.xml
-        dbus/udisksdevice)
-  endif(HAVE_DEVICEKIT)
 
   if(HAVE_UDISKS2)
        set_source_files_properties(dbus/org.freedesktop.DBus.ObjectManager.xml

@@ -30,12 +30,16 @@
 #include <QMenu>
 #include <QIcon>
 #include <QString>
+<<<<<<< HEAD
 #include <QPixmap>
 #include <QPainter>
 #include <QPoint>
 #include <QPolygon>
 #include <QRect>
 #include <QAction>
+=======
+#include <QUrl>
+>>>>>>> master
 #include <QtEvents>
 #include <QSettings>
 
@@ -238,14 +242,26 @@ void SystemTrayIcon::MuteButtonStateChanged(bool value) {
   if (action_mute_) action_mute_->setChecked(value);
 }
 
+<<<<<<< HEAD
 void SystemTrayIcon::SetNowPlaying(const Song &song, const QString &image_path) {
+=======
+bool QtSystemTrayIcon::IsVisible() const {
+  return tray_->isVisible();
+}
+
+void QtSystemTrayIcon::SetVisible(bool visible) {
+  tray_->setVisible(visible);
+}
+
+void QtSystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
+>>>>>>> master
 
 #ifdef Q_OS_WIN
   // Windows doesn't support HTML in tooltips, so just show something basic
   setToolTip(song.PrettyTitleWithArtist());
 #else
 
-  int columns = image_path == nullptr ? 1 : 2;
+  int columns = cover_url.isEmpty() ? 1 : 2;
 
   QString tooltip(pattern_);
 
@@ -263,7 +279,7 @@ void SystemTrayIcon::SetNowPlaying(const Song &song, const QString &image_path) 
   tooltip.replace("%lengthValue", song.PrettyLength().toHtmlEscaped());
 
   if (columns == 2) {
-    QString final_path = image_path.startsWith("file://") ? image_path.mid(7) : image_path;
+    QString final_path = cover_url.isLocalFile() ? cover_url.path() : cover_url.toString();
     if (de_ == "kde") {
       tooltip.replace("%image", "<img src=\"" % final_path % "\" />");
     }

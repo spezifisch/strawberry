@@ -70,10 +70,6 @@ TidalSettingsPage::TidalSettingsPage(SettingsDialog *parent)
   ui_->streamurl->addItem("urlpostpaywall", StreamUrlMethod_UrlPostPaywall);
   ui_->streamurl->addItem("playbackinfopostpaywall", StreamUrlMethod_PlaybackInfoPostPaywall);
 
-  ui_->oauth->hide();
-  ui_->label_client_id->hide();
-  ui_->client_id->hide();
-
 }
 
 TidalSettingsPage::~TidalSettingsPage() { delete ui_; }
@@ -84,8 +80,7 @@ void TidalSettingsPage::Load() {
 
   s.beginGroup(kSettingsGroup);
   ui_->enable->setChecked(s.value("enabled", false).toBool());
-  //ui_->oauth->setChecked(s.value("oauth", false).toBool());
-  ui_->oauth->setChecked(false);
+  ui_->oauth->setChecked(s.value("oauth", false).toBool());
 
   ui_->client_id->setText(s.value("client_id").toString());
   ui_->api_token->setText(s.value("api_token").toString());
@@ -111,6 +106,7 @@ void TidalSettingsPage::Load() {
 
   s.endGroup();
 
+  OAuthClicked(ui_->oauth->isChecked());
   if (service_->authenticated()) ui_->login_state->SetLoggedIn(LoginStateWidget::LoggedIn);
 
 }
@@ -145,6 +141,10 @@ void TidalSettingsPage::Save() {
 void TidalSettingsPage::LoginClicked() {
 
   if (ui_->oauth->isChecked()) {
+    if (ui_->client_id->text().isEmpty()) {
+      QMessageBox::critical(this, tr("Configuration incomplete"), tr("Missing Tidal client ID."));
+      return;
+    }
     emit Login();
   }
   else {

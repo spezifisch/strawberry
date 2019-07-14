@@ -86,7 +86,11 @@ void SizeOverlayDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
   const QFontMetrics metrics(font);
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+  const int text_width = metrics.horizontalAdvance(text);
+#else
   const int text_width = metrics.width(text);
+#endif
 
   const QRect icon_rect(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.width());
 
@@ -127,7 +131,7 @@ AlbumCoverSearcher::AlbumCoverSearcher(const QIcon &no_cover_icon, Application *
   options_.scale_output_image_ = false;
   options_.pad_output_image_ = false;
 
-  connect(app_->album_cover_loader(), SIGNAL(ImageLoaded(quint64, QImage)), SLOT(ImageLoaded(quint64, QImage)));
+  connect(app_->album_cover_loader(), SIGNAL(ImageLoaded(quint64, QUrl, QImage)), SLOT(ImageLoaded(quint64, QUrl, QImage)));
 
   connect(ui_->search, SIGNAL(clicked()), SLOT(Search()));
   connect(ui_->covers, SIGNAL(doubleClicked(QModelIndex)), SLOT(CoverDoubleClicked(QModelIndex)));
@@ -145,7 +149,7 @@ AlbumCoverSearcher::~AlbumCoverSearcher() {
 void AlbumCoverSearcher::Init(AlbumCoverFetcher *fetcher) {
 
   fetcher_ = fetcher;
-  connect(fetcher_, SIGNAL(SearchFinished(quint64,CoverSearchResults,CoverSearchStatistics)), SLOT(SearchFinished(quint64, CoverSearchResults)));
+  connect(fetcher_, SIGNAL(SearchFinished(quint64, CoverSearchResults, CoverSearchStatistics)), SLOT(SearchFinished(quint64, CoverSearchResults)));
 
 }
 
@@ -197,7 +201,7 @@ void AlbumCoverSearcher::Search() {
 
 }
 
-void AlbumCoverSearcher::SearchFinished(quint64 id, const CoverSearchResults &results) {
+void AlbumCoverSearcher::SearchFinished(const quint64 id, const CoverSearchResults &results) {
 
   if (id != id_)
     return;
@@ -212,7 +216,7 @@ void AlbumCoverSearcher::SearchFinished(quint64 id, const CoverSearchResults &re
   for (const CoverSearchResult &result : results) {
     if (result.image_url.isEmpty()) continue;
 
-    quint64 id = app_->album_cover_loader()->LoadImageAsync(options_, result.image_url.toString(), QString());
+    quint64 id = app_->album_cover_loader()->LoadImageAsync(options_, result.image_url, QUrl());
 
     QStandardItem *item = new QStandardItem;
     item->setIcon(no_cover_icon_);
@@ -232,7 +236,7 @@ void AlbumCoverSearcher::SearchFinished(quint64 id, const CoverSearchResults &re
 
 }
 
-void AlbumCoverSearcher::ImageLoaded(quint64 id, const QImage &image) {
+void AlbumCoverSearcher::ImageLoaded(const quint64 id, const QUrl &cover_url, const QImage &image) {
 
   if (!cover_loading_tasks_.contains(id)) return;
   QStandardItem *item = cover_loading_tasks_.take(id);

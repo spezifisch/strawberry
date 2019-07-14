@@ -35,7 +35,6 @@
 #include <QPainter>
 #include <QPalette>
 #include <QBrush>
-#include <QSignalMapper>
 #include <QTextDocument>
 #include <QTimeLine>
 #include <QAction>
@@ -46,7 +45,7 @@
 #include "core/application.h"
 #include "covermanager/albumcoverchoicecontroller.h"
 #include "covermanager/albumcoverloader.h"
-#include "covermanager/currentartloader.h"
+#include "covermanager/currentalbumcoverloader.h"
 #include "playingwidget.h"
 
 using std::unique_ptr;
@@ -101,10 +100,8 @@ PlayingWidget::PlayingWidget(QWidget *parent)
 
   // Context menu
   QActionGroup *mode_group = new QActionGroup(this);
-  QSignalMapper *mode_mapper = new QSignalMapper(this);
-  connect(mode_mapper, SIGNAL(mapped(int)), SLOT(SetMode(int)));
-  CreateModeAction(SmallSongDetails, tr("Small album cover"), mode_group, mode_mapper);
-  CreateModeAction(LargeSongDetails, tr("Large album cover"), mode_group, mode_mapper);
+  CreateModeAction(SmallSongDetails, tr("Small album cover"), mode_group);
+  CreateModeAction(LargeSongDetails, tr("Large album cover"), mode_group);
   menu_->addActions(mode_group->actions());
 
   fit_cover_width_action_ = menu_->addAction(tr("Fit cover to width"));
@@ -131,13 +128,12 @@ PlayingWidget::PlayingWidget(QWidget *parent)
 
 PlayingWidget::~PlayingWidget() {}
 
-void PlayingWidget::SetApplication(Application *app, AlbumCoverChoiceController *album_cover_choice_controller) {
+void PlayingWidget::Init(Application *app, AlbumCoverChoiceController *album_cover_choice_controller) {
 
   app_ = app;
-  connect(app_->current_art_loader(), SIGNAL(ArtLoaded(Song, QString, QImage)), SLOT(AlbumArtLoaded(Song, QString, QImage)));
 
   album_cover_choice_controller_ = album_cover_choice_controller;
-  album_cover_choice_controller_->SetApplication(app_);
+  album_cover_choice_controller_->Init(app_);
   QList<QAction*> cover_actions = album_cover_choice_controller_->GetAllActions();
   cover_actions.append(album_cover_choice_controller_->search_cover_auto_action());
   menu_->addActions(cover_actions);
@@ -152,7 +148,6 @@ void PlayingWidget::SetApplication(Application *app, AlbumCoverChoiceController 
   connect(above_statusbar_action_, SIGNAL(toggled(bool)), SLOT(ShowAboveStatusBar(bool)));
 
   connect(album_cover_choice_controller_, SIGNAL(AutomaticCoverSearchDone()), this, SLOT(AutomaticCoverSearchDone()));
-  connect(album_cover_choice_controller_->search_cover_auto_action(), SIGNAL(triggered()), this, SLOT(SearchCoverAutomatically()));
 
 }
 
@@ -202,12 +197,11 @@ QSize PlayingWidget::sizeHint() const {
   return QSize(cover_loader_options_.desired_height_, total_height_);
 }
 
-void PlayingWidget::CreateModeAction(Mode mode, const QString &text, QActionGroup *group, QSignalMapper *mapper) {
+void PlayingWidget::CreateModeAction(Mode mode, const QString &text, QActionGroup *group) {
 
   QAction *action = new QAction(text, group);
   action->setCheckable(true);
-  mapper->setMapping(action, mode);
-  connect(action, SIGNAL(triggered()), mapper, SLOT(map()));
+  connect(action, &QAction::triggered, [this, mode]() { SetMode(mode); } );
 
   if (mode == mode_) action->setChecked(true);
 
@@ -270,7 +264,7 @@ void PlayingWidget::SongChanged(const Song &song) {
   song_ = song;
 }
 
-void PlayingWidget::AlbumArtLoaded(const Song &song, const QString &, const QImage &image) {
+void PlayingWidget::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image) {
 
   if (!playing_ || song.id() != song_playing_.id() || song.url() != song_playing_.url() || song.effective_albumartist() != song_playing_.effective_albumartist() || song.effective_album() != song_playing_.effective_album() || song.title() != song_playing_.title()) return;
   if (timeline_fade_->state() == QTimeLine::Running && image == image_original_) return;
@@ -279,7 +273,6 @@ void PlayingWidget::AlbumArtLoaded(const Song &song, const QString &, const QIma
   downloading_covers_ = false;
   song_ = song;
   SetImage(image);
-  GetCoverAutomatically();
 
 }
 
@@ -290,7 +283,7 @@ void PlayingWidget::SetImage(const QImage &image) {
     QSize psize(size());
     if (size().height() <= 0) psize.setHeight(total_height_);
     pixmap_previous_track_ = QPixmap(psize);
-    pixmap_previous_track_.fill(palette().background().color());
+    pixmap_previous_track_.fill(palette().window().color());
     pixmap_previous_track_opacity_ = 1.0;
     QPainter p(&pixmap_previous_track_);
     DrawContents(&p);
@@ -495,28 +488,15 @@ void PlayingWidget::dropEvent(QDropEvent *e) {
 
 }
 
-void PlayingWidget::GetCoverAutomatically() {
+void PlayingWidget::SearchCoverInProgress() {
 
-  // Search for cover automatically?
-  bool search =
-               album_cover_choice_controller_->search_cover_auto_action()->isChecked() &&
-               !song_.has_manually_unset_cover() &&
-               song_.art_automatic().isEmpty() &&
-               song_.art_manual().isEmpty() &&
-               !song_.effective_albumartist().isEmpty() &&
-               !song_.effective_album().isEmpty();
+  downloading_covers_ = true;
 
-  if (search) {
-    downloading_covers_ = true;
-    // This is done in mainwindow instead to avoid searching multiple times (ContextView & PlayingWidget)
-    // album_cover_choice_controller_->SearchCoverAutomatically(song_);
-
-    // Show a spinner animation
-    spinner_animation_.reset(new QMovie(":/pictures/spinner.gif", QByteArray(), this));
-    connect(spinner_animation_.get(), SIGNAL(updated(const QRect&)), SLOT(update()));
-    spinner_animation_->start();
-    update();
-  }
+  // Show a spinner animation
+  spinner_animation_.reset(new QMovie(":/pictures/spinner.gif", QByteArray(), this));
+  connect(spinner_animation_.get(), SIGNAL(updated(const QRect&)), SLOT(update()));
+  spinner_animation_->start();
+  update();
 
 }
 
@@ -526,8 +506,4 @@ void PlayingWidget::AutomaticCoverSearchDone() {
   spinner_animation_.reset();
   update();
 
-}
-
-void PlayingWidget::SearchCoverAutomatically() {
-  GetCoverAutomatically();
 }

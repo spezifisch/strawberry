@@ -28,9 +28,12 @@
 
 #include <QObject>
 #include <QString>
+#include <QUrl>
 #include <QIcon>
 #include <QPixmap>
 #include <QAction>
+
+#include "systemtrayicon.h"
 
 class MacSystemTrayIconPrivate;
 class Song;
@@ -48,7 +51,7 @@ class SystemTrayIcon : public QObject {
   void SetupMenu(QAction *previous, QAction *play, QAction *stop, QAction *stop_after, QAction *next, QAction *mute, QAction *love, QAction *quit);
   void ShowPopup(const QString &summary, const QString &message, int timeout) {}
 
-  void SetNowPlaying(const Song &song, const QString &image_path);
+  void SetNowPlaying(const Song& song, const QUrl &cover_url);
   void ClearNowPlaying();
 
   void SetPlaying(bool enable_play_pause = false);

@@ -28,8 +28,9 @@
 #include "iconloader.h"
 
 #include <QApplication>
-#include <QIcon>
 #include <QString>
+#include <QUrl>
+#include <QIcon>
 #include <QPixmap>
 #include <QPainter>
 #include <QPoint>
@@ -286,7 +287,7 @@ void SystemTrayIcon::SetStopped() {
 
 }
 
-void SystemTrayIcon::SetNowPlaying(const Song& song, const QString& image_path) {
+void SystemTrayIcon::SetNowPlaying(const Song& song, const QUrl& cover_url) {
 
   p_->ShowNowPlaying(song.artist(), song.PrettyTitle());
 

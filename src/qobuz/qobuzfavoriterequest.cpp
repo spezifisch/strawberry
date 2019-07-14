@@ -126,7 +126,6 @@ void QobuzFavoriteRequest::AddFavorites(const FavoriteType type, const SongList 
   QString ids = ids_list.join(',');
 
   typedef QPair<QByteArray, QByteArray> EncodedParam;
-  typedef QList<EncodedParam> EncodedParamList;
 
   ParamList params = ParamList() << Param("app_id", app_id())
                                  << Param("user_auth_token", user_auth_token())
@@ -154,8 +153,7 @@ void QobuzFavoriteRequest::AddFavoritesReply(QNetworkReply *reply, const Favorit
     return;
   }
 
-  QString error;
-  QByteArray data = GetReplyData(reply, error);
+  QByteArray data = GetReplyData(reply);
 
   if (reply->error() != QNetworkReply::NoError) {
     return;
@@ -258,8 +256,7 @@ void QobuzFavoriteRequest::RemoveFavoritesReply(QNetworkReply *reply, const Favo
     return;
   }
 
-  QString error;
-  QByteArray data = GetReplyData(reply, error);
+  QByteArray data = GetReplyData(reply);
   if (reply->error() != QNetworkReply::NoError) {
     return;
   }
@@ -277,5 +274,12 @@ void QobuzFavoriteRequest::RemoveFavoritesReply(QNetworkReply *reply, const Favo
       emit SongsRemoved(songs);
       break;
   }
+
+}
+
+void QobuzFavoriteRequest::Error(const QString &error, const QVariant &debug) {
+
+  qLog(Error) << "Qobuz:" << error;
+  if (debug.isValid()) qLog(Debug) << debug;
 
 }

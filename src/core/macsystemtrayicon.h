@@ -33,8 +33,6 @@
 #include <QPixmap>
 #include <QAction>
 
-#include "systemtrayicon.h"
-
 class MacSystemTrayIconPrivate;
 class Song;
 

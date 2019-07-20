@@ -124,13 +124,9 @@ void OSD::ReshowCurrentSong() {
 void OSD::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image) {
 
   // Don't change tray icon details if it's a preview
-<<<<<<< HEAD
+
   if (tray_icon_->IsAvailable() && !preview_mode_)
-    tray_icon_->SetNowPlaying(song, uri);
-=======
-  if (!preview_mode_ && tray_icon_)
     tray_icon_->SetNowPlaying(song, cover_url);
->>>>>>> master
 
   last_song_ = song;
   last_image_ = image;

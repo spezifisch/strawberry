@@ -30,16 +30,13 @@
 #include <QMenu>
 #include <QIcon>
 #include <QString>
-<<<<<<< HEAD
+#include <QUrl>
 #include <QPixmap>
 #include <QPainter>
 #include <QPoint>
 #include <QPolygon>
 #include <QRect>
 #include <QAction>
-=======
-#include <QUrl>
->>>>>>> master
 #include <QtEvents>
 #include <QSettings>
 

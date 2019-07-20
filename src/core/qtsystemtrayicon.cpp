@@ -239,19 +239,7 @@ void SystemTrayIcon::MuteButtonStateChanged(bool value) {
   if (action_mute_) action_mute_->setChecked(value);
 }
 
-<<<<<<< HEAD
-void SystemTrayIcon::SetNowPlaying(const Song &song, const QString &image_path) {
-=======
-bool QtSystemTrayIcon::IsVisible() const {
-  return tray_->isVisible();
-}
-
-void QtSystemTrayIcon::SetVisible(bool visible) {
-  tray_->setVisible(visible);
-}
-
-void QtSystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
->>>>>>> master
+void SystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
 
 #ifdef Q_OS_WIN
   // Windows doesn't support HTML in tooltips, so just show something basic

@@ -50,6 +50,7 @@
 #include <QObject>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QSysInfo>
 #include <QStandardPaths>
 #include <QLibraryInfo>
 #include <QFileDevice>
@@ -94,7 +95,7 @@
 #include "core/networkproxyfactory.h"
 #include "core/scangiomodulepath.h"
 #ifdef HAVE_TRANSLATIONS
-#  include "core/potranslator.h"
+#  include "core/translations.h"
 #endif
 #include "settings/behavioursettingspage.h"
 
@@ -160,6 +161,7 @@ int main(int argc, char* argv[]) {
 
   // Output the version, so when people attach log output to bug reports they don't have to tell us which version they're using.
   qLog(Info) << "Strawberry" << STRAWBERRY_VERSION_DISPLAY;
+  qLog(Info) << QString("%1 %2 - (%3 %4) [%5]").arg(QSysInfo::prettyProductName()).arg(QSysInfo::productVersion()).arg(QSysInfo::kernelType()).arg(QSysInfo::kernelVersion()).arg(QSysInfo::currentCpuArchitecture());
 
   // Seed the random number generators.
   time_t t = time(nullptr);
@@ -232,12 +234,18 @@ int main(int argc, char* argv[]) {
     s.endGroup();
   }
 
-  const QString language = override_language.isEmpty() ? Utilities::SystemLanguageName() : override_language;
+  QString system_language = QLocale::system().uiLanguages().empty() ? QLocale::system().name() : QLocale::system().uiLanguages().first();
+  // uiLanguages returns strings with "-" as separators for language/region; however QTranslator needs "_" separators
+  system_language.replace("-", "_");
 
-  Utilities::LoadTranslation("qt", QLibraryInfo::location(QLibraryInfo::TranslationsPath), language);
-  Utilities::LoadTranslation("strawberry", ":/translations", language);
-  Utilities::LoadTranslation("strawberry", a.applicationDirPath(), language);
-  Utilities::LoadTranslation("strawberry", QDir::currentPath(), language);
+  const QString language = override_language.isEmpty() ? system_language : override_language;
+
+  std::unique_ptr<Translations> translations(new Translations);
+
+  translations->LoadTranslation("qt", QLibraryInfo::location(QLibraryInfo::TranslationsPath), language);
+  translations->LoadTranslation("strawberry", ":/translations", language);
+  translations->LoadTranslation("strawberry", a.applicationDirPath(), language);
+  translations->LoadTranslation("strawberry", QDir::currentPath(), language);
 #endif
 
   Application app;

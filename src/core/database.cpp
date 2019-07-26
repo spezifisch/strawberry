@@ -210,6 +210,8 @@ int Database::FTSNext(sqlite3_tokenizer_cursor *cursor, const char* *token, int 
 
 void Database::StaticInit() {
 
+  if (sFTSTokenizer) return;
+
   sFTSTokenizer = new sqlite3_tokenizer_module;
   sFTSTokenizer->iVersion = 0;
   sFTSTokenizer->xCreate = &Database::FTSCreate;
@@ -227,7 +229,10 @@ Database::Database(Application *app, QObject *parent, const QString &database_na
       mutex_(QMutex::Recursive),
       injected_database_name_(database_name),
       query_hash_(0),
-      startup_schema_version_(-1) {
+      startup_schema_version_(-1),
+      original_thread_(nullptr) {
+
+  original_thread_ = thread();
 
   {
     QMutexLocker l(&sNextConnectionIdMutex);
@@ -238,6 +243,32 @@ Database::Database(Application *app, QObject *parent, const QString &database_na
 
   QMutexLocker l(&mutex_);
   Connect();
+
+}
+
+Database::~Database() {
+
+  QMutexLocker l(&connect_mutex_);
+
+  for (QString &connection_id : QSqlDatabase::connectionNames()) {
+    qLog(Error) << "Connection" << connection_id << "is still open!";
+  }
+
+  if (sFTSTokenizer)
+    delete sFTSTokenizer;
+
+}
+
+void Database::ExitAsync() {
+  metaObject()->invokeMethod(this, "Exit", Qt::QueuedConnection);
+}
+
+void Database::Exit() {
+
+  assert(QThread::currentThread() == thread());
+  Close();
+  moveToThread(original_thread_);
+  emit ExitFinished();
 
 }
 
@@ -255,12 +286,17 @@ QSqlDatabase Database::Connect() {
   const QString connection_id = QString("%1_thread_%2").arg(connection_id_).arg(reinterpret_cast<quint64>(QThread::currentThread()));
 
   // Try to find an existing connection for this thread
-  QSqlDatabase db = QSqlDatabase::database(connection_id);
+  QSqlDatabase db;
+  if (QSqlDatabase::connectionNames().contains(connection_id)) {
+    db = QSqlDatabase::database(connection_id);
+  }
+  else {
+    db = QSqlDatabase::addDatabase("QSQLITE", connection_id);
+  }
   if (db.isOpen()) {
     return db;
   }
-
-  db = QSqlDatabase::addDatabase("QSQLITE", connection_id);
+  //qLog(Debug) << "Opened database with connection id" << connection_id;
 
   if (!injected_database_name_.isNull())
     db.setDatabaseName(injected_database_name_);
@@ -273,7 +309,7 @@ QSqlDatabase Database::Connect() {
   }
 
   // Find Sqlite3 functions in the Qt plugin.
-  StaticInit();
+  if (!sFTSTokenizer) StaticInit();
 
   {
 
@@ -340,6 +376,26 @@ QSqlDatabase Database::Connect() {
   }
 
   return db;
+
+}
+
+void Database::Close() {
+
+  QMutexLocker l(&connect_mutex_);
+
+  const QString connection_id = QString("%1_thread_%2").arg(connection_id_).arg(reinterpret_cast<quint64>(QThread::currentThread()));
+
+  // Try to find an existing connection for this thread
+  if (QSqlDatabase::connectionNames().contains(connection_id)) {
+    {
+      QSqlDatabase db = QSqlDatabase::database(connection_id);
+      if (db.isOpen()) {
+        db.close();
+        //qLog(Debug) << "Closed database with connection id" << connection_id;
+      }
+    }
+    QSqlDatabase::removeDatabase(connection_id);
+  }
 
 }
 
@@ -649,7 +705,7 @@ void Database::BackupFile(const QString &filename) {
   sqlite3 *source_connection = nullptr;
   sqlite3 *dest_connection = nullptr;
 
-  BOOST_SCOPE_EXIT((source_connection)(dest_connection)(task_id)(app_)) {
+  BOOST_SCOPE_EXIT((&source_connection)(&dest_connection)(task_id)(app_)) {
     // Harmless to call sqlite3_close() with a nullptr pointer.
     sqlite3_close(source_connection);
     sqlite3_close(dest_connection);

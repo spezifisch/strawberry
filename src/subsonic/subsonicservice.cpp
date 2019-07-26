@@ -94,7 +94,16 @@ SubsonicService::SubsonicService(Application *app, QObject *parent)
 
 }
 
-SubsonicService::~SubsonicService() {}
+SubsonicService::~SubsonicService() {
+  collection_backend_->deleteLater();
+}
+
+void SubsonicService::Exit() {
+
+  connect(collection_backend_, SIGNAL(ExitFinished()), this, SIGNAL(ExitFinished()));
+  collection_backend_->ExitAsync();
+
+}
 
 void SubsonicService::ShowConfig() {
   app_->OpenSettingsDialogAtPage(SettingsDialog::Page_Subsonic);
@@ -315,8 +324,8 @@ void SubsonicService::CheckConfiguration() {
 
 void SubsonicService::ResetSongsRequest() {
 
-  if (songs_request_.get()) {
-    disconnect(songs_request_.get(), 0, nullptr, 0);
+  if (songs_request_.get()) {  // WARNING: Don't disconnect everything. NewClosure() relies on destroyed()!!!
+    disconnect(songs_request_.get(), 0, this, 0);
     disconnect(this, 0, songs_request_.get(), 0);
     songs_request_.reset();
   }

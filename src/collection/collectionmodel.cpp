@@ -125,9 +125,14 @@ CollectionModel::CollectionModel(CollectionBackend *backend, Application *app, Q
   backend_->UpdateTotalArtistCountAsync();
   backend_->UpdateTotalAlbumCountAsync();
 
+  QPixmapCache::setCacheLimit(61440);
+
 }
 
-CollectionModel::~CollectionModel() { delete root_; }
+CollectionModel::~CollectionModel() {
+  backend_->Close();
+  delete root_;
+}
 
 void CollectionModel::set_pretty_covers(bool use_pretty_covers) {
 
@@ -419,9 +424,21 @@ void CollectionModel::SongsDeleted(const SongList &songs) {
 
       if (node->parent != root_) parents << node->parent;
 
+      // Remove from pixmap cache
       QModelIndex idx = ItemToIndex(node->parent);
       const QString cache_key = AlbumIconPixmapCacheKey(idx);
       QPixmapCache::remove(cache_key);
+      if (pending_cache_keys_.contains(cache_key)) pending_cache_keys_.remove(cache_key);
+
+      // Remove from pending art loading
+      QMapIterator<quint64, ItemAndCacheKey> i(pending_art_);
+      while (i.hasNext()) {
+        i.next();
+        if (i.value().first == node) {
+          pending_art_.remove(i.key());
+          break;
+        }
+      }
 
       beginRemoveRows(idx, node->row, node->row);
       node->parent->Delete(node->row);
@@ -459,6 +476,22 @@ void CollectionModel::SongsDeleted(const SongList &songs) {
         node->parent->compilation_artist_node_ = nullptr;
       else
         container_nodes_[node->container_level].remove(node->key);
+
+      // Remove from pixmap cache
+      QModelIndex idx = ItemToIndex(node->parent);
+      const QString cache_key = AlbumIconPixmapCacheKey(idx);
+      QPixmapCache::remove(cache_key);
+      if (pending_cache_keys_.contains(cache_key)) pending_cache_keys_.remove(cache_key);
+
+      // Remove from pending art loading
+      QMapIterator<quint64, ItemAndCacheKey> i(pending_art_);
+      while (i.hasNext()) {
+        i.next();
+        if (i.value().first == node) {
+          pending_art_.remove(i.key());
+          break;
+        }
+      }
 
       // It was empty - delete it
       beginRemoveRows(ItemToIndex(node->parent), node->row, node->row);
@@ -567,6 +600,8 @@ void CollectionModel::AlbumCoverLoaded(const quint64 id, const QUrl &cover_url, 
   }
 
   const QModelIndex idx = ItemToIndex(item);
+  if (!idx.isValid()) return;
+
   emit dataChanged(idx, idx);
 
 }
@@ -719,12 +754,16 @@ CollectionModel::QueryResult CollectionModel::RunQuery(CollectionItem *parent) {
 
   // Execute the query
   QMutexLocker l(backend_->db()->Mutex());
-
-  if (!backend_->ExecQuery(&q)) return result;
-
-  while (q.Next()) {
-    result.rows << SqlRow(q);
+  if (backend_->ExecQuery(&q)) {
+    while (q.Next()) {
+      result.rows << SqlRow(q);
+    }
   }
+
+  if (QThread::currentThread() != thread() && QThread::currentThread() != backend_->thread()) {
+    backend_->Close();
+  }
+
   return result;
 
 }
@@ -771,6 +810,10 @@ void CollectionModel::ResetAsync() {
 
 void CollectionModel::ResetAsyncQueryFinished(QFuture<CollectionModel::QueryResult> future) {
 
+  if (QThread::currentThread() != thread() && QThread::currentThread() != backend_->thread()) {
+    backend_->Close();
+  }
+
   const struct QueryResult result = future.result();
 
   BeginReset();
@@ -798,6 +841,8 @@ void CollectionModel::BeginReset() {
   container_nodes_[2].clear();
   divider_nodes_.clear();
   pending_art_.clear();
+  pending_cache_keys_.clear();
+  QPixmapCache::clear();
 
   root_ = new CollectionItem(this);
   root_->compilation_artist_node_ = nullptr;

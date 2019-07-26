@@ -20,8 +20,11 @@
 
 #include <memory>
 #include <functional>
+#include <assert.h>
 
 #include <QObject>
+#include <QApplication>
+#include <QThread>
 #include <QMutex>
 #include <QIODevice>
 #include <QDir>
@@ -56,7 +59,36 @@ using std::shared_ptr;
 const int PlaylistBackend::kSongTableJoins = 2;
 
 PlaylistBackend::PlaylistBackend(Application *app, QObject *parent)
-    : QObject(parent), app_(app), db_(app_->database()) {}
+    : QObject(parent), app_(app), db_(app_->database()), original_thread_(nullptr) {
+
+  original_thread_ = thread();
+
+}
+
+PlaylistBackend::~PlaylistBackend() {}
+
+void PlaylistBackend::Close() {
+
+  if (db_) {
+    QMutexLocker l(db_->Mutex());
+    db_->Close();
+  }
+
+}
+
+void PlaylistBackend::ExitAsync() {
+  metaObject()->invokeMethod(this, "Exit", Qt::QueuedConnection);
+}
+
+void PlaylistBackend::Exit() {
+
+  assert(QThread::currentThread() == thread());
+
+  Close();
+  moveToThread(original_thread_);
+  emit ExitFinished();
+
+}
 
 PlaylistBackend::PlaylistList PlaylistBackend::GetAllPlaylists() {
   return GetPlaylists(GetPlaylists_All);
@@ -163,32 +195,52 @@ QSqlQuery PlaylistBackend::GetPlaylistRows(int playlist) {
 
 QList<PlaylistItemPtr> PlaylistBackend::GetPlaylistItems(int playlist) {
 
-  QSqlQuery q = GetPlaylistRows(playlist);
-  // Note that as this only accesses the query, not the db, we don't need the mutex.
-  if (db_->CheckErrors(q)) return QList<PlaylistItemPtr>();
-
-  // it's probable that we'll have a few songs associated with the same CUE so we're caching results of parsing CUEs
-  std::shared_ptr<NewSongFromQueryState> state_ptr(new NewSongFromQueryState());
   QList<PlaylistItemPtr> playlistitems;
-  while (q.next()) {
-    playlistitems << NewPlaylistItemFromQuery(SqlRow(q), state_ptr);
+
+  {
+
+    QSqlQuery q = GetPlaylistRows(playlist);
+    // Note that as this only accesses the query, not the db, we don't need the mutex.
+    if (db_->CheckErrors(q)) return QList<PlaylistItemPtr>();
+
+    // it's probable that we'll have a few songs associated with the same CUE so we're caching results of parsing CUEs
+    std::shared_ptr<NewSongFromQueryState> state_ptr(new NewSongFromQueryState());
+    while (q.next()) {
+      playlistitems << NewPlaylistItemFromQuery(SqlRow(q), state_ptr);
+    }
+
   }
+
+  if (QThread::currentThread() != thread() && QThread::currentThread() != qApp->thread()) {
+    Close();
+  }
+
   return playlistitems;
 
 }
 
 QList<Song> PlaylistBackend::GetPlaylistSongs(int playlist) {
 
-  QSqlQuery q = GetPlaylistRows(playlist);
-  // Note that as this only accesses the query, not the db, we don't need the mutex.
-  if (db_->CheckErrors(q)) return QList<Song>();
+  SongList songs;
 
-  // it's probable that we'll have a few songs associated with the same CUE so we're caching results of parsing CUEs
-  std::shared_ptr<NewSongFromQueryState> state_ptr(new NewSongFromQueryState());
-  QList<Song> songs;
-  while (q.next()) {
-    songs << NewSongFromQuery(SqlRow(q), state_ptr);
+  {
+
+    QSqlQuery q = GetPlaylistRows(playlist);
+    // Note that as this only accesses the query, not the db, we don't need the mutex.
+    if (db_->CheckErrors(q)) return QList<Song>();
+
+    // it's probable that we'll have a few songs associated with the same CUE so we're caching results of parsing CUEs
+    std::shared_ptr<NewSongFromQueryState> state_ptr(new NewSongFromQueryState());
+    while (q.next()) {
+      songs << NewSongFromQuery(SqlRow(q), state_ptr);
+    }
+
   }
+
+  if (QThread::currentThread() != thread() && QThread::currentThread() != qApp->thread()) {
+    Close();
+  }
+
   return songs;
 
 }

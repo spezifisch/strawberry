@@ -18,9 +18,14 @@
  *
  */
 
+#include "config.h"
+
 #include <stdbool.h>
+#include <assert.h>
 
 #include <QObject>
+#include <QApplication>
+#include <QThread>
 #include <QMutex>
 #include <QIODevice>
 #include <QFile>
@@ -32,40 +37,74 @@
 
 #include "core/database.h"
 #include "core/scopedtransaction.h"
+#include "core/logging.h"
 #include "devicedatabasebackend.h"
 
 const int DeviceDatabaseBackend::kDeviceSchemaVersion = 0;
 
 DeviceDatabaseBackend::DeviceDatabaseBackend(QObject *parent) :
     QObject(parent),
-    db_(nullptr)
-    {}
+    db_(nullptr),
+    original_thread_(nullptr)
+    {
+
+  original_thread_ = thread();
+
+}
+
+DeviceDatabaseBackend::~DeviceDatabaseBackend() {}
 
 void DeviceDatabaseBackend::Init(Database* db) { db_ = db; }
 
-DeviceDatabaseBackend::DeviceList DeviceDatabaseBackend::GetAllDevices() {
+void DeviceDatabaseBackend::Close() {
 
-  QMutexLocker l(db_->Mutex());
-  QSqlDatabase db(db_->Connect());
+  if (db_) {
+    QMutexLocker l(db_->Mutex());
+    db_->Close();
+  }
+
+}
+
+void DeviceDatabaseBackend::ExitAsync() {
+  metaObject()->invokeMethod(this, "Exit", Qt::QueuedConnection);
+}
+
+void DeviceDatabaseBackend::Exit() {
+
+  assert(QThread::currentThread() == thread());
+  Close();
+  moveToThread(original_thread_);
+  emit ExitFinished();
+
+}
+
+DeviceDatabaseBackend::DeviceList DeviceDatabaseBackend::GetAllDevices() {
 
   DeviceList ret;
 
-  QSqlQuery q(db);
-  q.prepare("SELECT ROWID, unique_id, friendly_name, size, icon, transcode_mode, transcode_format FROM devices");
-  q.exec();
-  if (db_->CheckErrors(q)) return ret;
+  {
+    QMutexLocker l(db_->Mutex());
+    QSqlDatabase db(db_->Connect());
+    QSqlQuery q(db);
+    q.prepare("SELECT ROWID, unique_id, friendly_name, size, icon, transcode_mode, transcode_format FROM devices");
+    q.exec();
+    if (db_->CheckErrors(q)) return ret;
 
-  while (q.next()) {
-    Device dev;
-    dev.id_ = q.value(0).toInt();
-    dev.unique_id_ = q.value(1).toString();
-    dev.friendly_name_ = q.value(2).toString();
-    dev.size_ = q.value(3).toLongLong();
-    dev.icon_name_ = q.value(4).toString();
-    dev.transcode_mode_ = MusicStorage::TranscodeMode(q.value(5).toInt());
-    dev.transcode_format_ = Song::FileType(q.value(6).toInt());
-    ret << dev;
+    while (q.next()) {
+      Device dev;
+      dev.id_ = q.value(0).toInt();
+      dev.unique_id_ = q.value(1).toString();
+      dev.friendly_name_ = q.value(2).toString();
+      dev.size_ = q.value(3).toLongLong();
+      dev.icon_name_ = q.value(4).toString();
+      dev.transcode_mode_ = MusicStorage::TranscodeMode(q.value(5).toInt());
+      dev.transcode_format_ = Song::FileType(q.value(6).toInt());
+      ret << dev;
+    }
   }
+
+  Close();
+
   return ret;
 
 }
@@ -101,6 +140,7 @@ int DeviceDatabaseBackend::AddDevice(const Device &device) {
   db_->ExecSchemaCommands(db, schema, 0, true);
 
   t.Commit();
+
   return id;
 
 }

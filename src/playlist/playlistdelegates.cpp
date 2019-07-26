@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <QtGlobal>
+#include <QApplication>
 #include <QObject>
 #include <QWidget>
 #include <QtConcurrentRun>
@@ -352,7 +353,6 @@ QString FileTypeItemDelegate::displayText(const QVariant &value, const QLocale &
 }
 
 QWidget *TextItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-
   return new QLineEdit(parent);
 }
 
@@ -361,6 +361,10 @@ TagCompletionModel::TagCompletionModel(CollectionBackend *backend, Playlist::Col
   QString col = database_column(column);
   if (!col.isEmpty()) {
     setStringList(backend->GetAll(col));
+  }
+
+  if (QThread::currentThread() != backend->thread() && QThread::currentThread() != qApp->thread()) {
+    backend->Close();
   }
 
 }
@@ -395,12 +399,17 @@ TagCompleter::TagCompleter(CollectionBackend *backend, Playlist::Column column, 
 
 }
 
+TagCompleter::~TagCompleter() {
+  delete model();
+}
+
 void TagCompleter::ModelReady(QFuture<TagCompletionModel*> future) {
 
   TagCompletionModel *model = future.result();
   setModel(model);
   setCaseSensitivity(Qt::CaseInsensitive);
   editor_->setCompleter(this);
+
 }
 
 QWidget *TagCompletionItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem&, const QModelIndex&) const {
@@ -409,6 +418,7 @@ QWidget *TagCompletionItemDelegate::createEditor(QWidget *parent, const QStyleOp
   new TagCompleter(backend_, column_, editor);
 
   return editor;
+
 }
 
 QString NativeSeparatorsDelegate::displayText(const QVariant &value, const QLocale&) const {

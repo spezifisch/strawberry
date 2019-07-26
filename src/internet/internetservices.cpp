@@ -31,12 +31,18 @@
 #include "internetservice.h"
 
 InternetServices::InternetServices(QObject *parent) : QObject(parent) {}
-InternetServices::~InternetServices() {}
+
+InternetServices::~InternetServices() {
+
+  while (!services_.isEmpty()) {
+    delete services_.take(services_.firstKey());
+  }
+
+}
 
 void InternetServices::AddService(InternetService *service) {
 
   services_.insert(service->source(), service);
-  connect(service, SIGNAL(destroyed()), SLOT(ServiceDeleted()));
   if (service->has_initial_load_settings()) service->InitialLoadSettings();
   else service->ReloadSettings();
 
@@ -50,12 +56,7 @@ void InternetServices::RemoveService(InternetService *service) {
   services_.remove(service->source());
   disconnect(service, 0, this, 0);
 
-}
-
-void InternetServices::ServiceDeleted() {
-
-  InternetService *service = qobject_cast<InternetService*>(sender());
-  if (service) RemoveService(service);
+  qLog(Debug) << "Removed internet service" << service->name();
 
 }
 
@@ -70,4 +71,22 @@ void InternetServices::ReloadSettings() {
   for (InternetService *service : services_.values()) {
     service->ReloadSettings();
   }
+}
+
+void InternetServices::Exit() {
+
+  for (InternetService *service : services_.values()) {
+    wait_for_exit_ << service;
+    connect(service, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+    service->Exit();
+  }
+
+}
+
+void InternetServices::ExitReceived() {
+
+  InternetService *service = qobject_cast<InternetService*>(sender());
+  wait_for_exit_.removeAll(service);
+  if (wait_for_exit_.isEmpty()) emit ExitFinished();
+
 }

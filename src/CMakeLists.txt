@@ -110,6 +110,7 @@ set(SOURCES
   core/windows7thumbbar.cpp
   core/screensaver.cpp
   core/scopedtransaction.cpp
+  core/translations.cpp
 
   engine/enginetype.cpp
   engine/enginebase.cpp

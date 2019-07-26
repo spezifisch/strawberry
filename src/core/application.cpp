@@ -223,10 +223,12 @@ Application::~Application() {
 
   for (QThread *thread : threads_) {
     thread->wait();
+    thread->deleteLater();
   }
+
 }
 
-void Application::MoveToNewThread(QObject *object) {
+QThread *Application::MoveToNewThread(QObject *object) {
 
   QThread *thread = new QThread(this);
 
@@ -234,11 +236,63 @@ void Application::MoveToNewThread(QObject *object) {
 
   thread->start();
   threads_ << thread;
+
+  return thread;
+
 }
 
 void Application::MoveToThread(QObject *object, QThread *thread) {
   object->setParent(nullptr);
   object->moveToThread(thread);
+}
+
+void Application::Exit() {
+
+  wait_for_exit_ << tag_reader_client()
+                 << collection()
+                 << playlist_backend()
+                 << album_cover_loader()
+#ifndef Q_OS_WIN
+                 << device_manager()
+#endif
+                 << internet_services();
+
+  connect(tag_reader_client(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  tag_reader_client()->ExitAsync();
+
+  connect(collection(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  collection()->Exit();
+
+  connect(playlist_backend(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  playlist_backend()->ExitAsync();
+
+  connect(album_cover_loader(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  album_cover_loader()->ExitAsync();
+
+#ifndef Q_OS_WIN
+  connect(device_manager(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  device_manager()->Exit();
+#endif
+
+  connect(internet_services(), SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  internet_services()->Exit();
+
+}
+
+void Application::ExitReceived() {
+
+  QObject *obj = static_cast<QObject*>(sender());
+  disconnect(obj, 0, this, 0);
+
+  qLog(Debug) << obj << "successfully exited.";
+
+  wait_for_exit_.removeAll(obj);
+  if (wait_for_exit_.isEmpty()) {
+    database()->Close();
+    connect(database(), SIGNAL(ExitFinished()), this, SIGNAL(ExitFinished()));
+    database()->ExitAsync();
+  }
+
 }
 
 void Application::AddError(const QString& message) { emit ErrorAdded(message); }

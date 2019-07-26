@@ -182,9 +182,37 @@ TidalService::~TidalService() {
 
   while (!stream_url_requests_.isEmpty()) {
     TidalStreamURLRequest *stream_url_req = stream_url_requests_.takeFirst();
-    disconnect(stream_url_req, 0, nullptr, 0);
+    disconnect(stream_url_req, 0, this, 0);
     stream_url_req->deleteLater();
   }
+
+  artists_collection_backend_->deleteLater();
+  albums_collection_backend_->deleteLater();
+  songs_collection_backend_->deleteLater();
+
+}
+
+void TidalService::Exit() {
+
+  wait_for_exit_ << artists_collection_backend_ << albums_collection_backend_ << songs_collection_backend_;
+
+  connect(artists_collection_backend_, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  connect(albums_collection_backend_, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  connect(songs_collection_backend_, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+
+  artists_collection_backend_->ExitAsync();
+  albums_collection_backend_->ExitAsync();
+  songs_collection_backend_->ExitAsync();
+
+}
+
+void TidalService::ExitReceived() {
+
+  QObject *obj = static_cast<QObject*>(sender());
+  disconnect(obj, 0, this, 0);
+  qLog(Debug) << obj << "successfully exited.";
+  wait_for_exit_.removeAll(obj);
+  if (wait_for_exit_.isEmpty()) emit ExitFinished();
 
 }
 
@@ -635,7 +663,7 @@ void TidalService::TryLogin() {
 void TidalService::ResetArtistsRequest() {
 
   if (artists_request_.get()) {
-    disconnect(artists_request_.get(), 0, nullptr, 0);
+    disconnect(artists_request_.get(), 0, this, 0);
     disconnect(this, 0, artists_request_.get(), 0);
     artists_request_.reset();
   }
@@ -690,7 +718,7 @@ void TidalService::ArtistsUpdateProgressReceived(const int id, const int progres
 void TidalService::ResetAlbumsRequest() {
 
   if (albums_request_.get()) {
-    disconnect(albums_request_.get(), 0, nullptr, 0);
+    disconnect(albums_request_.get(), 0, this, 0);
     disconnect(this, 0, albums_request_.get(), 0);
     albums_request_.reset();
   }
@@ -743,7 +771,7 @@ void TidalService::AlbumsUpdateProgressReceived(const int id, const int progress
 void TidalService::ResetSongsRequest() {
 
   if (songs_request_.get()) {
-    disconnect(songs_request_.get(), 0, nullptr, 0);
+    disconnect(songs_request_.get(), 0, this, 0);
     disconnect(this, 0, songs_request_.get(), 0);
     songs_request_.reset();
   }

@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdbool.h>
+#include <unistd.h>
 
 #include <QObject>
 #include <QThread>
@@ -50,7 +51,10 @@ SCollection::SCollection(Application *app, QObject *parent)
       backend_(nullptr),
       model_(nullptr),
       watcher_(nullptr),
-      watcher_thread_(nullptr) {
+      watcher_thread_(nullptr),
+      original_thread_(nullptr) {
+
+  original_thread_ = thread();
 
   backend_ = new CollectionBackend();
   backend()->moveToThread(app->database()->thread());
@@ -64,10 +68,17 @@ SCollection::SCollection(Application *app, QObject *parent)
 }
 
 SCollection::~SCollection() {
-  watcher_->Stop();
-  watcher_->deleteLater();
-  watcher_thread_->exit();
-  watcher_thread_->wait(5000 /* five seconds */);
+
+  if (watcher_) {
+    watcher_->Stop();
+    watcher_->deleteLater();
+  }
+  if (watcher_thread_) {
+    watcher_thread_->exit();
+    watcher_thread_->wait(5000 /* five seconds */);
+  }
+  backend_->deleteLater();
+
 }
 
 void SCollection::Init() {
@@ -97,6 +108,31 @@ void SCollection::Init() {
 
   // This will start the watcher checking for updates
   backend_->LoadDirectoriesAsync();
+
+}
+
+void SCollection::Exit() {
+
+  wait_for_exit_ << backend_ << watcher_;
+
+  disconnect(backend_, 0, watcher_, 0);
+  disconnect(watcher_, 0, backend_, 0);
+
+  connect(backend_, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  connect(watcher_, SIGNAL(ExitFinished()), this, SLOT(ExitReceived()));
+  backend_->ExitAsync();
+  watcher_->ExitAsync();
+
+}
+
+void SCollection::ExitReceived() {
+
+  QObject *obj = static_cast<QObject*>(sender());
+  disconnect(obj, 0, this, 0);
+  qLog(Debug) << obj << "successfully exited.";
+  wait_for_exit_.removeAll(obj);
+  if (wait_for_exit_.isEmpty()) emit ExitFinished();
+
 }
 
 void SCollection::IncrementalScan() { watcher_->IncrementalScanAsync(); }

@@ -238,7 +238,8 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
       playing_widget_(true),
       doubleclick_addmode_(BehaviourSettingsPage::AddBehaviour_Append),
       doubleclick_playmode_(BehaviourSettingsPage::PlayBehaviour_Never),
-      menu_playmode_(BehaviourSettingsPage::PlayBehaviour_Never)
+      menu_playmode_(BehaviourSettingsPage::PlayBehaviour_Never),
+      exit_count_(0)
       {
 
   qLog(Debug) << "Starting";
@@ -984,18 +985,37 @@ void MainWindow::SaveSettings() {
 
 void MainWindow::Exit() {
 
+  ++exit_count_;
+
   SaveSettings();
 
-  if (app_->player()->engine()->is_fadeout_enabled()) {
-    // To shut down the application when fadeout will be finished
-    connect(app_->player()->engine(), SIGNAL(FadeoutFinishedSignal()), qApp, SLOT(quit()));
-    if (app_->player()->GetState() == Engine::Playing) {
-      app_->player()->Stop();
-      hide();
-      if (tray_icon_->IsAvailable()) tray_icon_->SetVisible(false);
-      return; // Don't quit the application now: wait for the fadeout finished signal
-    }
+  if (exit_count_ > 1) {
+    qApp->quit();
   }
+  else {
+    if (app_->player()->engine()->is_fadeout_enabled()) {
+      // To shut down the application when fadeout will be finished
+      connect(app_->player()->engine(), SIGNAL(FadeoutFinishedSignal()), this, SLOT(DoExit()));
+      if (app_->player()->GetState() == Engine::Playing) {
+        app_->player()->Stop();
+        hide();
+        if (tray_icon_->IsAvailable()) tray_icon_->SetVisible(false);
+        return; // Don't quit the application now: wait for the fadeout finished signal
+      }
+    }
+    DoExit();
+  }
+
+}
+
+void MainWindow::DoExit() {
+
+  connect(app_, SIGNAL(ExitFinished()), this, SLOT(ExitFinished()));
+  app_->Exit();
+
+}
+
+void MainWindow::ExitFinished() {
 
   qApp->quit();
 
@@ -1307,7 +1327,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   }
   else {
     Exit();
-    QApplication::quit();
   }
 
 }
@@ -1797,7 +1816,7 @@ void MainWindow::SongSaveComplete(TagReaderReply *reply, const QPersistentModelI
   if (reply->is_successful() && index.isValid()) {
     app_->playlist_manager()->current()->ReloadItems(QList<int>()<< index.row());
   }
-  metaObject()->invokeMethod(reply, "deleteLater", Qt::QueuedConnection);
+  reply->deleteLater();
 
 }
 

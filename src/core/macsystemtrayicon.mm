@@ -174,8 +174,7 @@ class MacSystemTrayIconPrivate {
 SystemTrayIcon::SystemTrayIcon(QObject* parent)
     : QObject(parent),
       icon_(IconLoader::Load("strawberry")),
-      normal_icon_(icon_.pixmap(48, QIcon::Normal)),
-      grey_icon_(icon_.pixmap(48, QIcon::Disabled)),
+      normal_icon_(QPixmap(":/pictures/strawberry.png").scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation)),
       playing_icon_(":/pictures/tiny-play.png"),
       paused_icon_(":/pictures/tiny-pause.png"),
       percentage_(0) {
@@ -251,7 +250,7 @@ void SystemTrayIcon::SetupMenuItem(QAction* action) {
 }
 
 void SystemTrayIcon::UpdateIcon() {
-  QApplication::setWindowIcon(CreateIcon(normal_icon_, grey_icon_));
+  QApplication::setWindowIcon(CreateIcon(normal_icon_, normal_icon_));
 }
 
 void SystemTrayIcon::SetProgress(int percentage) {

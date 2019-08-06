@@ -87,7 +87,6 @@ class SystemTrayIcon : public QObject {
  private:
   QIcon icon_;
   QPixmap normal_icon_;
-  QPixmap grey_icon_;
   QPixmap playing_icon_;
   QPixmap paused_icon_;
   QPixmap current_state_icon_;

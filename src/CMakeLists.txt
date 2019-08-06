@@ -833,6 +833,7 @@ endif()
 # Platform specific - macOS
 optional_source(APPLE
   SOURCES
+    core/mac_utilities.mm
     core/mac_startup.mm
     core/macsystemtrayicon.mm
     core/macscreensaver.cpp

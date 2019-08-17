@@ -1,6 +1,6 @@
 /*
  * Strawberry Music Player
- * Copyright 2018, Jonas Kvinge <jonas@jkvinge.net>
+ * Copyright 2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +17,30 @@
  *
  */
 
-#ifndef AUDDLYRICSPROVIDER_H
-#define AUDDLYRICSPROVIDER_H
+#ifndef LOLOLYRICSPROVIDER_H
+#define LOLOLYRICSPROVIDER_H
 
 #include "config.h"
 
 #include <stdbool.h>
 
 #include <QObject>
+#include <QVariant>
 #include <QString>
 
-#include "jsonlyricsprovider.h"
+#include "lyricsprovider.h"
 #include "lyricsfetcher.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
 
-class AuddLyricsProvider : public JsonLyricsProvider {
+class LoloLyricsProvider : public LyricsProvider {
   Q_OBJECT
 
  public:
-  explicit AuddLyricsProvider(QObject *parent = nullptr);
+  explicit LoloLyricsProvider(QObject *parent = nullptr);
 
-  bool StartSearch(const QString &artist, const QString &album, const QString &title, quint64 id);
+  bool StartSearch(const QString &artist, const QString &album, const QString &title, const quint64 id);
   void CancelSearch(quint64 id);
 
  private slots:
@@ -47,14 +48,9 @@ class AuddLyricsProvider : public JsonLyricsProvider {
 
  private:
   static const char *kUrlSearch;
-  static const char *kAPITokenB64;
-  static const int kMaxLength;
   QNetworkAccessManager *network_;
   void Error(const quint64 id, const QString &error, QVariant debug = QVariant());
 
-  QJsonArray ExtractResult(QNetworkReply *reply, const quint64 id, const QString &artist, const QString &title);
-
 };
 
-#endif  // AUDDLYRICSPROVIDER_H
-
+#endif  // LOLOLYRICSPROVIDER_H

@@ -46,6 +46,7 @@
 #include "core/closure.h"
 #include "core/logging.h"
 #include "core/network.h"
+#include "core/networktimeouts.h"
 #include "core/utilities.h"
 #include "musicbrainzclient.h"
 
@@ -156,6 +157,9 @@ void MusicBrainzClient::StartDiscIdRequest(const QString &discid) {
   url.setQuery(url_query);
 
   QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
   QNetworkReply *reply = network_->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(DiscIdRequestFinished(const QString&, QNetworkReply*)), discid, reply);
 
@@ -177,6 +181,9 @@ void MusicBrainzClient::FlushRequests() {
   url.setQuery(url_query);
 
   QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
   QNetworkReply *reply = network_->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(RequestFinished(QNetworkReply*, const int, const int)), reply, request.id, request.number);
   requests_.insert(request.id, reply);

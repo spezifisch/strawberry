@@ -2,7 +2,6 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
- * Copyright 2013, Jonas Kvinge <jonas@strawbs.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,47 +18,39 @@
  *
  */
 
-#ifndef ABOUT_H
-#define ABOUT_H
+#ifndef NETWORKTIMEOUTS_H
+#define NETWORKTIMEOUTS_H
 
 #include "config.h"
 
 #include <stdbool.h>
 
+#include <QtGlobal>
 #include <QObject>
-#include <QWidget>
-#include <QDialog>
-#include <QList>
-#include <QString>
+#include <QMap>
 
-#include "ui_about.h"
+class QNetworkReply;
+class QTimerEvent;
 
-class About : public QDialog {
+class NetworkTimeouts : public QObject {
   Q_OBJECT
 
  public:
-  About(QWidget *parent = nullptr);
+  explicit NetworkTimeouts(int timeout_msec, QObject *parent = nullptr);
 
-  struct Person {
-    Person(const QString &n, const QString &e = QString()) : name(n), email(e) {}
-    bool operator<(const Person &other) const { return name < other.name; }
-    QString name;
-    QString email;
-  };
+  void AddReply(QNetworkReply *reply);
+  void SetTimeout(int msec) { timeout_msec_ = msec; }
 
- private:
-  QString MainHtml() const;
-  QString ContributorsHtml() const;
-  QString PersonToHtml(const Person& person) const;
+ protected:
+  void timerEvent(QTimerEvent *e);
+
+ private slots:
+  void ReplyFinished();
 
  private:
-  Ui::About ui_;
+  int timeout_msec_;
+  QMap<QNetworkReply*, int> timers_;
 
-  QList<Person> strawberry_authors_;
-  QList<Person> strawberry_contributors_;
-  QList<Person> strawberry_thanks_;
-  QList<Person> clementine_authors_;
-  QList<Person> clementine_contributors_;
 };
 
-#endif  // ABOUT_H
+#endif  // NETWORKTIMEOUTS_H

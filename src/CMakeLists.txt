@@ -91,6 +91,7 @@ set(SOURCES
   core/multisortfilterproxy.cpp
   core/musicstorage.cpp
   core/network.cpp
+  core/networktimeouts.cpp
   core/networkproxyfactory.cpp
   core/qtfslistener.cpp
   core/settingsprovider.cpp
@@ -296,6 +297,7 @@ set(HEADERS
   core/filesystemwatcherinterface.h
   core/mergedproxymodel.h
   core/network.h
+  core/networktimeouts.h
   core/qtfslistener.h
   core/songloader.h
   core/tagreaderclient.h

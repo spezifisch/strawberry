@@ -108,7 +108,6 @@ set(SOURCES
   core/scangiomodulepath.cpp
   core/iconloader.cpp
   core/standarditemiconloader.cpp
-  core/windows7thumbbar.cpp
   core/screensaver.cpp
   core/scopedtransaction.cpp
   core/translations.cpp
@@ -304,7 +303,6 @@ set(HEADERS
   core/taskmanager.h
   core/urlhandler.h
   core/standarditemiconloader.h
-  core/windows7thumbbar.h
   core/mimedata.h
 
   engine/enginebase.h
@@ -871,6 +869,9 @@ optional_source(WIN32
   SOURCES
     engine/directsounddevicefinder.cpp
     widgets/osd_win.cpp
+    core/windows7thumbbar.cpp
+  HEADERS
+    core/windows7thumbbar.h
 )
 
 optional_source(HAVE_TIDAL

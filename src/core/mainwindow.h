@@ -66,7 +66,7 @@
 using std::unique_ptr;
 
 class About;
-class AlbumCoverManager;;
+class AlbumCoverManager;
 class Application;
 class ContextView;
 class CollectionViewContainer;

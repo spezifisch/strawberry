@@ -105,7 +105,13 @@ GstEnginePipeline::GstEnginePipeline(GstEngine *engine)
       equalizer_(nullptr),
       rgvolume_(nullptr),
       rglimiter_(nullptr),
-      discoverer_(nullptr)
+      discoverer_(nullptr),
+      about_to_finish_cb_id_(-1),
+      pad_added_cb_id_(-1),
+      notify_source_cb_id_(-1),
+      bus_cb_id_(-1),
+      discovery_finished_cb_id_(-1),
+      discovery_discovered_cb_id_(-1)
       {
 
   if (!sElementDeleter) {
@@ -118,18 +124,33 @@ GstEnginePipeline::GstEnginePipeline(GstEngine *engine)
 
 GstEnginePipeline::~GstEnginePipeline() {
 
-  if (pipeline_) {
-    gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(pipeline_)), nullptr, nullptr, nullptr);
-    g_source_remove(bus_cb_id_);
-    gst_element_set_state(pipeline_, GST_STATE_NULL);
-    gst_object_unref(GST_OBJECT(pipeline_));
+  if (discoverer_) {
+
+    if (discovery_discovered_cb_id_ != -1)
+      g_signal_handler_disconnect(G_OBJECT(discoverer_), discovery_discovered_cb_id_);
+    if (discovery_finished_cb_id_ != -1)
+      g_signal_handler_disconnect(G_OBJECT(discoverer_), discovery_finished_cb_id_);
+
+    g_object_unref(discoverer_);
   }
 
-  if (discoverer_) {
-#ifdef Q_OS_LINUX
-    gst_discoverer_stop(discoverer_);
-#endif
-    g_object_unref(discoverer_);
+  if (pipeline_) {
+
+    if (about_to_finish_cb_id_ != -1)
+      g_signal_handler_disconnect(G_OBJECT(pipeline_), about_to_finish_cb_id_);
+
+    if (pad_added_cb_id_ != -1)
+      g_signal_handler_disconnect(G_OBJECT(pipeline_), pad_added_cb_id_);
+
+    if (notify_source_cb_id_ != -1)
+      g_signal_handler_disconnect(G_OBJECT(pipeline_), notify_source_cb_id_);
+
+    gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(pipeline_)), nullptr, nullptr, nullptr);
+    if (bus_cb_id_ != -1)
+      g_source_remove(bus_cb_id_);
+    gst_element_set_state(pipeline_, GST_STATE_NULL);
+
+    gst_object_unref(GST_OBJECT(pipeline_));
   }
 
 }
@@ -449,16 +470,15 @@ bool GstEnginePipeline::InitFromUrl(const QByteArray &stream_url, const QUrl ori
   flags &= ~0x00000001;
   g_object_set(G_OBJECT(pipeline_), "flags", flags, nullptr);
 
-  CHECKED_GCONNECT(G_OBJECT(pipeline_), "about-to-finish", &AboutToFinishCallback, this);
-
-  CHECKED_GCONNECT(G_OBJECT(pipeline_), "pad-added", &NewPadCallback, this);
-  CHECKED_GCONNECT(G_OBJECT(pipeline_), "notify::source", &SourceSetupCallback, this);
+  about_to_finish_cb_id_ = CHECKED_GCONNECT(G_OBJECT(pipeline_), "about-to-finish", &AboutToFinishCallback, this);
+  pad_added_cb_id_ = CHECKED_GCONNECT(G_OBJECT(pipeline_), "pad-added", &NewPadCallback, this);
+  notify_source_cb_id_ = CHECKED_GCONNECT(G_OBJECT(pipeline_), "notify::source", &SourceSetupCallback, this);
 
   // Setting up a discoverer
   discoverer_ = gst_discoverer_new(kDiscoveryTimeoutS * GST_SECOND, nullptr);
   if (discoverer_) {
-    CHECKED_GCONNECT(G_OBJECT(discoverer_), "discovered", &StreamDiscovered, this);
-    CHECKED_GCONNECT(G_OBJECT(discoverer_), "finished", &StreamDiscoveryFinished, this);
+    discovery_discovered_cb_id_ = CHECKED_GCONNECT(G_OBJECT(discoverer_), "discovered", &StreamDiscovered, this);
+    discovery_finished_cb_id_ = CHECKED_GCONNECT(G_OBJECT(discoverer_), "finished", &StreamDiscoveryFinished, this);
     gst_discoverer_start(discoverer_);
   }
 
@@ -720,6 +740,14 @@ void GstEnginePipeline::StateChangedMessageReceived(GstMessage *msg) {
       next_uri_set_ = false;
       g_object_set(G_OBJECT(pipeline_), "uri", stream_url_.constData(), nullptr);
       SetState(GST_STATE_PLAYING);
+
+      // Add request to discover the stream
+      if (discoverer_) {
+        if (!gst_discoverer_discover_uri_async(discoverer_, stream_url_.toStdString().c_str())) {
+          qLog(Error) << "Failed to start stream discovery for" << stream_url_;
+        }
+      }
+
     }
   }
 
@@ -1169,6 +1197,13 @@ void GstEnginePipeline::SetNextUrl(const QByteArray &stream_url, const QUrl &ori
   next_beginning_offset_nanosec_ = beginning_nanosec;
   next_end_offset_nanosec_ = end_nanosec;
 
+  // Add request to discover the stream
+  if (discoverer_) {
+    if (!gst_discoverer_discover_uri_async(discoverer_, next_stream_url_.toStdString().c_str())) {
+      qLog(Error) << "Failed to start stream discovery for" << next_stream_url_;
+    }
+  }
+
 }
 
 void GstEnginePipeline::StreamDiscovered(GstDiscoverer *discoverer, GstDiscovererInfo *info, GError *err, gpointer self) {
@@ -1194,7 +1229,12 @@ void GstEnginePipeline::StreamDiscovered(GstDiscoverer *discoverer, GstDiscovere
     GstDiscovererStreamInfo *stream_info = (GstDiscovererStreamInfo*) g_list_first(audio_streams)->data;
 
     Engine::SimpleMetaBundle bundle;
-    bundle.url = instance->original_url();
+    if (discovered_url == instance->stream_url_) {
+      bundle.url = instance->original_url_;
+    }
+    else if (discovered_url == instance->next_stream_url_) {
+      bundle.url = instance->next_original_url_;
+    }
     bundle.stream_url = QUrl(discovered_url);
     bundle.samplerate = gst_discoverer_audio_info_get_sample_rate(GST_DISCOVERER_AUDIO_INFO(stream_info));
     bundle.bitdepth = gst_discoverer_audio_info_get_depth(GST_DISCOVERER_AUDIO_INFO(stream_info));
@@ -1230,9 +1270,10 @@ void GstEnginePipeline::StreamDiscovered(GstDiscoverer *discoverer, GstDiscovere
 }
 
 void GstEnginePipeline::StreamDiscoveryFinished(GstDiscoverer *discoverer, gpointer self) {
+
   Q_UNUSED(discoverer);
   Q_UNUSED(self);
-  //GstEnginePipeline *instance = reinterpret_cast<GstEnginePipeline*>(self);
+
 }
 
 QString GstEnginePipeline::GSTdiscovererErrorMessage(GstDiscovererResult result) {

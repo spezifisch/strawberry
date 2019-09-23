@@ -94,7 +94,7 @@ class GstEnginePipeline : public QObject {
 
   // If this is set then it will be loaded automatically when playback finishes for gapless playback
   void SetNextUrl(const QByteArray &stream_url, const QUrl &original_url, qint64 beginning_nanosec, qint64 end_nanosec);
-  bool has_next_valid_url() const { return !next_stream_url_.isNull() && !next_stream_url_.isEmpty(); }
+  bool has_next_valid_url() const { return !next_stream_url_.isEmpty(); }
 
   void SetSourceDevice(QString device) { source_device_ = device; }
 
@@ -286,11 +286,17 @@ signals:
   GstElement *rglimiter_;
   GstDiscoverer *discoverer_;
 
-  uint bus_cb_id_;
+  int about_to_finish_cb_id_;
+  int pad_added_cb_id_;
+  int notify_source_cb_id_;
+  int bus_cb_id_;
+  int discovery_finished_cb_id_;
+  int discovery_discovered_cb_id_;
 
   QThreadPool set_state_threadpool_;
 
   GstSegment last_decodebin_segment_;
+
 };
 
 #endif  // GSTENGINEPIPELINE_H

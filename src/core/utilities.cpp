@@ -2,7 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
- * Copyright 2018, Jonas Kvinge <jonas@jkvinge.net>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,6 +59,7 @@
 #include <QSettings>
 #include <QtEvents>
 #include <QMessageBox>
+#include <QNetworkInterface>
 #include <QtDebug>
 
 #ifdef Q_OS_LINUX
@@ -602,6 +603,7 @@ int SetThreadIOPriority(IoPriority priority) {
 #elif defined(Q_OS_MACOS)
   return setpriority(PRIO_DARWIN_THREAD, 0, priority == IOPRIO_CLASS_IDLE ? PRIO_DARWIN_BG : 0);
 #else
+  Q_UNUSED(priority);
   return 0;
 #endif
 
@@ -809,6 +811,32 @@ QString UnicodeToAscii(const QString &unicode) {
 
   delete[] input_ptr;
   delete[] output_ptr;
+
+  return ret;
+
+}
+
+QString MacAddress() {
+
+  QString ret;
+
+  for (QNetworkInterface &netif : QNetworkInterface::allInterfaces()) {
+    if (
+        (netif.hardwareAddress() == "00:00:00:00:00:00") ||
+        (netif.flags() & QNetworkInterface::IsLoopBack) ||
+        !(netif.flags() & QNetworkInterface::IsUp) ||
+        !(netif.flags() & QNetworkInterface::IsRunning)
+        ) { continue; }
+    if (ret.isEmpty()
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+        || netif.type() == QNetworkInterface::Ethernet || netif.type() == QNetworkInterface::Wifi
+#endif
+    ) {
+      ret = netif.hardwareAddress();
+    }
+  }
+
+  if (ret.isEmpty()) ret = "00:00:00:00:00:00";
 
   return ret;
 

@@ -242,6 +242,8 @@ void SystemTrayIcon::MuteButtonStateChanged(bool value) {
 void SystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
 
 #ifdef Q_OS_WIN
+  Q_UNUSED(song);
+  Q_UNUSED(cover_url);
   // Windows doesn't support HTML in tooltips, so just show something basic
   setToolTip(song.PrettyTitleWithArtist());
 #else

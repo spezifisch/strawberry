@@ -167,14 +167,10 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void RenumberTracks();
   void SelectionSetValue();
   void EditValue();
-#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   void AutoCompleteTags();
   void AutoCompleteTagsAccepted();
-#endif
   void PlaylistUndoRedoChanged(QAction *undo, QAction *redo);
-#ifdef HAVE_GSTREAMER
   void AddFilesToTranscoder();
-#endif
 
   void PlaylistCopyToCollection();
   void PlaylistMoveToCollection();
@@ -230,9 +226,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void ShowCoverManager();
 
   void ShowAboutDialog();
-#ifdef HAVE_GSTREAMER
   void ShowTranscodeDialog();
-#endif
   void ShowErrorDialog(const QString& message);
   SettingsDialog *CreateSettingsDialog();
   EditTagDialog *CreateEditTagDialog();
@@ -324,9 +318,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   std::unique_ptr<TagFetcher> tag_fetcher_;
 #endif
   std::unique_ptr<TrackSelectionDialog> track_selection_dialog_;
-#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   PlaylistItemList autocomplete_tag_items_;
-#endif
 
   InternetTabsView *tidal_view_;
   InternetTabsView *qobuz_view_;

@@ -47,6 +47,7 @@
 #include "core/tagreaderclient.h"
 #include "playlistitem.h"
 #include "playlistsequence.h"
+#include "smartplaylists/playlistgenerator_fwd.h"
 
 class CollectionBackend;
 class PlaylistBackend;
@@ -193,6 +194,8 @@ class Playlist : public QAbstractListModel {
   const QModelIndex current_index() const;
 
   bool stop_after_current() const;
+  bool is_dynamic() const { return static_cast<bool>(dynamic_playlist_); }
+  int dynamic_history_length() const;
 
   QString special_type() const { return special_type_; }
   void set_special_type(const QString &v) { special_type_ = v; }
@@ -229,6 +232,7 @@ class Playlist : public QAbstractListModel {
   void InsertSongs (const SongList &items, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
   void InsertSongsOrCollectionItems (const SongList &items, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
   void InsertInternetItems(InternetService* service, const SongList& songs, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
+  void InsertSmartPlaylist(PlaylistGeneratorPtr gen, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
 
   void ReshuffleIndices();
 
@@ -292,6 +296,10 @@ class Playlist : public QAbstractListModel {
 
   void ShuffleModeChanged(PlaylistSequence::ShuffleMode mode);
 
+  void ExpandDynamicPlaylist();
+  void RepopulateDynamicPlaylist();
+  void TurnOffDynamicPlaylist();
+
   void SetColumnAlignment(const ColumnAlignmentMap &alignment);
 
   void InsertUrls(const QList<QUrl> &urls, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
@@ -319,9 +327,11 @@ private:
   int NextVirtualIndex(int i, bool ignore_repeat_track) const;
   int PreviousVirtualIndex(int i, bool ignore_repeat_track) const;
   bool FilterContainsVirtualIndex(int i) const;
+  void TurnOnDynamicPlaylist(PlaylistGeneratorPtr gen);
 
   template <typename T>
   void InsertSongItems(const SongList &songs, int pos, bool play_now, bool enqueue, bool enqueue_next = false);
+  void InsertDynamicItems(int count);
 
   // Modify the playlist without changing the undo stack.  These are used by our friends in PlaylistUndoCommands
   void InsertItemsWithoutUndo(const PlaylistItemList &items, int pos, bool enqueue = false, bool enqueue_next = false);
@@ -381,6 +391,7 @@ private:
 
   QUndoStack *undo_stack_;
 
+  PlaylistGeneratorPtr dynamic_playlist_;
   ColumnAlignmentMap column_alignments_;
 
   QList<SongInsertVetoListener*> veto_listeners_;

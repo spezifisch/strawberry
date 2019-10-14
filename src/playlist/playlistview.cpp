@@ -77,6 +77,7 @@
 #include "covermanager/currentalbumcoverloader.h"
 #include "settings/appearancesettingspage.h"
 #include "settings/playlistsettingspage.h"
+#include "dynamicplaylistcontrols.h"
 
 #ifdef HAVE_MOODBAR
 #  include "moodbar/moodbaritemdelegate.h"
@@ -170,7 +171,8 @@ PlaylistView::PlaylistView(QWidget *parent)
       currenttrack_pause_(":/pictures/currenttrack_pause.png"),
       cached_current_row_row_(-1),
       drop_indicator_row_(-1),
-      drag_over_(false) {
+      drag_over_(false),
+      dynamic_controls_(new DynamicPlaylistControls(this)) {
 
   setHeader(header_);
   header_->setSectionsMovable(true);
@@ -197,6 +199,8 @@ PlaylistView::PlaylistView(QWidget *parent)
   setAlternatingRowColors(true);
 
   setAttribute(Qt::WA_MacShowFocusRect, false);
+
+  dynamic_controls_->hide();
 
 #ifdef Q_OS_MACOS
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -264,11 +268,17 @@ void PlaylistView::SetPlaylist(Playlist *playlist) {
     disconnect(playlist_, SIGNAL(CurrentSongChanged(Song)), this, SLOT(MaybeAutoscroll()));
     disconnect(playlist_, SIGNAL(destroyed()), this, SLOT(PlaylistDestroyed()));
     disconnect(playlist_, SIGNAL(QueueChanged()), this, SLOT(update()));
+
+    disconnect(playlist_, SIGNAL(DynamicModeChanged(bool)), this, SLOT(DynamicModeChanged(bool)));
+    disconnect(dynamic_controls_, SIGNAL(Expand()), playlist_, SLOT(ExpandDynamicPlaylist()));
+    disconnect(dynamic_controls_, SIGNAL(Repopulate()), playlist_, SLOT(RepopulateDynamicPlaylist()));
+    disconnect(dynamic_controls_, SIGNAL(TurnOff()), playlist_, SLOT(TurnOffDynamicPlaylist()));
   }
 
   playlist_ = playlist;
   LoadGeometry();
   ReloadSettings();
+  DynamicModeChanged(playlist->is_dynamic());
   setFocus();
   read_only_settings_ = false;
   JumpToLastPlayedTrack();
@@ -277,6 +287,11 @@ void PlaylistView::SetPlaylist(Playlist *playlist) {
   connect(playlist_, SIGNAL(CurrentSongChanged(Song)), SLOT(MaybeAutoscroll()));
   connect(playlist_, SIGNAL(destroyed()), SLOT(PlaylistDestroyed()));
   connect(playlist_, SIGNAL(QueueChanged()), SLOT(update()));
+
+  connect(playlist_, SIGNAL(DynamicModeChanged(bool)), SLOT(DynamicModeChanged(bool)));
+  connect(dynamic_controls_, SIGNAL(Expand()), playlist_, SLOT(ExpandDynamicPlaylist()));
+  connect(dynamic_controls_, SIGNAL(Repopulate()), playlist_, SLOT(RepopulateDynamicPlaylist()));
+  connect(dynamic_controls_, SIGNAL(TurnOff()), playlist_, SLOT(TurnOffDynamicPlaylist()));
 
 }
 
@@ -1142,6 +1157,15 @@ void PlaylistView::StretchChanged(bool stretch) {
 
 }
 
+void PlaylistView::resizeEvent(QResizeEvent *e) {
+
+  QTreeView::resizeEvent(e);
+  if (dynamic_controls_->isVisible()) {
+    RepositionDynamicControls();
+  }
+
+}
+
 bool PlaylistView::eventFilter(QObject *object, QEvent *event) {
 
   if (event->type() == QEvent::Enter && (object == horizontalScrollBar() || object == verticalScrollBar())) {
@@ -1342,3 +1366,23 @@ void PlaylistView::ResetColumns() {
   SetPlaylist(playlist_);
 
 }
+
+void PlaylistView::DynamicModeChanged(bool dynamic) {
+
+  if (!dynamic) {
+    dynamic_controls_->hide();
+  }
+  else {
+    RepositionDynamicControls();
+    dynamic_controls_->show();
+  }
+
+}
+
+void PlaylistView::RepositionDynamicControls() {
+
+  dynamic_controls_->resize(dynamic_controls_->sizeHint());
+  dynamic_controls_->move((width() - dynamic_controls_->width()) / 2, height() - dynamic_controls_->height() - 20);
+
+}
+

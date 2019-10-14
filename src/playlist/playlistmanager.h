@@ -35,6 +35,7 @@
 
 #include "core/song.h"
 #include "playlist.h"
+#include "smartplaylists/playlistgenerator.h"
 
 class Application;
 class CollectionBackend;
@@ -74,6 +75,8 @@ public:
   virtual PlaylistSequence *sequence() const = 0;
   virtual PlaylistParser *parser() const = 0;
   virtual PlaylistContainer *playlist_container() const = 0;
+
+  virtual void PlaySmartPlaylist(PlaylistGeneratorPtr generator, bool as_new, bool clear) = 0;
 
 public slots:
   virtual void New(const QString &name, const SongList& songs = SongList(), const QString &special_type = QString()) = 0;
@@ -204,6 +207,8 @@ class PlaylistManager : public PlaylistManagerInterface {
   void RemoveItemsWithoutUndo(int id, const QList<int>& indices);
   // Remove the current playing song
   void RemoveCurrentSong();
+
+  void PlaySmartPlaylist(PlaylistGeneratorPtr generator, bool as_new, bool clear);
 
  private slots:
   void SetActivePlaying();

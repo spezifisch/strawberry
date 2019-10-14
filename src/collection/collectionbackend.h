@@ -43,6 +43,7 @@
 
 class QThread;
 class Database;
+class SmartPlaylistSearch;
 
 class CollectionBackendInterface : public QObject {
   Q_OBJECT
@@ -187,6 +188,9 @@ class CollectionBackend : public CollectionBackendInterface {
   Song GetSongBySongId(int song_id);
   SongList GetSongsBySongId(const QList<int> &song_ids);
   SongList GetSongsBySongId(const QStringList &song_ids);
+
+  SongList GetAllSongs();
+  SongList FindSongs(const SmartPlaylistSearch& search);
 
  public slots:
   void Exit();

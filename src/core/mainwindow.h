@@ -93,6 +93,7 @@ class Ui_MainWindow;
 class Windows7ThumbBar;
 class InternetSongsView;
 class InternetTabsView;
+class SmartPlaylistsViewContainer;
 
 class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
@@ -325,6 +326,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   InternetTabsView *tidal_view_;
   InternetTabsView *qobuz_view_;
   InternetSongsView *subsonic_view_;
+
+  SmartPlaylistsViewContainer *smartplaylists_view_;
 
   QAction *collection_show_all_;
   QAction *collection_show_duplicates_;

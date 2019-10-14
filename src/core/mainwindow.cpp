@@ -167,6 +167,9 @@
 #  include "moodbar/moodbarproxystyle.h"
 #endif
 
+#include "smartplaylists/smartplaylistsviewcontainer.h"
+#include "smartplaylists/smartplaylistsview.h"
+
 using std::bind;
 using std::floor;
 using std::stable_sort;
@@ -226,6 +229,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #ifdef HAVE_SUBSONIC
       subsonic_view_(new InternetSongsView(app_, app->internet_services()->ServiceBySource(Song::Source_Subsonic), SubsonicSettingsPage::kSettingsGroup, SettingsDialog::Page_Subsonic, this)),
 #endif
+      smartplaylists_view_(new SmartPlaylistsViewContainer(app, this)),
       playlist_menu_(new QMenu(this)),
       playlist_add_to_another_(nullptr),
       playlistitem_actions_separator_(nullptr),
@@ -284,6 +288,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #ifdef HAVE_SUBSONIC
   ui_->tabs->AddTab(subsonic_view_, "subsonic", IconLoader::Load("subsonic"), tr("Subsonic"));
 #endif
+  ui_->tabs->AddTab(smartplaylists_view_, "smartplaylists", IconLoader::Load("view-media-playlist"), tr("Smart playlists"));
 
   // Add the playing widget to the fancy tab widget
   ui_->tabs->addBottomWidget(ui_->widget_playing);
@@ -763,6 +768,10 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
   connect(app_->playlist_manager()->sequence(), SIGNAL(RepeatModeChanged(PlaylistSequence::RepeatMode)), osd_, SLOT(RepeatModeChanged(PlaylistSequence::RepeatMode)));
   connect(app_->playlist_manager()->sequence(), SIGNAL(ShuffleModeChanged(PlaylistSequence::ShuffleMode)), osd_, SLOT(ShuffleModeChanged(PlaylistSequence::ShuffleMode)));
+  
+  // Smart playlists
+
+  connect(smartplaylists_view_->view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
 
   ScrobbleButtonVisibilityChanged(app_->scrobbler()->ScrobbleButton());
   LoveButtonVisibilityChanged(app_->scrobbler()->LoveButton());

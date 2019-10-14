@@ -167,6 +167,7 @@ set(SOURCES
   playlist/playlistview.cpp
   playlist/songloaderinserter.cpp
   playlist/songplaylistitem.cpp
+  playlist/dynamicplaylistcontrols.cpp
 
   queue/queue.cpp
   queue/queueview.cpp
@@ -181,6 +182,20 @@ set(SOURCES
   playlistparsers/wplparser.cpp
   playlistparsers/xmlparser.cpp
   playlistparsers/xspfparser.cpp
+
+  smartplaylists/playlistgenerator.cpp
+  smartplaylists/playlistgeneratorinserter.cpp
+  smartplaylists/playlistquerygenerator.cpp
+  smartplaylists/smartplaylistquerywizardplugin.cpp
+  smartplaylists/smartplaylistsearch.cpp
+  smartplaylists/smartplaylistsearchpreview.cpp
+  smartplaylists/smartplaylistsearchterm.cpp
+  smartplaylists/smartplaylistsearchtermwidget.cpp
+  smartplaylists/smartplaylistsmodel.cpp
+  smartplaylists/smartplaylistsviewcontainer.cpp
+  smartplaylists/smartplaylistsview.cpp
+  smartplaylists/smartplaylistwizard.cpp
+  smartplaylists/smartplaylistwizardplugin.cpp
 
   covermanager/albumcovermanager.cpp
   covermanager/albumcovermanagerlist.cpp
@@ -354,6 +369,7 @@ set(HEADERS
   playlist/playlistitemmimedata.h
   playlist/songloaderinserter.h
   playlist/songmimedata.h
+  playlist/dynamicplaylistcontrols.h
 
   queue/queue.h
   queue/queueview.h
@@ -366,6 +382,18 @@ set(HEADERS
   playlistparsers/playlistparser.h
   playlistparsers/plsparser.h
   playlistparsers/xspfparser.h
+
+  smartplaylists/playlistgenerator.h
+  smartplaylists/playlistgeneratorinserter.h
+  smartplaylists/playlistgeneratormimedata.h
+  smartplaylists/smartplaylistquerywizardplugin.h
+  smartplaylists/smartplaylistsearchpreview.h
+  smartplaylists/smartplaylistsearchtermwidget.h
+  smartplaylists/smartplaylistsmodel.h
+  smartplaylists/smartplaylistsviewcontainer.h
+  smartplaylists/smartplaylistsview.h
+  smartplaylists/smartplaylistwizard.h
+  smartplaylists/smartplaylistwizardplugin.h
 
   covermanager/albumcovermanager.h
   covermanager/albumcovermanagerlist.h
@@ -485,8 +513,16 @@ set(UI
   playlist/playlistlistcontainer.ui
   playlist/playlistsaveoptionsdialog.ui
   playlist/playlistsequence.ui
+  playlist/dynamicplaylistcontrols.ui
 
   queue/queueview.ui
+
+  smartplaylists/smartplaylistquerysearchpage.ui
+  smartplaylists/smartplaylistquerysortpage.ui
+  smartplaylists/smartplaylistsearchpreview.ui
+  smartplaylists/smartplaylistsearchtermwidget.ui
+  smartplaylists/smartplaylistsviewcontainer.ui
+  smartplaylists/smartplaylistwizardfinishpage.ui
 
   covermanager/albumcoverexport.ui
   covermanager/albumcovermanager.ui

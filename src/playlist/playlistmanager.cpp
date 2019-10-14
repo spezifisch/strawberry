@@ -589,3 +589,17 @@ void PlaylistManager::SetCurrentOrOpen(int id) {
 bool PlaylistManager::IsPlaylistOpen(int id) {
   return playlists_.contains(id);
 }
+
+void PlaylistManager::PlaySmartPlaylist(PlaylistGeneratorPtr generator, bool as_new, bool clear) {
+
+  if (as_new) {
+    New(generator->name());
+  }
+
+  if (clear) {
+    current()->Clear();
+  }
+
+  current()->InsertSmartPlaylist(generator);
+
+}

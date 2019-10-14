@@ -197,7 +197,9 @@ void SmartPlaylistSearchTermWidget::FieldChanged(int index) {
 
 }
 
-void SmartPlaylistSearchTermWidget::OpChanged(int index) {
+void SmartPlaylistSearchTermWidget::OpChanged(int idx) {
+
+  Q_UNUSED(idx);
 
   // Determine the currently selected operator
   SmartPlaylistSearchTerm::Operator op = static_cast<SmartPlaylistSearchTerm::Operator>(
@@ -216,9 +218,11 @@ void SmartPlaylistSearchTermWidget::OpChanged(int index) {
     }
     ui_->value_stack->setCurrentWidget(page);
   }
-  else if ((ui_->value_stack->currentWidget() == ui_->page_date) ||
-           (ui_->value_stack->currentWidget() == ui_->page_date_numeric) ||
-           (ui_->value_stack->currentWidget() == ui_->page_date_relative)) {
+  else if (
+      (ui_->value_stack->currentWidget() == ui_->page_date) ||
+      (ui_->value_stack->currentWidget() == ui_->page_date_numeric) ||
+      (ui_->value_stack->currentWidget() == ui_->page_date_relative)
+      ) {
     QWidget* page = nullptr;
     if (op == SmartPlaylistSearchTerm::Op_NumericDate || op == SmartPlaylistSearchTerm::Op_NumericDateNot) {
       page = ui_->page_date_numeric;

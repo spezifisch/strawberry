@@ -227,7 +227,10 @@ QVariant SmartPlaylistsModel::data(const QModelIndex &idx, int role) const {
 
 }
 
-void SmartPlaylistsModel::LazyPopulate(SmartPlaylistsItem *parent, bool signal) {}
+void SmartPlaylistsModel::LazyPopulate(SmartPlaylistsItem *parent, bool signal) {
+  Q_UNUSED(parent);
+  Q_UNUSED(signal);
+}
 
 QStringList SmartPlaylistsModel::mimeTypes() const {
   return QStringList() << "text/uri-list";

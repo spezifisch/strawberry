@@ -43,7 +43,7 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="layout_frame">
       <property name="spacing">
        <number>0</number>
       </property>
@@ -61,7 +61,7 @@
       </property>
       <item>
        <widget class="QFrame" name="container">
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="layout_container">
          <property name="spacing">
           <number>6</number>
          </property>
@@ -268,7 +268,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="label">
+              <widget class="QLabel" name="label_1">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                  <horstretch>0</horstretch>

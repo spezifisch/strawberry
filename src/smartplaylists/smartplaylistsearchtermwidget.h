@@ -38,7 +38,8 @@ class Ui_SmartPlaylistSearchTermWidget;
 
 class SmartPlaylistSearchTermWidget : public QWidget {
   Q_OBJECT
-  Q_PROPERTY(float overlay_opacity READ overlay_opacity WRITE set_overlay_opacity);
+
+  Q_PROPERTY(float overlay_opacity READ overlay_opacity WRITE set_overlay_opacity)
 
  public:
   SmartPlaylistSearchTermWidget(CollectionBackend *collection, QWidget *parent);

@@ -69,9 +69,10 @@ class PlaylistGenerator : public QObject, public std::enable_shared_from_this<Pl
   // The subclass should remember the last GetDynamicHistory() + GetDynamicFuture() tracks,
   // and ensure that the tracks returned from this method are not in that set.
   virtual bool is_dynamic() const { return false; }
-  virtual void set_dynamic(bool dynamic) {}
+  virtual void set_dynamic(bool dynamic) { Q_UNUSED(dynamic); }
   // Called from non-UI thread.
   virtual PlaylistItemList GenerateMore(int count) {
+    Q_UNUSED(count);
     return PlaylistItemList();
   }
 

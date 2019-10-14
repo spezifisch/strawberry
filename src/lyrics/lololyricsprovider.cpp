@@ -43,6 +43,8 @@ LoloLyricsProvider::LoloLyricsProvider(QObject *parent) : LyricsProvider("LoloLy
 
 bool LoloLyricsProvider::StartSearch(const QString &artist, const QString &album, const QString &title, const quint64 id) {
 
+  Q_UNUSED(album);
+
   const ParamList params = ParamList() << Param("artist", artist)
                                        << Param("track", title);
 
@@ -53,7 +55,11 @@ bool LoloLyricsProvider::StartSearch(const QString &artist, const QString &album
 
   QUrl url(kUrlSearch);
   url.setQuery(url_query);
-  QNetworkReply *reply = network_->get(QNetworkRequest(url));
+  QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+  QNetworkReply *reply = network_->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, const quint64, const QString&, const QString&)), reply, id, artist, title);
 
   //qLog(Debug) << "LoloLyrics: Sending request for" << url;
@@ -62,7 +68,7 @@ bool LoloLyricsProvider::StartSearch(const QString &artist, const QString &album
 
 }
 
-void LoloLyricsProvider::CancelSearch(const quint64 id) {}
+void LoloLyricsProvider::CancelSearch(const quint64 id) { Q_UNUSED(id); }
 
 void LoloLyricsProvider::HandleSearchReply(QNetworkReply *reply, const quint64 id, const QString &artist, const QString &title) {
 
@@ -128,7 +134,7 @@ void LoloLyricsProvider::HandleSearchReply(QNetworkReply *reply, const quint64 i
 
 }
 
-void LoloLyricsProvider::Error(const quint64 id, const QString &error, QVariant debug) {
+void LoloLyricsProvider::Error(const quint64 id, const QString &error, const QVariant &debug) {
 
   qLog(Error) << "LoloLyrics:" << error;
   if (debug.isValid()) qLog(Debug) << debug;

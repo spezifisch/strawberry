@@ -296,7 +296,8 @@ const QString &Song::albumartist() const { return d->albumartist_; }
 const QString &Song::albumartist_sortable() const { return d->albumartist_sortable_; }
 const QString &Song::effective_albumartist() const { return d->albumartist_.isEmpty() ? d->artist_ : d->albumartist_; }
 const QString &Song::effective_albumartist_sortable() const { return d->albumartist_.isEmpty() ? d->artist_sortable_ : d->albumartist_sortable_; }
-const QString &Song::playlist_albumartist() const { return is_compilation() ? d->albumartist_sortable_ : effective_albumartist_sortable(); }
+const QString &Song::playlist_albumartist() const { return is_compilation() ? d->albumartist_ : effective_albumartist(); }
+const QString &Song::playlist_albumartist_sortable() const { return is_compilation() ? d->albumartist_sortable_ : effective_albumartist_sortable(); }
 int Song::track() const { return d->track_; }
 int Song::disc() const { return d->disc_; }
 int Song::year() const { return d->year_; }
@@ -339,7 +340,7 @@ bool Song::has_embedded_cover() const { return d->art_automatic_.path() == kEmbe
 void Song::set_embedded_cover() { d->art_automatic_ = QUrl::fromLocalFile(kEmbeddedCover); }
 
 const QUrl &Song::stream_url() const { return d->stream_url_; }
-const QUrl &Song::effective_stream_url() const { return d->stream_url_.isEmpty() ? d->url_ : d->stream_url_; }
+const QUrl &Song::effective_stream_url() const { return !d->stream_url_.isEmpty() && d->stream_url_.isValid() ? d->stream_url_ : d->url_; }
 const QImage &Song::image() const { return d->image_; }
 
 const QString &Song::cue_path() const { return d->cue_path_; }
@@ -601,7 +602,48 @@ bool Song::IsFileLossless() const {
   }
 }
 
-Song::FileType Song::FiletypeByExtension(QString ext) {
+Song::FileType Song::FiletypeByMimetype(const QString &mimetype) {
+
+  if (mimetype.toLower() == "audio/wav" || mimetype.toLower() == "audio/x-wav") return Song::FileType_WAV;
+  else if (mimetype.toLower() == "audio/x-flac") return Song::FileType_FLAC;
+  else if (mimetype.toLower() == "audio/x-wavpack") return Song::FileType_WavPack;
+  else if (mimetype.toLower() == "audio/x-vorbis") return Song::FileType_OggVorbis;
+  else if (mimetype.toLower() == "audio/x-opus") return Song::FileType_OggOpus;
+  else if (mimetype.toLower() == "audio/x-speex")  return Song::FileType_OggSpeex;
+  // Gstreamer returns audio/mpeg for both MP3 and MP4/AAC.
+  // else if (mimetype.toLower() == "audio/mpeg") return Song::FileType_MPEG;
+  else if (mimetype.toLower() == "audio/aac") return Song::FileType_MP4;
+  else if (mimetype.toLower() == "audio/x-wma") return Song::FileType_ASF;
+  else if (mimetype.toLower() == "audio/aiff" || mimetype.toLower() == "audio/x-aiff") return Song::FileType_AIFF;
+  else if (mimetype.toLower() == "application/x-project") return Song::FileType_MPC;
+  else if (mimetype.toLower() == "audio/x-dsf") return Song::FileType_DSF;
+  else if (mimetype.toLower() == "audio/x-dsd") return Song::FileType_DSDIFF;
+  else if (mimetype.toLower() == "audio/x-ape" || mimetype.toLower() == "application/x-ape" || mimetype.toLower() == "audio/x-ffmpeg-parsed-ape") return Song::FileType_APE;
+  else return Song::FileType_Unknown;
+
+}
+
+Song::FileType Song::FiletypeByDescription(const QString &text) {
+
+  if (text == "WAV") return Song::FileType_WAV;
+  else if (text == "Free Lossless Audio Codec (FLAC)") return Song::FileType_FLAC;
+  else if (text == "Wavpack") return Song::FileType_WavPack;
+  else if (text == "Vorbis") return Song::FileType_OggVorbis;
+  else if (text == "Opus") return Song::FileType_OggOpus;
+  else if (text == "Speex") return Song::FileType_OggSpeex;
+  else if (text == "MPEG-1 Layer 3 (MP3)") return Song::FileType_MPEG;
+  else if (text == "MPEG-4 AAC") return Song::FileType_MP4;
+  else if (text == "WMA") return Song::FileType_ASF;
+  else if (text == "Audio Interchange File Format") return Song::FileType_AIFF;
+  else if (text == "MPC") return Song::FileType_MPC;
+  else if (text == "audio/x-dsf") return Song::FileType_DSF;
+  else if (text == "audio/x-dsd") return Song::FileType_DSDIFF;
+  else if (text == "audio/x-ffmpeg-parsed-ape") return Song::FileType_APE;
+  else return Song::FileType_Unknown;
+
+}
+
+Song::FileType Song::FiletypeByExtension(const QString &ext) {
 
   if (ext.toLower() == "wav" || ext.toLower() == "wave") return Song::FileType_WAV;
   else if (ext.toLower() == "flac") return Song::FileType_FLAC;
@@ -1149,28 +1191,57 @@ void Song::ToMTP(LIBMTP_track_t *track) const {
 }
 #endif
 
-void Song::MergeFromSimpleMetaBundle(const Engine::SimpleMetaBundle &bundle) {
-
-  if (d->init_from_file_ || d->url_.scheme() == "file") {
-    // This Song was already loaded using taglib. Our tags are probably better than the engine's.
-    // Note: init_from_file_ is used for non-file:// URLs when the metadata is known to be good, like from Jamendo.
-    return;
-  }
+bool Song::MergeFromSimpleMetaBundle(const Engine::SimpleMetaBundle &bundle) {
 
   d->valid_ = true;
-  if (!bundle.title.isEmpty()) set_title(bundle.title);
-  if (!bundle.artist.isEmpty()) set_artist(bundle.artist);
-  if (!bundle.album.isEmpty()) set_album(bundle.album);
-  if (!bundle.comment.isEmpty()) d->comment_ = bundle.comment;
-  if (!bundle.genre.isEmpty()) d->genre_ = bundle.genre;
+
+  bool minor = true;
+
+  if (d->init_from_file_ || is_collection_song() || d->url_.isLocalFile()) {
+    // This Song was already loaded using taglib. Our tags are probably better than the engine's.
+    if (title() != bundle.title && title().isEmpty() && !bundle.title.isEmpty()) {
+      set_title(bundle.title);
+      minor = false;
+    }
+    if (artist() != bundle.artist && artist().isEmpty() && !bundle.artist.isEmpty()) {
+      set_artist(bundle.artist);
+      minor = false;
+    }
+    if (album() != bundle.album && album().isEmpty() && !bundle.album.isEmpty()) {
+      set_album(bundle.album);
+      minor = false;
+    }
+    if (comment().isEmpty() && !bundle.comment.isEmpty()) set_comment(bundle.comment);
+    if (genre().isEmpty() && !bundle.genre.isEmpty()) set_genre(bundle.genre);
+    if (lyrics().isEmpty() && !bundle.lyrics.isEmpty()) set_lyrics(bundle.lyrics);
+  }
+  else {
+    if (title() != bundle.title && !bundle.title.isEmpty()) {
+      set_title(bundle.title);
+      minor = false;
+    }
+    if (artist() != bundle.artist && !bundle.artist.isEmpty()) {
+      set_artist(bundle.artist);
+      minor = false;
+    }
+    if (album() != bundle.album && !bundle.album.isEmpty()) {
+      set_album(bundle.album);
+      minor = false;
+    }
+    if (!bundle.comment.isEmpty()) set_comment(bundle.comment);
+    if (!bundle.genre.isEmpty()) set_genre(bundle.genre);
+    if (!bundle.lyrics.isEmpty()) set_lyrics(bundle.lyrics);
+  }
+
   if (bundle.length > 0) set_length_nanosec(bundle.length);
   if (bundle.year > 0) d->year_ = bundle.year;
   if (bundle.track > 0) d->track_ = bundle.track;
   if (bundle.filetype != FileType_Unknown) d->filetype_ = bundle.filetype;
   if (bundle.samplerate > 0) d->samplerate_ = bundle.samplerate;
-  if (bundle.bitdepth > 0) d->samplerate_ = bundle.bitdepth;
+  if (bundle.bitdepth > 0) d->bitdepth_ = bundle.bitdepth;
   if (bundle.bitrate > 0) d->bitrate_ = bundle.bitrate;
-  if (!bundle.lyrics.isEmpty()) d->lyrics_ = bundle.lyrics;
+
+  return minor;
 
 }
 
@@ -1372,12 +1443,14 @@ uint qHash(const Song &song) {
 }
 
 bool Song::IsSimilar(const Song &other) const {
-  return title().compare(other.title(), Qt::CaseInsensitive) == 0 && artist().compare(other.artist(), Qt::CaseInsensitive) == 0;
+  return title().compare(other.title(), Qt::CaseInsensitive) == 0 &&
+         artist().compare(other.artist(), Qt::CaseInsensitive) == 0 &&
+         album().compare(other.album(), Qt::CaseInsensitive) == 0;
 }
 
 uint HashSimilar(const Song &song) {
   // Should compare the same fields as function IsSimilar
-  return qHash(song.title().toLower()) ^ qHash(song.artist().toLower());
+  return qHash(song.title().toLower()) ^ qHash(song.artist().toLower()) ^ qHash(song.album().toLower());
 }
 
 bool Song::IsOnSameAlbum(const Song &other) const {

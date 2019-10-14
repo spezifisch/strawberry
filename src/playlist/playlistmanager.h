@@ -48,7 +48,7 @@ class PlaylistManagerInterface : public QObject {
   Q_OBJECT
 
 public:
-  PlaylistManagerInterface(Application *app, QObject *parent) : QObject(parent) {}
+  PlaylistManagerInterface(Application *app, QObject *parent) : QObject(parent) { Q_UNUSED(app); }
 
   virtual int current_id() const = 0;
   virtual int active_id() const = 0;
@@ -122,6 +122,7 @@ public slots:
 
   // Forwarded from individual playlists
   void CurrentSongChanged(const Song& song);
+  void SongMetadataChanged(const Song& song);
 
   // Signals that one of manager's playlists has changed (new items, new ordering etc.) - the argument shows which.
   void PlaylistChanged(Playlist *playlist);

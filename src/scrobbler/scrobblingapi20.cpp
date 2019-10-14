@@ -61,7 +61,7 @@
 
 const char *ScrobblingAPI20::kApiKey = "211990b4c96782c05d1536e7219eb56e";
 const char *ScrobblingAPI20::kSecret = "80fd738f49596e9709b1bf9319c444a8";
-const char *ScrobblingAPI20::kRedirectUrl = "https://oauth.strawbs.net";
+const char *ScrobblingAPI20::kRedirectUrl = "https://oauth.strawberrymusicplayer.org";
 const int ScrobblingAPI20::kScrobblesPerRequest = 50;
 
 ScrobblingAPI20::ScrobblingAPI20(const QString &name, const QString &settings_group, const QString &auth_url, const QString &api_url, const bool batch, Application *app, QObject *parent) :
@@ -150,6 +150,7 @@ void ScrobblingAPI20::Authenticate(const bool https) {
       messagebox_error.setTextFormat(Qt::RichText);
       messagebox_error.exec();
     }
+    // fallthrough
   case QMessageBox::Save:
     QApplication::clipboard()->setText(url.toString());
     break;
@@ -207,6 +208,9 @@ void ScrobblingAPI20::RequestSession(QString token) {
   session_url.setQuery(session_url_query);
 
   QNetworkRequest req(session_url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
   QNetworkReply *reply = network()->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(AuthenticateReplyFinished(QNetworkReply*)), reply);
 
@@ -334,6 +338,9 @@ QNetworkReply *ScrobblingAPI20::CreateRequest(const ParamList &request_params) {
 
   QUrl url(api_url_);
   QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
   req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
   QByteArray query = url_query.toString(QUrl::FullyEncoded).toUtf8();
   QNetworkReply *reply = network()->post(req, query);
@@ -658,7 +665,7 @@ void ScrobblingAPI20::ScrobbleRequestFinished(QNetworkReply *reply, QList<quint6
     }
 
     if (!json_obj_artist.contains("#text") || !json_obj_album.contains("#text") || !json_obj_song.contains("#text")) {
-      // Just ignore this, as Last.fm seem to return 1 ignored scrobble for a blank song for each requst (no idea why).
+      // Just ignore this, as Last.fm seem to return 1 ignored scrobble for a blank song for each request (no idea why).
       continue;
     }
 

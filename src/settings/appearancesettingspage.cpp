@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2012, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,6 +109,8 @@ AppearanceSettingsPage::AppearanceSettingsPage(SettingsDialog *dialog)
 
   connect(ui_->select_tabbar_color, SIGNAL(pressed()), SLOT(TabBarSelectBGColor()));
   connect(ui_->tabbar_system_color, SIGNAL(toggled(bool)), SLOT(TabBarSystemColor(bool)));
+
+  ui_->checkbox_system_icons->hide();
 
   Load();
 
@@ -322,7 +325,7 @@ void AppearanceSettingsPage::BlurLevelChanged(int value) {
 }
 
 void AppearanceSettingsPage::OpacityLevelChanged(int percent) {
-  ui_->background_opacity_label->setText(QString("%1\%").arg(percent));
+  ui_->background_opacity_label->setText(QString("%1%").arg(percent));
 }
 
 void AppearanceSettingsPage::TabBarSystemColor(bool checked) {

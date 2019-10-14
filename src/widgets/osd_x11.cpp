@@ -102,6 +102,7 @@ QDBusArgument &operator<<(QDBusArgument &arg, const QImage &image) {
 }
 
 const QDBusArgument &operator>>(const QDBusArgument &arg, QImage &image) {
+  Q_UNUSED(image);
   // This is needed to link but shouldn't be called.
   Q_ASSERT(0);
   return arg;
@@ -156,6 +157,10 @@ void OSD::ShowMessageNative(const QString &summary, const QString &message, cons
   QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, this);
   connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), SLOT(CallFinished(QDBusPendingCallWatcher*)));
 #else   // HAVE_DBUS
+  Q_UNUSED(summary)
+  Q_UNUSED(message)
+  Q_UNUSED(icon)
+  Q_UNUSED(image)
   qLog(Warning) << "not implemented";
 #endif  // HAVE_DBUS
 
@@ -178,5 +183,6 @@ void OSD::CallFinished(QDBusPendingCallWatcher *watcher) {
     last_notification_time_ = QDateTime::currentDateTime();
   }
 }
+#else
+void OSD::CallFinished() {}
 #endif
-

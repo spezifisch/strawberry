@@ -61,7 +61,7 @@
 using std::unique_ptr;
 
 class About;
-class AlbumCoverManager;;
+class AlbumCoverManager;
 class Application;
 class ContextView;
 class CollectionViewContainer;
@@ -90,10 +90,12 @@ class TrackSelectionDialog;
 class TranscodeDialog;
 #endif
 class Ui_MainWindow;
-class Windows7ThumbBar;
 class InternetSongsView;
 class InternetTabsView;
 class SmartPlaylistsViewContainer;
+#ifdef Q_OS_WIN
+class Windows7ThumbBar;
+#endif
 
 class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
@@ -118,10 +120,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
  protected:
   void keyPressEvent(QKeyEvent *event);
   void closeEvent(QCloseEvent *event);
-
-#ifdef Q_OS_WIN
-  bool winEvent(MSG *message, long *result);
-#endif
+  bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 
   // PlatformInterface
   void Activate();
@@ -164,14 +163,10 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void RenumberTracks();
   void SelectionSetValue();
   void EditValue();
-#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   void AutoCompleteTags();
   void AutoCompleteTagsAccepted();
-#endif
   void PlaylistUndoRedoChanged(QAction *undo, QAction *redo);
-#ifdef HAVE_GSTREAMER
   void AddFilesToTranscoder();
-#endif
 
   void PlaylistCopyToCollection();
   void PlaylistMoveToCollection();
@@ -227,9 +222,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void ShowCoverManager();
 
   void ShowAboutDialog();
-#ifdef HAVE_GSTREAMER
   void ShowTranscodeDialog();
-#endif
   void ShowErrorDialog(const QString& message);
   SettingsDialog *CreateSettingsDialog();
   EditTagDialog *CreateEditTagDialog();
@@ -285,7 +278,9 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
  private:
   Ui_MainWindow *ui_;
+#ifdef Q_OS_WIN
   Windows7ThumbBar *thumbbar_;
+#endif
 
   Application *app_;
   SystemTrayIcon  *tray_icon_;
@@ -319,9 +314,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   std::unique_ptr<TagFetcher> tag_fetcher_;
 #endif
   std::unique_ptr<TrackSelectionDialog> track_selection_dialog_;
-#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   PlaylistItemList autocomplete_tag_items_;
-#endif
 
   InternetTabsView *tidal_view_;
   InternetTabsView *qobuz_view_;

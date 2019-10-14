@@ -103,6 +103,7 @@ pkg_check_modules(GSTREAMER_BASE gstreamer-base-1.0)
 pkg_check_modules(GSTREAMER_AUDIO gstreamer-audio-1.0)
 pkg_check_modules(GSTREAMER_APP gstreamer-app-1.0)
 pkg_check_modules(GSTREAMER_TAG gstreamer-tag-1.0)
+pkg_check_modules(GSTREAMER_PBUTILS gstreamer-pbutils-1.0)
 pkg_check_modules(LIBXINE libxine)
 pkg_check_modules(LIBVLC libvlc)
 pkg_check_modules(PHONON phonon4qt5)
@@ -274,6 +275,7 @@ optional_component(GSTREAMER ON "Engine: GStreamer backend"
   DEPENDS "gstreamer-app-1.0" GSTREAMER_APP_FOUND
   DEPENDS "gstreamer-audio-1.0" GSTREAMER_AUDIO_FOUND
   DEPENDS "gstreamer-tag-1.0" GSTREAMER_TAG_FOUND
+  DEPENDS "gstreamer-pbutils-1.0" GSTREAMER_PBUTILS_FOUND
 )
 
 optional_component(XINE ON "Engine: Xine backend"
@@ -325,7 +327,7 @@ optional_component(IMOBILEDEVICE ON "Devices: iPhone, iPod Touch, iPad and Apple
   DEPENDS "libimobiledevice" LIBIMOBILEDEVICE_FOUND
   DEPENDS "libplist" LIBPLIST_FOUND
   DEPENDS "libusbmuxd" LIBUSBMUXD_FOUND
-  DEPENDS "libgpod" LIBGPOD_FOUND
+  DEPENDS "libgpod" HAVE_LIBGPOD
 )
 
 optional_component(SPARKLE ON "Sparkle integration"
@@ -347,14 +349,20 @@ optional_component(MOODBAR ON "Moodbar"
   DEPENDS "gstreamer" HAVE_GSTREAMER
 )
 
-if(APPLE)
-  option(USE_BUNDLE "Bundle macOS dependencies" OFF)
+if(LINUX OR APPLE)
+  option(USE_BUNDLE "Bundle dependencies" OFF)
 elseif(WIN32)
-  option(USE_BUNDLE "Bundle Windows dependencies" ON)
+  option(USE_BUNDLE "Bundle dependencies" ON)
 endif()
-if (APPLE AND USE_BUNDLE AND NOT USE_BUNDLE_DIR)
+
+if (USE_BUNDLE AND NOT USE_BUNDLE_DIR)
+if(LINUX)
+  set(USE_BUNDLE_DIR "../plugins")
+endif(LINUX)
+if(APPLE)
   set(USE_BUNDLE_DIR "../PlugIns")
-endif()
+endif(APPLE)
+endif(USE_BUNDLE AND NOT USE_BUNDLE_DIR)
 
 # Check that we have sqlite3 with FTS5
 

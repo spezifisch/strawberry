@@ -19,7 +19,8 @@
 
 #include "config.h"
 
-#include <assert.h>
+#include <stdbool.h>
+#include <memory>
 
 #include <QObject>
 #include <QByteArray>
@@ -27,8 +28,8 @@
 #include <QString>
 #include <QUrl>
 #include <QImage>
+#include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QSslError>
 #include <QSslConfiguration>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -38,7 +39,6 @@
 #include "core/application.h"
 #include "core/closure.h"
 #include "core/logging.h"
-#include "core/network.h"
 #include "core/song.h"
 #include "core/timeconstants.h"
 #include "covermanager/albumcoverloader.h"
@@ -50,12 +50,12 @@ const int SubsonicRequest::kMaxConcurrentAlbumsRequests = 3;
 const int SubsonicRequest::kMaxConcurrentAlbumSongsRequests = 3;
 const int SubsonicRequest::kMaxConcurrentAlbumCoverRequests = 1;
 
-SubsonicRequest::SubsonicRequest(SubsonicService *service, SubsonicUrlHandler *url_handler, Application *app, NetworkAccessManager *network, QObject *parent)
-    : SubsonicBaseRequest(service, network, parent),
+SubsonicRequest::SubsonicRequest(SubsonicService *service, SubsonicUrlHandler *url_handler, Application *app, QObject *parent)
+    : SubsonicBaseRequest(service, parent),
       service_(service),
       url_handler_(url_handler),
       app_(app),
-      network_(network),
+      network_(new QNetworkAccessManager),
       finished_(false),
       albums_requests_active_(0),
       album_songs_requests_active_(0),
@@ -65,7 +65,13 @@ SubsonicRequest::SubsonicRequest(SubsonicService *service, SubsonicUrlHandler *u
       album_covers_requested_(0),
       album_covers_received_(0),
       no_results_(false)
-      {}
+      {
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 9, 0))
+  network_->setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
+#endif
+
+}
 
 SubsonicRequest::~SubsonicRequest() {
 
@@ -258,6 +264,10 @@ void SubsonicRequest::AlbumsReplyReceived(QNetworkReply *reply, const int offset
     }
 
     qint64 album_id = json_obj["id"].toString().toLongLong();
+    if (album_id == 0) {
+      album_id = json_obj["id"].toInt();
+    }
+
     QString artist = json_obj["artist"].toString();
     QString album;
     if (json_obj.contains("album")) album = json_obj["album"].toString();
@@ -470,18 +480,17 @@ void SubsonicRequest::SongsFinishCheck() {
 
 int SubsonicRequest::ParseSong(Song &song, const QJsonObject &json_obj, const qint64 artist_id_requested, const qint64 album_id_requested, const QString &album_artist) {
 
+  Q_UNUSED(artist_id_requested);
+  Q_UNUSED(album_id_requested);
+
   if (
       !json_obj.contains("id") ||
       !json_obj.contains("title") ||
-      !json_obj.contains("album") ||
-      !json_obj.contains("artist") ||
       !json_obj.contains("size") ||
       !json_obj.contains("contentType") ||
       !json_obj.contains("suffix") ||
       !json_obj.contains("duration") ||
       !json_obj.contains("bitRate") ||
-      !json_obj.contains("albumId") ||
-      !json_obj.contains("artistId") ||
       !json_obj.contains("type")
     ) {
     Error("Invalid Json reply, song is missing one or more values.", json_obj);
@@ -489,13 +498,32 @@ int SubsonicRequest::ParseSong(Song &song, const QJsonObject &json_obj, const qi
   }
 
   qint64 song_id = json_obj["id"].toString().toLongLong();
-  qint64 album_id = json_obj["albumId"].toString().toLongLong();
-  qint64 artist_id = json_obj["artistId"].toString().toLongLong();
+  if (song_id == 0) song_id = json_obj["id"].toInt();
+
+  qint64 album_id = -1;
+  if (json_obj.contains("albumId")) {
+    album_id = json_obj["albumId"].toString().toLongLong();
+    if (album_id == 0) album_id = json_obj["albumId"].toInt();
+  }
+
+  qint64 artist_id = -1;
+  if (json_obj.contains("artistId")) {
+    artist_id = json_obj["artistId"].toString().toLongLong();
+    if (artist_id == 0) artist_id = json_obj["artistId"].toInt();
+  }
 
   QString title = json_obj["title"].toString();
   title.remove(Song::kTitleRemoveMisc);
-  QString album = json_obj["album"].toString();
-  QString artist = json_obj["artist"].toString();
+
+  QString album;
+  if (json_obj.contains("album")) {
+    album = json_obj["album"].toString();
+  }
+  QString artist;
+  if (json_obj.contains("artist")) {
+    artist = json_obj["artist"].toString();
+  }
+
   int size = json_obj["size"].toInt();
   QString mimetype = json_obj["contentType"].toString();
   quint64 duration = json_obj["duration"].toInt() * kNsecPerSec;
@@ -505,7 +533,10 @@ int SubsonicRequest::ParseSong(Song &song, const QJsonObject &json_obj, const qi
   if (json_obj.contains("year")) year = json_obj["year"].toInt();
 
   int disc = 0;
-  if (json_obj.contains("disc")) disc = json_obj["disc"].toString().toInt();
+  if (json_obj.contains("disc")) {
+    disc = json_obj["disc"].toString().toInt();
+    if (disc == 0) disc = json_obj["disc"].toInt();
+  }
 
   int track = 0;
   if (json_obj.contains("track")) track = json_obj["track"].toInt();
@@ -514,7 +545,10 @@ int SubsonicRequest::ParseSong(Song &song, const QJsonObject &json_obj, const qi
   if (json_obj.contains("genre")) genre = json_obj["genre"].toString();
 
   int cover_art_id = -1;
-  if (json_obj.contains("coverArt")) cover_art_id = json_obj["coverArt"].toString().toInt();
+  if (json_obj.contains("coverArt")) {
+    cover_art_id = json_obj["coverArt"].toString().toInt();
+    if (cover_art_id == 0) cover_art_id = json_obj["coverArt"].toInt();
+  }
 
   QUrl url;
   url.setScheme(url_handler_->scheme());
@@ -539,8 +573,8 @@ int SubsonicRequest::ParseSong(Song &song, const QJsonObject &json_obj, const qi
 
   song.set_source(Song::Source_Subsonic);
   song.set_song_id(song_id);
-  song.set_album_id(album_id);
-  song.set_artist_id(artist_id);
+  if (album_id > 0) song.set_album_id(album_id);
+  if (artist_id > 0) song.set_artist_id(artist_id);
   if (album_artist != artist) song.set_albumartist(album_artist);
   song.set_album(album);
   song.set_artist(artist);
@@ -609,6 +643,9 @@ void SubsonicRequest::FlushAlbumCoverRequests() {
     ++album_covers_requests_active_;
 
     QNetworkRequest req(request.url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+    req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
 
     if (!verify_certificate()) {
       QSslConfiguration sslconfig = QSslConfiguration::defaultConfiguration();

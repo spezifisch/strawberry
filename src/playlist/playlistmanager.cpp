@@ -140,6 +140,7 @@ Playlist *PlaylistManager::AddPlaylist(int id, const QString &name, const QStrin
   ret->set_ui_path(ui_path);
 
   connect(ret, SIGNAL(CurrentSongChanged(Song)), SIGNAL(CurrentSongChanged(Song)));
+  connect(ret, SIGNAL(SongMetadataChanged(Song)), SIGNAL(SongMetadataChanged(Song)));
   connect(ret, SIGNAL(PlaylistChanged()), SLOT(OneOfPlaylistsChanged()));
   connect(ret, SIGNAL(PlaylistChanged()), SLOT(UpdateSummaryText()));
   connect(ret, SIGNAL(EditingFinished(QModelIndex)), SIGNAL(EditingFinished(QModelIndex)));
@@ -385,7 +386,7 @@ void PlaylistManager::SetActiveToCurrent() {
 
   // Check if we need to update the active playlist.
   // By calling SetActiveToCurrent, the playlist manager emits the signal "ActiveChanged".
-  // This signal causes the network remote module to send all playlists to the clients, even no change happend.
+  // This signal causes the network remote module to send all playlists to the clients, even if no change happen.
   if (current_id() != active_id()) {
     SetActivePlaylist(current_id());
   }

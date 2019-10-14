@@ -68,7 +68,7 @@ class QobuzService : public InternetService {
   int Search(const QString &query, InternetSearch::SearchType type);
   void CancelSearch();
 
-  const int max_login_attempts() { return kLoginAttempts; }
+  int max_login_attempts() { return kLoginAttempts; }
 
   Application *app() { return app_; }
   QString app_id() { return app_id_; }
@@ -83,10 +83,13 @@ class QobuzService : public InternetService {
   bool download_album_covers() { return download_album_covers_; }
 
   QString user_auth_token() { return user_auth_token_; }
+  qint64 user_id() { return user_id_; }
+  QString device_id() { return device_id_; }
+  qint64 credential_id() { return credential_id_; }
 
-  const bool authenticated() { return (!app_id_.isEmpty() && !app_secret_.isEmpty() && !user_auth_token_.isEmpty()); }
-  const bool login_sent() { return login_sent_; }
-  const bool login_attempts() { return login_attempts_; }
+  bool authenticated() { return (!app_id_.isEmpty() && !app_secret_.isEmpty() && !user_auth_token_.isEmpty()); }
+  bool login_sent() { return login_sent_; }
+  bool login_attempts() { return login_attempts_; }
 
   void GetStreamURL(const QUrl &url);
 
@@ -144,7 +147,7 @@ class QobuzService : public InternetService {
   void ArtistsUpdateProgressReceived(const int id, const int progress);
   void AlbumsUpdateProgressReceived(const int id, const int progress);
   void SongsUpdateProgressReceived(const int id, const int progress);
-  void HandleStreamURLFinished(const QUrl &original_url, const QUrl &media_url, const Song::FileType filetype, const int samplerate, const int bit_depth, const qint64 duration, QString error);
+  void HandleStreamURLFinished(const QUrl &original_url, const QUrl &stream_url, const Song::FileType filetype, const int samplerate, const int bit_depth, const qint64 duration, QString error);
 
  private:
   typedef QPair<QString, QString> Param;
@@ -204,7 +207,10 @@ class QobuzService : public InternetService {
   int songssearchlimit_;
   bool download_album_covers_;
 
+  qint64 user_id_;
   QString user_auth_token_;
+  QString device_id_;
+  qint64 credential_id_;
 
   int pending_search_id_;
   int next_pending_search_id_;

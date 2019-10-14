@@ -19,6 +19,9 @@
 
 #include "config.h"
 
+#include <stdbool.h>
+#include <memory>
+
 #include <QObject>
 #include <QByteArray>
 #include <QPair>
@@ -27,6 +30,7 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QSslConfiguration>
+#include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonParseError>
@@ -36,15 +40,19 @@
 #include <QJsonValue>
 
 #include "core/logging.h"
-#include "core/network.h"
 #include "subsonicservice.h"
 #include "subsonicbaserequest.h"
 
-SubsonicBaseRequest::SubsonicBaseRequest(SubsonicService *service, NetworkAccessManager *network, QObject *parent) :
+SubsonicBaseRequest::SubsonicBaseRequest(SubsonicService *service, QObject *parent) :
       QObject(parent),
       service_(service),
-      network_(network)
-      {}
+      network_(new QNetworkAccessManager) {
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 9, 0))
+  network_->setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
+#endif
+
+}
 
 SubsonicBaseRequest::~SubsonicBaseRequest() {}
 
@@ -66,10 +74,10 @@ QUrl SubsonicBaseRequest::CreateUrl(const QString &ressource_name, const QList<P
   QUrl url(server_url());
 
   if (!url.path().isEmpty() && url.path().right(1) == "/") {
-    url.setPath(url.path() + QString("rest/") + ressource_name);
+    url.setPath(url.path() + QString("rest/") + ressource_name + QString(".view"));
   }
   else
-    url.setPath(url.path() + QString("/rest/") + ressource_name);
+    url.setPath(url.path() + QString("/rest/") + ressource_name + QString(".view"));
 
   url.setQuery(url_query);
 
@@ -89,6 +97,9 @@ QNetworkReply *SubsonicBaseRequest::CreateGetRequest(const QString &ressource_na
   }
 
   req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
 
   QNetworkReply *reply = network_->get(req);
   connect(reply, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(HandleSSLErrors(QList<QSslError>)));
@@ -120,6 +131,7 @@ QByteArray SubsonicBaseRequest::GetReplyData(QNetworkReply *reply) {
       Error(QString("%1 (%2)").arg(reply->errorString()).arg(reply->error()));
     }
     else {
+
       // See if there is Json data containing "error" - then use that instead.
       data = reply->readAll();
       QString error;

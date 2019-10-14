@@ -27,15 +27,13 @@
 #include <QAction>
 #include <QtDebug>
 
-#ifdef Q_OS_WIN32
-  #ifndef _WIN32_WINNT
-    #define _WIN32_WINNT 0x0600
-  #endif
-  #include <windows.h>
-  #include <commctrl.h>
-  #include <shobjidl.h>
-  extern HICON qt_pixmapToWinHICON(const QPixmap &p);
-#endif  // Q_OS_WIN32
+#ifndef _WIN32_WINNT
+  #define _WIN32_WINNT 0x0600
+#endif
+#include <windows.h>
+#include <commctrl.h>
+#include <shobjidl.h>
+extern HICON qt_pixmapToWinHICON(const QPixmap &p);
 
 #include "core/logging.h"
 #include "windows7thumbbar.h"
@@ -51,7 +49,6 @@ Windows7ThumbBar::Windows7ThumbBar(QWidget *widget)
 
 void Windows7ThumbBar::SetActions(const QList<QAction*>& actions) {
 
-#ifdef Q_OS_WIN32
   qLog(Debug) << "Setting actions";
   Q_ASSERT(actions.count() <= kMaxButtonCount);
 
@@ -62,11 +59,9 @@ void Windows7ThumbBar::SetActions(const QList<QAction*>& actions) {
     }
   }
   qLog(Debug) << "Done";
-#endif  // Q_OS_WIN32
 
 }
 
-#ifdef Q_OS_WIN32
 static void SetupButton(const QAction *action, THUMBBUTTON *button) {
 
   if (action) {
@@ -87,12 +82,11 @@ static void SetupButton(const QAction *action, THUMBBUTTON *button) {
     button->dwFlags = THBF_NOBACKGROUND;
     button->dwMask = THUMBBUTTONMASK(THB_FLAGS);
   }
+
 }
-#endif  // Q_OS_WIN32
 
 void Windows7ThumbBar::HandleWinEvent(MSG *msg) {
 
-#ifdef Q_OS_WIN32
   if (button_created_message_id_ == 0) {
     // Compute the value for the TaskbarButtonCreated message
     button_created_message_id_ = RegisterWindowMessage("TaskbarButtonCreated");
@@ -142,10 +136,11 @@ void Windows7ThumbBar::HandleWinEvent(MSG *msg) {
     if (hr != S_OK)
       qLog(Debug) << "Failed to add buttons" << hex << DWORD (hr);
     for (int i = 0; i < actions_.count(); i++) {
-      if (buttons[i].hIcon > 0)
+      if (buttons[i].hIcon)
         DestroyIcon (buttons[i].hIcon);
     }
-  } else if (msg->message == WM_COMMAND) {
+  }
+  else if (msg->message == WM_COMMAND) {
     const int button_id = LOWORD(msg->wParam);
 
     if (button_id >= 0 && button_id < actions_.count()) {
@@ -155,13 +150,11 @@ void Windows7ThumbBar::HandleWinEvent(MSG *msg) {
       }
     }
   }
-#endif  // Q_OS_WIN32
 
 }
 
 void Windows7ThumbBar::ActionChanged() {
 
-#ifdef Q_OS_WIN32
   if (!taskbar_list_) return;
   ITaskbarList3 *taskbar_list = reinterpret_cast<ITaskbarList3*>(taskbar_list_);
 
@@ -172,10 +165,9 @@ void Windows7ThumbBar::ActionChanged() {
 
     button->iId = i;
     SetupButton(action, button);
-    if (buttons->hIcon > 0) DestroyIcon(buttons->hIcon);
+    if (buttons->hIcon) DestroyIcon(buttons->hIcon);
   }
 
   taskbar_list->ThumbBarUpdateButtons((HWND)widget_->winId(), actions_.count(), buttons);
-#endif  // Q_OS_WIN32
 
 }

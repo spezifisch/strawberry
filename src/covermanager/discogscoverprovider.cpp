@@ -56,7 +56,7 @@ const char *DiscogsCoverProvider::kSecretKeyB64 = "ZkFIcmlaSER4aHhRSlF2U3d0bm5ZV
 
 DiscogsCoverProvider::DiscogsCoverProvider(Application *app, QObject *parent) : CoverProvider("Discogs", 0.0, false, app, parent), network_(new NetworkAccessManager(this)) {}
 
-bool DiscogsCoverProvider::StartSearch(const QString &artist, const QString &album, int s_id) {
+bool DiscogsCoverProvider::StartSearch(const QString &artist, const QString &album, const int s_id) {
 
   DiscogsCoverSearchContext *s_ctx = new DiscogsCoverSearchContext;
 
@@ -71,12 +71,12 @@ bool DiscogsCoverProvider::StartSearch(const QString &artist, const QString &alb
 
 }
 
-void DiscogsCoverProvider::CancelSearch(int id) {
+void DiscogsCoverProvider::CancelSearch(const int id) {
   delete requests_search_.take(id);
 }
 
 
-bool DiscogsCoverProvider::StartRelease(DiscogsCoverSearchContext *s_ctx, int r_id, QString &resource_url) {
+bool DiscogsCoverProvider::StartRelease(DiscogsCoverSearchContext *s_ctx, const int r_id, const QString &resource_url) {
 
   DiscogsCoverReleaseContext *r_ctx = new DiscogsCoverReleaseContext;
 
@@ -132,7 +132,11 @@ void DiscogsCoverProvider::SendSearchRequest(DiscogsCoverSearchContext *s_ctx) {
   // Add the signature to the request
   url_query.addQueryItem("Signature", QUrl::toPercentEncoding(signature.toBase64()));
 
-  QNetworkReply *reply = network_->get(QNetworkRequest(url));
+  QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+  QNetworkReply *reply = network_->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleSearchReply(QNetworkReply*, int)), reply, s_ctx->id);
 
 }
@@ -167,7 +171,11 @@ void DiscogsCoverProvider::SendReleaseRequest(DiscogsCoverSearchContext *s_ctx, 
 
   url.setQuery(url_query);
 
-  QNetworkReply *reply = network_->get(QNetworkRequest(url));
+  QNetworkRequest req(url);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+  QNetworkReply *reply = network_->get(req);
   NewClosure(reply, SIGNAL(finished()), this, SLOT(HandleReleaseReply(QNetworkReply*, int, int)), reply, s_ctx->id, r_ctx->id);
 
 }
@@ -241,7 +249,7 @@ QJsonObject DiscogsCoverProvider::ExtractJsonObj(const QByteArray &data) {
 
 }
 
-QJsonValue DiscogsCoverProvider::ExtractData(const QByteArray &data, const QString name, const bool silent) {
+QJsonValue DiscogsCoverProvider::ExtractData(const QByteArray &data, const QString &name, const bool silent) {
 
   QJsonObject json_obj = ExtractJsonObj(data);
   if (json_obj.isEmpty()) return QJsonObject();
@@ -315,7 +323,7 @@ void DiscogsCoverProvider::HandleSearchReply(QNetworkReply *reply, int s_id) {
 
 }
 
-void DiscogsCoverProvider::HandleReleaseReply(QNetworkReply *reply, int s_id, int r_id) {
+void DiscogsCoverProvider::HandleReleaseReply(QNetworkReply *reply, const int s_id, const int r_id) {
 
   reply->deleteLater();
 
@@ -456,7 +464,7 @@ void DiscogsCoverProvider::EndSearch(DiscogsCoverReleaseContext *r_ctx) {
   delete requests_release_.take(r_ctx->id);
 }
 
-void DiscogsCoverProvider::Error(QString error, QVariant debug) {
+void DiscogsCoverProvider::Error(const QString &error, const QVariant &debug) {
   qLog(Error) << "Discogs:" << error;
   if (debug.isValid()) qLog(Debug) << debug;
 }

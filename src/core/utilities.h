@@ -2,7 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
- * Copyright 2018, Jonas Kvinge <jonas@jkvinge.net>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -154,6 +154,8 @@ QString DesktopEnvironment();
 
 QString UnicodeToAscii(const QString &unicode);
 
+QString MacAddress();
+
 }  // namespace
 
 class ScopedWCharArray {
@@ -169,7 +171,7 @@ class ScopedWCharArray {
   int bytes() const { return (chars_ + 1)  *sizeof(wchar_t); }
 
  private:
-  Q_DISABLE_COPY(ScopedWCharArray);
+  Q_DISABLE_COPY(ScopedWCharArray)
 
   int chars_;
   std::unique_ptr<wchar_t[]> data_;

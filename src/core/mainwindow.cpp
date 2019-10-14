@@ -74,7 +74,6 @@
 #include "stylehelper.h"
 #include "stylesheetloader.h"
 #include "systemtrayicon.h"
-#include "windows7thumbbar.h"
 #include "application.h"
 #include "database.h"
 #include "player.h"
@@ -170,6 +169,10 @@
 #include "smartplaylists/smartplaylistsviewcontainer.h"
 #include "smartplaylists/smartplaylistsview.h"
 
+#ifdef Q_OS_WIN
+#  include "windows7thumbbar.h"
+#endif
+
 using std::bind;
 using std::floor;
 using std::stable_sort;
@@ -185,7 +188,9 @@ const int kTrackPositionUpdateTimeMs = 1000;
 MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, const CommandlineOptions &options, QWidget *parent) :
       QMainWindow(parent),
       ui_(new Ui_MainWindow),
+#ifdef Q_OS_WIN
       thumbbar_(new Windows7ThumbBar(this)),
+#endif
       app_(app),
       tray_icon_(tray_icon),
       osd_(osd),
@@ -347,11 +352,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   ui_->action_open_file->setIcon(IconLoader::Load("document-open"));
   ui_->action_open_cd->setIcon(IconLoader::Load("cd"));
-  ui_->action_previous_track->setIcon(IconLoader::Load("media-rewind"));
+  ui_->action_previous_track->setIcon(IconLoader::Load("media-skip-backward"));
   ui_->action_play_pause->setIcon(IconLoader::Load("media-play"));
   ui_->action_stop->setIcon(IconLoader::Load("media-stop"));
   ui_->action_stop_after_this_track->setIcon(IconLoader::Load("media-stop"));
-  ui_->action_next_track->setIcon(IconLoader::Load("media-forward"));
+  ui_->action_next_track->setIcon(IconLoader::Load("media-skip-forward"));
   ui_->action_quit->setIcon(IconLoader::Load("application-exit"));
 
   // Playlist
@@ -601,7 +606,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   playlist_queue_play_next_ = playlist_menu_->addAction(IconLoader::Load("go-next"), tr("Queue selected tracks to play next"), this, SLOT(PlaylistQueuePlayNext()));
   playlist_queue_play_next_->setShortcut(QKeySequence("Ctrl+Shift+D"));
   ui_->playlist->addAction(playlist_queue_play_next_);
-  playlist_skip_ = playlist_menu_->addAction(IconLoader::Load("media-forward"), tr("Toggle skip status"), this, SLOT(PlaylistSkip()));
+  playlist_skip_ = playlist_menu_->addAction(IconLoader::Load("media-skip-forward"), tr("Toggle skip status"), this, SLOT(PlaylistSkip()));
   ui_->playlist->addAction(playlist_skip_);
 
   playlist_menu_->addSeparator();
@@ -667,7 +672,9 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   }
 
   // Windows 7 thumbbar buttons
+#ifdef Q_OS_WIN
   thumbbar_->SetActions(QList<QAction*>() << ui_->action_previous_track << ui_->action_play_pause << ui_->action_stop << ui_->action_next_track << nullptr << ui_->action_love);
+#endif
 
 #if (defined(Q_OS_MACOS) && defined(HAVE_SPARKLE))
   // Add check for updates item to application menu.
@@ -702,6 +709,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   // Context
   connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(Song)), context_view_, SLOT(SongChanged(Song)));
+  connect(app_->playlist_manager(), SIGNAL(SongMetadataChanged(Song)), context_view_, SLOT(SongChanged(Song)));
   connect(app_->player(), SIGNAL(PlaylistFinished()), context_view_, SLOT(Stopped()));
   connect(app_->player(), SIGNAL(Playing()), context_view_, SLOT(Playing()));
   connect(app_->player(), SIGNAL(Stopped()), context_view_, SLOT(Stopped()));
@@ -746,7 +754,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   // Load theme
   // This is tricky: we need to save the default/system palette now,
-  // before loading user preferred theme (which will overide it), to be able to restore it later
+  // before loading user preferred theme (which will override it), to be able to restore it later
   const_cast<QPalette&>(Appearance::kDefaultPalette) = QApplication::palette();
   app_->appearance()->LoadUserTheme();
   StyleSheetLoader *css_loader = new StyleSheetLoader(this);
@@ -856,7 +864,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   RefreshStyleSheet();
 
-  qLog(Debug) << "Started";
+  qLog(Debug) << "Started" << QThread::currentThread();
   initialised_ = true;
 
   app_->scrobbler()->ConnectError();
@@ -1331,12 +1339,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   settings.endGroup();
 
   if (keep_running && event->spontaneous() && QSystemTrayIcon::isSystemTrayAvailable()) {
-    event->ignore();
     SetHiddenInTray(true);
   }
   else {
     Exit();
   }
+  event->ignore();
 
 }
 
@@ -1346,7 +1354,7 @@ void MainWindow::SetHiddenInTray(bool hidden) {
 
   // Some window managers don't remember maximized state between calls to hide() and show(), so we have to remember it ourself.
   if (hidden) {
-    //was_maximized_ = isMaximized();
+    was_maximized_ = isMaximized();
     hide();
   }
   else {
@@ -1643,7 +1651,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   if (not_in_queue == 0) playlist_queue_->setIcon(IconLoader::Load("go-previous"));
   else playlist_queue_->setIcon(IconLoader::Load("go-next"));
 
-  if (in_skipped < selected) playlist_skip_->setIcon(IconLoader::Load("media-forward"));
+  if (in_skipped < selected) playlist_skip_->setIcon(IconLoader::Load("media-skip-forward"));
   else playlist_skip_->setIcon(IconLoader::Load("media-play"));
 
 
@@ -2070,10 +2078,14 @@ void MainWindow::CommandlineOptionsReceived(const CommandlineOptions &options) {
 }
 
 void MainWindow::ForceShowOSD(const Song &song, const bool toggle) {
+
+  Q_UNUSED(song);
+
   if (toggle) {
     osd_->SetPrettyOSDToggleMode(toggle);
   }
   osd_->ReshowCurrentSong();
+
 }
 
 void MainWindow::Activate() {
@@ -2103,8 +2115,9 @@ void MainWindow::PlaylistUndoRedoChanged(QAction *undo, QAction *redo) {
   playlist_menu_->insertAction(playlist_undoredo_, redo);
 }
 
-#ifdef HAVE_GSTREAMER
 void MainWindow::AddFilesToTranscoder() {
+
+#ifdef HAVE_GSTREAMER
 
   QStringList filenames;
 
@@ -2119,21 +2132,24 @@ void MainWindow::AddFilesToTranscoder() {
   transcode_dialog_->SetFilenames(filenames);
 
   ShowTranscodeDialog();
-}
+
 #endif
 
+}
+
 void MainWindow::ShowCollectionConfig() {
-  //EnsureSettingsDialogCreated();
   settings_dialog_->OpenAtPage(SettingsDialog::Page_Collection);
 }
 
 void MainWindow::TaskCountChanged(int count) {
+
   if (count == 0) {
     ui_->status_bar_stack->setCurrentWidget(ui_->playlist_summary_page);
   }
   else {
     ui_->status_bar_stack->setCurrentWidget(ui_->multi_loading_indicator);
   }
+
 }
 
 void MainWindow::PlayingWidgetPositionChanged(bool above_status_bar) {
@@ -2168,6 +2184,8 @@ void MainWindow::CopyFilesToDevice(const QList<QUrl> &urls) {
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
+#else
+  Q_UNUSED(urls);
 #endif
 }
 
@@ -2334,13 +2352,13 @@ void MainWindow::ShowAboutDialog() {
 
 }
 
-#ifdef HAVE_GSTREAMER
 void MainWindow::ShowTranscodeDialog() {
 
+#ifdef HAVE_GSTREAMER
   transcode_dialog_->show();
+#endif
 
 }
-#endif
 
 void MainWindow::ShowErrorDialog(const QString &message) {
   error_dialog_->ShowMessage(message);
@@ -2386,11 +2404,13 @@ void MainWindow::PlaylistViewSelectionModelChanged() {
 }
 
 void MainWindow::PlaylistCurrentChanged(const QModelIndex &proxy_current) {
+
   const QModelIndex source_current =app_->playlist_manager()->current()->proxy()->mapToSource(proxy_current);
 
   // If the user moves the current index using the keyboard and then presses
   // F2, we don't want that editing the last column that was right clicked on.
   if (source_current != playlist_menu_index_) playlist_menu_index_ = QModelIndex();
+
 }
 
 void MainWindow::Raise() {
@@ -2398,15 +2418,25 @@ void MainWindow::Raise() {
   activateWindow();
 }
 
-#ifdef Q_OS_WIN32
-bool MainWindow::winEvent(MSG *msg, long*) {
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
+
+  Q_UNUSED(eventType);
+  Q_UNUSED(result);
+
+#ifdef Q_OS_WIN
+  MSG *msg = static_cast<MSG*>(message);
   thumbbar_->HandleWinEvent(msg);
+#else
+  Q_UNUSED(message);
+#endif
+
   return false;
+
 }
-#endif  // Q_OS_WIN32
+
+void MainWindow::AutoCompleteTags() {
 
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
-void MainWindow::AutoCompleteTags() {
 
   // Create the tag fetching stuff if it hasn't been already
   if (!tag_fetcher_) {
@@ -2440,6 +2470,9 @@ void MainWindow::AutoCompleteTags() {
   tag_fetcher_->StartFetch(songs);
 
   track_selection_dialog_->show();
+
+#endif
+
 }
 
 void MainWindow::AutoCompleteTagsAccepted() {
@@ -2450,8 +2483,8 @@ void MainWindow::AutoCompleteTagsAccepted() {
 
   // This is really lame but we don't know what rows have changed
   ui_->playlist->view()->update();
+
 }
-#endif
 
 void MainWindow::HandleNotificationPreview(OSD::Behaviour type, QString line1, QString line2) {
 

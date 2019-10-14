@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,6 +59,7 @@ SCollection::SCollection(Application *app, QObject *parent)
 
   backend_ = new CollectionBackend();
   backend()->moveToThread(app->database()->thread());
+  qLog(Debug) << backend_ << "moved to thread" << app->database()->thread();
 
   backend_->Init(app->database(), Song::Source_Collection, kSongsTable, kDirsTable, kSubdirsTable, kFtsTable);
 
@@ -89,6 +91,7 @@ void SCollection::Init() {
 
   watcher_->moveToThread(watcher_thread_);
   watcher_thread_->start(QThread::IdlePriority);
+  qLog(Debug) << watcher_ << "moved to thread" << watcher_thread_;
 
   watcher_->set_backend(backend_);
   watcher_->set_task_manager(app_->task_manager());
@@ -166,6 +169,8 @@ void SCollection::Stopped() {
 
 void SCollection::CurrentSongChanged(const Song &song) {  // FIXME
 
+  Q_UNUSED(song);
+
   TagReaderReply *reply = nullptr;
 
   if (reply) {
@@ -175,4 +180,5 @@ void SCollection::CurrentSongChanged(const Song &song) {  // FIXME
 }
 
 void SCollection::SongsStatisticsChanged(const SongList &songs) {
+  Q_UNUSED(songs);
 }

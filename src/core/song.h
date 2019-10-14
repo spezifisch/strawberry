@@ -143,7 +143,9 @@ class Song {
   QIcon IconForFiletype() const { return IconForFiletype(filetype()); }
 
   bool IsFileLossless() const;
-  static FileType FiletypeByExtension(QString ext);
+  static FileType FiletypeByMimetype(const QString &mimetype);
+  static FileType FiletypeByDescription(const QString &text);
+  static FileType FiletypeByExtension(const QString &ext);
 
   // Sort songs alphabetically using their pretty title
   static void SortSongsListAlphabetically(QList<Song> *songs);
@@ -156,7 +158,7 @@ class Song {
   void InitFromFilePartial(const QString &filename);  // Just store the filename: incomplete but fast
   void InitArtManual();  // Check if there is already a art in the cache and store the filename in art_manual
 
-  void MergeFromSimpleMetaBundle(const Engine::SimpleMetaBundle &bundle);
+  bool MergeFromSimpleMetaBundle(const Engine::SimpleMetaBundle &bundle);
 
 #ifdef HAVE_LIBGPOD
   void InitFromItdb(const _Itdb_Track *track, const QString &prefix);
@@ -250,6 +252,7 @@ class Song {
 
   // Playlist views are special because you don't want to fill in album artists automatically for compilations, but you do for normal albums:
   const QString &playlist_albumartist() const;
+  const QString &playlist_albumartist_sortable() const;
 
   // Returns true if this Song had it's cover manually unset by user.
   bool has_manually_unset_cover() const;
@@ -360,10 +363,10 @@ class Song {
 
   QSharedDataPointer<Private> d;
 };
-Q_DECLARE_METATYPE(Song);
+Q_DECLARE_METATYPE(Song)
 
 typedef QList<Song> SongList;
-Q_DECLARE_METATYPE(QList<Song>);
+Q_DECLARE_METATYPE(QList<Song>)
 
 uint qHash(const Song &song);
 // Hash function using field checked in IsSimilar function

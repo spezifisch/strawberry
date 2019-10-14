@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,8 +68,8 @@ class SortItems;
 }
 
 typedef QMap<int, Qt::Alignment> ColumnAlignmentMap;
-Q_DECLARE_METATYPE(Qt::Alignment);
-Q_DECLARE_METATYPE(ColumnAlignmentMap);
+Q_DECLARE_METATYPE(Qt::Alignment)
+Q_DECLARE_METATYPE(ColumnAlignmentMap)
 
 // Objects that may prevent a song being added to the playlist.
 // When there is something about to be inserted into it,
@@ -201,7 +202,7 @@ class Playlist : public QAbstractListModel {
   void set_special_type(const QString &v) { special_type_ = v; }
 
   const PlaylistItemPtr &item_at(int index) const { return items_[index]; }
-  const bool has_item_at(int index) const { return index >= 0 && index < rowCount(); }
+  bool has_item_at(int index) const { return index >= 0 && index < rowCount(); }
 
   PlaylistItemPtr current_item() const;
 
@@ -224,7 +225,7 @@ class Playlist : public QAbstractListModel {
   void set_scrobbled(bool state) { scrobbled_ = state; }
   void set_nowplaying(bool state) { nowplaying_ = state; }
   qint64 scrobble_point_nanosec() const { return scrobble_point_; }
-  void UpdateScrobblePoint(qint64 seek_point_nanosec = 0);
+  void UpdateScrobblePoint(const qint64 seek_point_nanosec = 0);
 
   // Changing the playlist
   void InsertItems (const PlaylistItemList &items, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
@@ -285,7 +286,7 @@ class Playlist : public QAbstractListModel {
   void IgnoreSorting(bool value) { ignore_sorting_ = value; }
 
   void ClearStreamMetadata();
-  void SetStreamMetadata(const QUrl &url, const Song &song);
+  void SetStreamMetadata(const QUrl &url, const Song &song, const bool minor);
   void ItemChanged(PlaylistItemPtr item);
   void UpdateItems(const SongList &songs);
 
@@ -306,10 +307,11 @@ class Playlist : public QAbstractListModel {
   // Removes items with given indices from the playlist. This operation is not undoable.
   void RemoveItemsWithoutUndo(const QList<int> &indices);
 
-signals:
+ signals:
   void RestoreFinished();
   void PlaylistLoaded();
   void CurrentSongChanged(const Song &metadata);
+  void SongMetadataChanged(const Song &metadata);
   void EditingFinished(const QModelIndex &index);
   void PlayRequested(const QModelIndex &index);
 
@@ -322,7 +324,7 @@ signals:
   // Signals that the queue has changed, meaning that the remaining queued items should update their position.
   void QueueChanged();
 
-private:
+ private:
   void SetCurrentIsPaused(bool paused);
   int NextVirtualIndex(int i, bool ignore_repeat_track) const;
   int PreviousVirtualIndex(int i, bool ignore_repeat_track) const;
@@ -356,7 +358,7 @@ private:
   void ItemsLoaded(QFuture<PlaylistItemList> future);
   void SongInsertVetoListenerDestroyed();
 
-private:
+ private:
   bool is_loading_;
   PlaylistFilter *proxy_;
   Queue *queue_;
@@ -407,8 +409,4 @@ private:
 
 };
 
-// QDataStream& operator <<(QDataStream&, const Playlist*);
-// QDataStream& operator >>(QDataStream&, Playlist*&);
-
 #endif  // PLAYLIST_H
-

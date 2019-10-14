@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,7 +131,6 @@ CollectionModel::CollectionModel(CollectionBackend *backend, Application *app, Q
 }
 
 CollectionModel::~CollectionModel() {
-  backend_->Close();
   delete root_;
 }
 
@@ -587,6 +587,8 @@ QVariant CollectionModel::AlbumIcon(const QModelIndex &idx) {
 }
 
 void CollectionModel::AlbumCoverLoaded(const quint64 id, const QUrl &cover_url, const QImage &image) {
+
+  Q_UNUSED(cover_url);
 
   if (!pending_art_.contains(id)) return;
 
@@ -1238,10 +1240,17 @@ CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool cr
       item->sort_text = SortTextForNumber(year) + " ";
       break;
     }
-    case GroupBy_Composer:  if (item->key.isNull()) item->key = s.composer();
-    case GroupBy_Performer: if (item->key.isNull()) item->key = s.performer();
-    case GroupBy_Grouping:  if (item->key.isNull()) item->key = s.grouping();
-    case GroupBy_Genre:     if (item->key.isNull()) item->key = s.genre();
+    case GroupBy_Composer:
+      if (item->key.isNull()) item->key = s.composer();
+      // fallthrough
+    case GroupBy_Performer:
+      if (item->key.isNull()) item->key = s.performer();
+      // fallthrough
+    case GroupBy_Grouping:
+      if (item->key.isNull()) item->key = s.grouping();
+      // fallthrough
+    case GroupBy_Genre:
+      if (item->key.isNull()) item->key = s.genre();
       item->display_text = TextOrUnknown(item->key);
       item->sort_text = SortTextForArtist(item->key);
       break;

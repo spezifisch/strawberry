@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <gst/gst.h>
+#include <gst/pbutils/pbutils.h>
 
 #include <QtGlobal>
 #include <QObject>
@@ -51,6 +52,7 @@ void GstStartup::InitialiseGStreamer() {
   SetEnvironment();
 
   gst_init(nullptr, nullptr);
+  gst_pb_utils_init();
 
 #ifdef HAVE_MOODBAR
   gstfastspectrum_register_static();
@@ -66,7 +68,7 @@ void GstStartup::SetEnvironment() {
 
 // On Windows and macOS we bundle the gstreamer plugins with strawberry
 #ifdef USE_BUNDLE
-#if defined(Q_OS_MACOS)
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
   scanner_path = QCoreApplication::applicationDirPath() + "/" + USE_BUNDLE_DIR + "/gst-plugin-scanner";
   plugin_path = QCoreApplication::applicationDirPath() + "/" + USE_BUNDLE_DIR + "/gstreamer";
 #elif defined(Q_OS_WIN32)

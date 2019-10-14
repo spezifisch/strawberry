@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -380,6 +381,8 @@ void Playlist::MoodbarUpdated(const QModelIndex& index) {
 
 bool Playlist::setData(const QModelIndex &index, const QVariant &value, int role) {
 
+  Q_UNUSED(role);
+
   int row = index.row();
   PlaylistItemPtr item = item_at(row);
   Song song = item->Metadata();
@@ -586,7 +589,16 @@ int Playlist::previous_row(bool ignore_repeat_track) const {
 void Playlist::set_current_row(int i, bool is_stopping) {
 
   QModelIndex old_current_item_index = current_item_index_;
+
   ClearStreamMetadata();
+
+  if (next_row() != -1 && next_row() != i) {
+    PlaylistItemPtr next_item = item_at(next_row());
+    if (next_item) {
+      next_item->ClearTemporaryMetadata();
+      emit dataChanged(index(next_row(), 0), index(next_row(), ColumnCount - 1));
+    }
+  }
 
   current_item_index_ = QPersistentModelIndex(index(i, 0, QModelIndex()));
 
@@ -1189,7 +1201,7 @@ bool Playlist::CompareItems(int column, Qt::SortOrder order, shared_ptr<Playlist
     case Column_Year:         cmp(year);
     case Column_OriginalYear: cmp(originalyear);
     case Column_Genre:        strcmp(genre);
-    case Column_AlbumArtist:  strcmp(playlist_albumartist);
+    case Column_AlbumArtist:  strcmp(playlist_albumartist_sortable);
     case Column_Composer:     strcmp(composer);
     case Column_Performer:    strcmp(performer);
     case Column_Grouping:     strcmp(grouping);
@@ -1577,31 +1589,29 @@ void Playlist::StopAfter(int row) {
 
 }
 
-void Playlist::SetStreamMetadata(const QUrl &url, const Song &song) {
+void Playlist::SetStreamMetadata(const QUrl &url, const Song &song, const bool minor) {
 
-  if (!current_item()) return;
-  if (current_item()->Url() != url) return;
+  if (!current_item() || current_item()->Url() != url) return;
 
-  // Don't update the metadata if it's only a minor change from before
-  if (
-      current_item()->Metadata().filetype() == song.filetype() &&
-      current_item()->Metadata().artist() == song.artist() &&
-      current_item()->Metadata().title() == song.title() &&
-      current_item()->Metadata().album() == song.album()
-  ) return;
+  //qLog(Debug) << "Setting temporary metadata for" << url;
 
-  // TODO: Update context & playlist if changed, but don't show popup.
-  //(song.bitrate() <= 0 || current_item()->Metadata().bitrate() == song.bitrate())
-  //(song.samplerate() <= 0 || current_item()->Metadata().samplerate() == song.samplerate())
-  //(song.bitdepth() <= 0 || current_item()->Metadata().bitdepth() == song.bitdepth())
-
-  qLog(Debug) << "Setting metadata for" << url << "to" << song.artist() << song.title();
+  bool length_changed = song.length_nanosec() != current_item_metadata().length_nanosec();
 
   current_item()->SetTemporaryMetadata(song);
 
-  InformOfCurrentSongChange();
+  if (minor) {
+    emit dataChanged(index(current_item_index_.row(), 0), index(current_item_index_.row(), ColumnCount - 1));
+    // if the song is invalid, we won't play it - there's no point in informing anybody about the change
+    const Song metadata(current_item_metadata());
+    if (metadata.is_valid()) {
+      emit SongMetadataChanged(metadata);
+    }
+  }
+  else {
+    InformOfCurrentSongChange();
+  }
 
-  UpdateScrobblePoint();
+  if (length_changed) UpdateScrobblePoint();
 
 }
 
@@ -1981,6 +1991,8 @@ void Playlist::RemoveDeletedSongs() {
 
 }
 
+namespace {
+
 struct SongSimilarHash {
   long operator() (const Song &song) const {
     return HashSimilar(song);
@@ -1992,6 +2004,8 @@ struct SongSimilarEqual {
     return song1.IsSimilar(song2);
   }
 };
+
+}  // namespace
 
 void Playlist::RemoveDuplicateSongs() {
 
@@ -2053,12 +2067,11 @@ bool Playlist::ApplyValidityOnCurrentSong(const QUrl &url, bool valid) {
     Song current_song = current->Metadata();
 
     // If validity has changed, reload the item
-    // FIXME: Why?
-    // Removed this because it caused "Empty filename passed to function" errors when not using local filenames.
-    // It also causes Context and Playing widget to reload the image and getting stuck in playing mode when the URL is broken.
-    //if(!current_song.is_cdda() && current_song.url() == url && current_song.is_valid() != QFile::exists(current_song.url().toLocalFile())) {
-      //ReloadItems(QList<int>() << current_row());
-    //}
+    if (current_song.source() == Song::Source_LocalFile || current_song.source() == Song::Source_Collection) {
+      if (current_song.url() == url && current_song.url().isLocalFile() && current_song.is_valid() != QFile::exists(current_song.url().toLocalFile())) {
+        ReloadItems(QList<int>() << current_row());
+      }
+    }
 
     // Gray out the song if it's now broken; otherwise undo the gray color
     if (valid) {
@@ -2087,7 +2100,7 @@ void Playlist::SkipTracks(const QModelIndexList &source_indexes) {
 
 }
 
-void Playlist::UpdateScrobblePoint(qint64 seek_point_nanosec) {
+void Playlist::UpdateScrobblePoint(const qint64 seek_point_nanosec) {
 
   const qint64 length = current_item_metadata().length_nanosec();
 

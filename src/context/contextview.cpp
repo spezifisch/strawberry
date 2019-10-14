@@ -156,8 +156,8 @@ void ContextView::AddActions() {
   s.beginGroup(kSettingsGroup);
   action_show_data_->setChecked(s.value("show_data", true).toBool());
   action_show_output_->setChecked(s.value("show_output", true).toBool());
-  action_show_albums_->setChecked(s.value("show_albums", true).toBool());
-  action_show_lyrics_->setChecked(s.value("show_lyrics", false).toBool());
+  action_show_albums_->setChecked(s.value("show_albums", false).toBool());
+  action_show_lyrics_->setChecked(s.value("show_lyrics", true).toBool());
   s.endGroup();
 
   connect(action_show_data_, SIGNAL(triggered()), this, SLOT(ActionShowData()));
@@ -199,7 +199,7 @@ void ContextView::SongChanged(const Song &song) {
     song_playing_ = song;
     song_ = song;
     SetSong(song);
-    if (lyrics_.isEmpty() && action_show_lyrics_->isChecked()) {
+    if (lyrics_.isEmpty() && action_show_lyrics_->isChecked() && !song.artist().isEmpty() && !song.title().isEmpty()) {
       lyrics_fetcher_->Clear();
       lyrics_id_ = lyrics_fetcher_->Search(song.effective_albumartist(), song.album(), song.title());
     }
@@ -514,6 +514,7 @@ bool ContextView::eventFilter(QObject *object, QEvent *event) {
     case QEvent::Paint:{
       handlePaintEvent(object, event);
     }
+    // fallthrough
     default:{
       return QObject::eventFilter(object, event);
     }
@@ -535,6 +536,8 @@ void ContextView::handlePaintEvent(QObject *object, QEvent *event) {
 
 void ContextView::PaintEventAlbum(QEvent *event) {
 
+  Q_UNUSED(event);
+
   QPainter p(ui_->label_play_album);
 
   DrawImage(&p);
@@ -544,6 +547,7 @@ void ContextView::PaintEventAlbum(QEvent *event) {
     p.setOpacity(pixmap_previous_opacity_);
     p.drawPixmap(0, 0, pixmap_previous_);
   }
+
 }
 
 void ContextView::DrawImage(QPainter *p) {
@@ -594,6 +598,8 @@ void ContextView::ScaleCover() {
 }
 
 void ContextView::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image) {
+
+  Q_UNUSED(cover_url);
 
   if (song != song_playing_ || image == image_original_) return;
 
@@ -680,7 +686,7 @@ void ContextView::ActionShowLyrics() {
   s.setValue("show_lyrics", action_show_lyrics_->isChecked());
   s.endGroup();
   SetSong(song_);
-  if (lyrics_.isEmpty() && action_show_lyrics_->isChecked()) {
+  if (lyrics_.isEmpty() && action_show_lyrics_->isChecked() && !song_.artist().isEmpty() && !song_.title().isEmpty()) {
     lyrics_fetcher_->Clear();
     lyrics_id_ = lyrics_fetcher_->Search(song_.artist(), song_.album(), song_.title());
   }

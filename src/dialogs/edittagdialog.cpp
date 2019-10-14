@@ -563,6 +563,8 @@ void EditTagDialog::UpdateStatisticsTab(const Song &song) {
 
 void EditTagDialog::AlbumCoverLoaded(const quint64 id, const QUrl &cover_url, const QImage &scaled, const QImage &original) {
 
+  Q_UNUSED(cover_url);
+
   if (id == cover_art_id_) {
     ui_->art->setPixmap(QPixmap::fromImage(scaled));
     original_ = original;
@@ -839,8 +841,9 @@ void EditTagDialog::ResetPlayCounts() {
   UpdateStatisticsTab(*song);
 }
 
-#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
 void EditTagDialog::FetchTag() {
+
+#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
 
   const QModelIndexList sel = ui_->song_list->selectionModel()->selectedIndexes();
 
@@ -862,9 +865,13 @@ void EditTagDialog::FetchTag() {
 
   results_dialog_->show();
 
+#endif
+
 }
 
 void EditTagDialog::FetchTagSongChosen(const Song &original_song, const Song &new_metadata) {
+
+#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
 
   const QString filename = original_song.url().toLocalFile();
 
@@ -891,8 +898,12 @@ void EditTagDialog::FetchTagSongChosen(const Song &original_song, const Song &ne
     UpdateUI(sel);
   }
 
-}
+#else
+  Q_UNUSED(original_song)
+  Q_UNUSED(new_metadata)
 #endif
+
+}
 
 void EditTagDialog::SongSaveComplete(TagReaderReply *reply, const QString &filename, const Song &song) {
 

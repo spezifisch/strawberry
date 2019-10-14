@@ -114,7 +114,7 @@ bool GstEngine::Init() {
 
 Engine::State GstEngine::state() const {
 
-  if (!current_pipeline_) return media_url_.isEmpty() ? Engine::Empty : Engine::Idle;
+  if (!current_pipeline_) return stream_url_.isEmpty() ? Engine::Empty : Engine::Idle;
 
   switch (current_pipeline_->state()) {
     case GST_STATE_NULL:
@@ -131,11 +131,11 @@ Engine::State GstEngine::state() const {
 
 }
 
-void GstEngine::StartPreloading(const QUrl &media_url, const QUrl &original_url, bool force_stop_at_end, qint64 beginning_nanosec, qint64 end_nanosec) {
+void GstEngine::StartPreloading(const QUrl &stream_url, const QUrl &original_url, const bool force_stop_at_end, const qint64 beginning_nanosec, const qint64 end_nanosec) {
 
   EnsureInitialised();
 
-  QByteArray gst_url = FixupUrl(media_url);
+  QByteArray gst_url = FixupUrl(stream_url);
 
   // No crossfading, so we can just queue the new URL in the existing pipeline and get gapless playback (hopefully)
   if (current_pipeline_)
@@ -143,20 +143,20 @@ void GstEngine::StartPreloading(const QUrl &media_url, const QUrl &original_url,
 
 }
 
-bool GstEngine::Load(const QUrl &media_url, const QUrl &original_url, Engine::TrackChangeFlags change, bool force_stop_at_end, quint64 beginning_nanosec, qint64 end_nanosec) {
+bool GstEngine::Load(const QUrl &stream_url, const QUrl &original_url, Engine::TrackChangeFlags change, const bool force_stop_at_end, const quint64 beginning_nanosec, const qint64 end_nanosec) {
 
   EnsureInitialised();
 
-  Engine::Base::Load(media_url, original_url, change, force_stop_at_end, beginning_nanosec, end_nanosec);
+  Engine::Base::Load(stream_url, original_url, change, force_stop_at_end, beginning_nanosec, end_nanosec);
 
-  QByteArray gst_url = FixupUrl(media_url);
+  QByteArray gst_url = FixupUrl(stream_url);
 
   bool crossfade = current_pipeline_ && ((crossfade_enabled_ && change & Engine::Manual) || (autocrossfade_enabled_ && change & Engine::Auto) || ((crossfade_enabled_ || autocrossfade_enabled_) && change & Engine::Intro));
 
   if (change & Engine::Auto && change & Engine::SameAlbum && !crossfade_same_album_)
     crossfade = false;
 
-  if (!crossfade && current_pipeline_ && current_pipeline_->media_url() == gst_url && change & Engine::Auto) {
+  if (!crossfade && current_pipeline_ && current_pipeline_->stream_url() == gst_url && change & Engine::Auto) {
     // We're not crossfading, and the pipeline is already playing the URI we want, so just do nothing.
     return true;
   }
@@ -181,7 +181,7 @@ bool GstEngine::Load(const QUrl &media_url, const QUrl &original_url, Engine::Tr
 
 }
 
-bool GstEngine::Play(quint64 offset_nanosec) {
+bool GstEngine::Play(const quint64 offset_nanosec) {
 
   EnsureInitialised();
 
@@ -198,11 +198,11 @@ bool GstEngine::Play(quint64 offset_nanosec) {
 
 }
 
-void GstEngine::Stop(bool stop_after) {
+void GstEngine::Stop(const bool stop_after) {
 
   StopTimers();
 
-  media_url_ = QUrl();  // To ensure we return Empty from state()
+  stream_url_ = QUrl();  // To ensure we return Empty from state()
   original_url_ = QUrl();
   beginning_nanosec_ = end_nanosec_ = 0;
 
@@ -272,7 +272,7 @@ void GstEngine::Unpause() {
   }
 }
 
-void GstEngine::Seek(quint64 offset_nanosec) {
+void GstEngine::Seek(const quint64 offset_nanosec) {
 
   if (!current_pipeline_) return;
 
@@ -285,7 +285,7 @@ void GstEngine::Seek(quint64 offset_nanosec) {
   }
 }
 
-void GstEngine::SetVolumeSW(uint percent) {
+void GstEngine::SetVolumeSW(const uint percent) {
   if (current_pipeline_) current_pipeline_->SetVolume(percent);
 }
 
@@ -314,7 +314,7 @@ qint64 GstEngine::length_nanosec() const {
 
 }
 
-const Engine::Scope &GstEngine::scope(int chunk_length) {
+const Engine::Scope &GstEngine::scope(const int chunk_length) {
 
   // The new buffer could have a different size
   if (have_new_buffer_) {
@@ -392,7 +392,7 @@ void GstEngine::ReloadSettings() {
 
 }
 
-GstElement *GstEngine::CreateElement(const QString &factoryName, GstElement *bin, bool showerror) {
+GstElement *GstEngine::CreateElement(const QString &factoryName, GstElement *bin, const bool showerror) {
 
   // Make a unique name
   QString name = factoryName + "-" + QString::number(next_element_id_++);
@@ -411,7 +411,7 @@ GstElement *GstEngine::CreateElement(const QString &factoryName, GstElement *bin
   return element;
 }
 
-void GstEngine::ConsumeBuffer(GstBuffer *buffer, int pipeline_id) {
+void GstEngine::ConsumeBuffer(GstBuffer *buffer, const int pipeline_id) {
 
   // Schedule this to run in the GUI thread.  The buffer gets added to the queue and unreffed by UpdateScope.
   if (!QMetaObject::invokeMethod(this, "AddBufferToScope", Q_ARG(GstBuffer*, buffer), Q_ARG(int, pipeline_id))) {
@@ -420,14 +420,14 @@ void GstEngine::ConsumeBuffer(GstBuffer *buffer, int pipeline_id) {
 
 }
 
-void GstEngine::SetEqualizerEnabled(bool enabled) {
+void GstEngine::SetEqualizerEnabled(const bool enabled) {
 
   equalizer_enabled_ = enabled;
 
   if (current_pipeline_) current_pipeline_->SetEqualizerEnabled(enabled);
 }
 
-void GstEngine::SetEqualizerParameters(int preamp, const QList<int> &band_gains) {
+void GstEngine::SetEqualizerParameters(const int preamp, const QList<int> &band_gains) {
 
   equalizer_preamp_ = preamp;
   equalizer_gains_ = band_gains;
@@ -437,7 +437,7 @@ void GstEngine::SetEqualizerParameters(int preamp, const QList<int> &band_gains)
 
 }
 
-void GstEngine::SetStereoBalance(float value) {
+void GstEngine::SetStereoBalance(const float value) {
 
   stereo_balance_ = value;
 
@@ -479,7 +479,7 @@ void GstEngine::timerEvent(QTimerEvent *e) {
 
 }
 
-void GstEngine::EndOfStreamReached(int pipeline_id, bool has_next_track) {
+void GstEngine::EndOfStreamReached(const int pipeline_id, const bool has_next_track) {
 
   if (!current_pipeline_.get() || current_pipeline_->id() != pipeline_id)
     return;
@@ -503,7 +503,7 @@ void GstEngine::HandlePipelineError(int pipeline_id, const QString &message, int
   emit StateChanged(Engine::Error);
 
   if (domain == GST_RESOURCE_ERROR && (error_code == GST_RESOURCE_ERROR_NOT_FOUND || error_code == GST_RESOURCE_ERROR_NOT_AUTHORIZED)) {
-     emit InvalidSongRequested(media_url_);
+     emit InvalidSongRequested(stream_url_);
    }
   else {
     emit FatalError();
@@ -513,15 +513,14 @@ void GstEngine::HandlePipelineError(int pipeline_id, const QString &message, int
 
 }
 
-void GstEngine::NewMetaData(int pipeline_id, const Engine::SimpleMetaBundle &bundle) {
+void GstEngine::NewMetaData(const int pipeline_id, const Engine::SimpleMetaBundle &bundle) {
 
-  if (!current_pipeline_.get() || current_pipeline_->id() != pipeline_id)
-    return;
-
+  if (!current_pipeline_.get() || current_pipeline_->id() != pipeline_id) return;
   emit MetaData(bundle);
+
 }
 
-void GstEngine::AddBufferToScope(GstBuffer *buf, int pipeline_id) {
+void GstEngine::AddBufferToScope(GstBuffer *buf, const int pipeline_id) {
 
   if (!current_pipeline_ || current_pipeline_->id() != pipeline_id) {
     gst_buffer_unref(buf);
@@ -581,7 +580,7 @@ void GstEngine::PlayDone(QFuture<GstStateChangeReturn> future, const quint64 off
   if (ret == GST_STATE_CHANGE_FAILURE) {
     // Failure, but we got a redirection URL - try loading that instead
     QByteArray redirect_url = current_pipeline_->redirect_url();
-    if (!redirect_url.isEmpty() && redirect_url != current_pipeline_->media_url()) {
+    if (!redirect_url.isEmpty() && redirect_url != current_pipeline_->stream_url()) {
       qLog(Info) << "Redirecting to" << redirect_url;
       current_pipeline_ = CreatePipeline(redirect_url, current_pipeline_->original_url(), end_nanosec_);
       Play(offset_nanosec);
@@ -604,7 +603,7 @@ void GstEngine::PlayDone(QFuture<GstStateChangeReturn> future, const quint64 off
 
   emit StateChanged(Engine::Playing);
   // We've successfully started playing a media stream with this url
-  emit ValidSongRequested(media_url_);
+  emit ValidSongRequested(stream_url_);
 
 }
 
@@ -619,7 +618,7 @@ void GstEngine::BufferingStarted() {
 
 }
 
-void GstEngine::BufferingProgress(int percent) {
+void GstEngine::BufferingProgress(const int percent) {
   task_manager_->SetTaskProgress(buffering_task_id_, percent, 100);
 }
 
@@ -678,7 +677,7 @@ QByteArray GstEngine::FixupUrl(const QUrl &url) {
     }
     else {
       // Currently, Gstreamer can't handle input CD devices inside cdda URL.
-      // So we handle them ourselve: we extract the track number and re-create an URL with only cdda:// + the track number (which can be handled by Gstreamer).
+      // So we handle them ourselves: we extract the track number and re-create an URL with only cdda:// + the track number (which can be handled by Gstreamer).
       // We keep the device in mind, and we will set it later using SourceSetupCallback
       QStringList path = url.path().split('/');
       str = QString("cdda://%1").arg(path.takeLast());
@@ -762,7 +761,7 @@ shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline() {
 
 }
 
-shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline(const QByteArray &gst_url, const QUrl &original_url, qint64 end_nanosec) {
+shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline(const QByteArray &gst_url, const QUrl &original_url, const qint64 end_nanosec) {
 
   shared_ptr<GstEnginePipeline> ret = CreatePipeline();
   if (!ret->InitFromUrl(gst_url, original_url, end_nanosec)) ret.reset();
@@ -770,7 +769,7 @@ shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline(const QByteArray &gst_ur
 
 }
 
-void GstEngine::UpdateScope(int chunk_length) {
+void GstEngine::UpdateScope(const int chunk_length) {
 
   typedef Engine::Scope::value_type sample_type;
 

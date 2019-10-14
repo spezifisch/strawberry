@@ -27,7 +27,9 @@
 
 class Application;
 
-SubsonicUrlHandler::SubsonicUrlHandler(Application *app, SubsonicService *service) : UrlHandler(service), service_(service) {}
+SubsonicUrlHandler::SubsonicUrlHandler(Application *app, SubsonicService *service) : UrlHandler(service), service_(service) {
+  Q_UNUSED(app);
+}
 
 UrlHandler::LoadResult SubsonicUrlHandler::StartLoading(const QUrl &url) {
 
@@ -52,17 +54,17 @@ UrlHandler::LoadResult SubsonicUrlHandler::StartLoading(const QUrl &url) {
     url_query.addQueryItem(encoded_param.first, encoded_param.second);
   }
 
-  QUrl media_url(server_url());
+  QUrl stream_url(server_url());
 
-  if (!media_url.path().isEmpty() && media_url.path().right(1) == "/") {
-    media_url.setPath(media_url.path() + QString("rest/stream"));
+  if (!stream_url.path().isEmpty() && stream_url.path().right(1) == "/") {
+    stream_url.setPath(stream_url.path() + QString("rest/stream.view"));
   }
   else
-    media_url.setPath(media_url.path() + QString("/rest/stream"));
+    stream_url.setPath(stream_url.path() + QString("/rest/stream.view"));
 
-  media_url.setQuery(url_query);
+  stream_url.setQuery(url_query);
 
-  return LoadResult(url, LoadResult::TrackAvailable, media_url);
+  return LoadResult(url, LoadResult::TrackAvailable, stream_url);
 
 }
 

@@ -18,6 +18,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -U__STRICT_ANSI__ -Wall -Woverloaded-virtual -Wno-sign-compare -fpermissive")
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wpedantic")
+endif()
+
 option(BUILD_WERROR "Build with -Werror" OFF)
 
 if(BUILD_WERROR)
@@ -58,6 +62,7 @@ if(HAVE_GSTREAMER)
   include_directories(${GSTREAMER_AUDIO_INCLUDE_DIRS})
   include_directories(${GSTREAMER_BASE_INCLUDE_DIRS})
   include_directories(${GSTREAMER_TAG_INCLUDE_DIRS})
+  include_directories(${GSTREAMER_PBUTILS_INCLUDE_DIRS})
 endif()
 
 if(HAVE_PHONON)
@@ -91,6 +96,7 @@ set(SOURCES
   core/multisortfilterproxy.cpp
   core/musicstorage.cpp
   core/network.cpp
+  core/networktimeouts.cpp
   core/networkproxyfactory.cpp
   core/qtfslistener.cpp
   core/settingsprovider.cpp
@@ -109,7 +115,6 @@ set(SOURCES
   core/qtsystemtrayicon.cpp
   core/standarditemiconloader.cpp
   core/systemtrayicon.cpp
-  core/windows7thumbbar.cpp
   core/screensaver.cpp
   core/scopedtransaction.cpp
   core/translations.cpp
@@ -313,6 +318,7 @@ set(HEADERS
   core/filesystemwatcherinterface.h
   core/mergedproxymodel.h
   core/network.h
+  core/networktimeouts.h
   core/qtfslistener.h
   core/songloader.h
   core/tagreaderclient.h
@@ -321,7 +327,6 @@ set(HEADERS
   core/qtsystemtrayicon.h
   core/standarditemiconloader.h
   core/systemtrayicon.h
-  core/windows7thumbbar.h
   core/mimedata.h
 
   engine/enginebase.h
@@ -909,6 +914,9 @@ optional_source(WIN32
   SOURCES
     engine/directsounddevicefinder.cpp
     widgets/osd_win.cpp
+    core/windows7thumbbar.cpp
+  HEADERS
+    core/windows7thumbbar.h
 )
 
 optional_source(HAVE_TIDAL
@@ -1072,7 +1080,7 @@ if(HAVE_ALSA)
 endif(HAVE_ALSA)
 
 if(HAVE_GSTREAMER)
-  target_link_libraries(strawberry_lib ${GSTREAMER_LIBRARIES} ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_AUDIO_LIBRARIES} ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_TAG_LIBRARIES})
+  target_link_libraries(strawberry_lib ${GSTREAMER_LIBRARIES} ${GSTREAMER_BASE_LIBRARIES} ${GSTREAMER_AUDIO_LIBRARIES} ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_TAG_LIBRARIES} ${GSTREAMER_PBUTILS_LIBRARIES})
 endif()
 
 if(HAVE_XINE)

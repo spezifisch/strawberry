@@ -1327,13 +1327,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   settings.endGroup();
 
   if (keep_running && event->spontaneous() && tray_icon_->IsAvailable()) {
+    event->ignore();
     SetHiddenInTray(true);
   }
   else {
     Exit();
   }
-
-  event->ignore();
 
 }
 
@@ -1350,6 +1349,7 @@ void MainWindow::SetHiddenInTray(bool hidden) {
     if (was_maximized_) showMaximized();
     else show();
   }
+
 }
 
 void MainWindow::FilePathChanged(const QString &path) {

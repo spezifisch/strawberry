@@ -72,6 +72,7 @@ class QTimerEvent;
 class Application;
 class CollectionBackend;
 class PlaylistHeader;
+class DynamicPlaylistControls;
 
 // This proxy style works around a bug/feature introduced in Qt 4.7's QGtkStyle
 // that uses Gtk to paint row backgrounds, ignoring any custom brush or palette the caller set in the QStyleOption.
@@ -150,6 +151,7 @@ class PlaylistView : public QTreeView {
   void dropEvent(QDropEvent *event);
   bool eventFilter(QObject *object, QEvent *event);
   void focusInEvent(QFocusEvent *event);
+  void resizeEvent(QResizeEvent* event);
 
   // QAbstractScrollArea
   void scrollContentsBy(int dx, int dy);
@@ -173,6 +175,7 @@ class PlaylistView : public QTreeView {
   void Stopped();
   void SongChanged(const Song &song);
   void AlbumCoverLoaded(const Song &new_song, const QUrl &cover_url, const QImage &song_art);
+  void DynamicModeChanged(bool dynamic);
 
  private:
   void LoadGeometry();
@@ -199,6 +202,8 @@ class PlaylistView : public QTreeView {
   QList<int> GetEditableColumns();
   QModelIndex NextEditableIndex(const QModelIndex &current);
   QModelIndex PrevEditableIndex(const QModelIndex &current);
+
+  void RepositionDynamicControls();
 
   Application *app_;
   PlaylistProxyStyle *style_;
@@ -271,6 +276,8 @@ class PlaylistView : public QTreeView {
   QByteArray state_;
 
   Song song_playing_;
+
+  DynamicPlaylistControls* dynamic_controls_;
 
 };
 

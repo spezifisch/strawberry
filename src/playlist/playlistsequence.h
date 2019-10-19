@@ -72,6 +72,7 @@ class PlaylistSequence : public QWidget {
   void SetShuffleMode(PlaylistSequence::ShuffleMode mode);
   void CycleShuffleMode();
   void CycleRepeatMode();
+  void SetUsingDynamicPlaylist(bool dynamic);
 
  signals:
   void RepeatModeChanged(PlaylistSequence::RepeatMode mode);
@@ -97,7 +98,7 @@ class PlaylistSequence : public QWidget {
   bool loading_;
   RepeatMode repeat_mode_;
   ShuffleMode shuffle_mode_;
-
+  bool dynamic_;
 };
 
 #endif  // PLAYLISTSEQUENCE_H

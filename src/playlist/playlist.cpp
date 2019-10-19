@@ -86,6 +86,10 @@
 #include "songplaylistitem.h"
 #include "tagreadermessages.pb.h"
 
+#include "smartplaylists/playlistgenerator.h"
+#include "smartplaylists/playlistgeneratorinserter.h"
+#include "smartplaylists/playlistgeneratormimedata.h"
+
 #include "internet/internetservices.h"
 #include "internet/internetplaylistitem.h"
 #include "internet/internetsongmimedata.h"
@@ -337,6 +341,9 @@ QVariant Playlist::data(const QModelIndex &idx, int role) const {
 
       if (items_[idx.row()]->HasCurrentForegroundColor()) {
         return QBrush(items_[idx.row()]->GetCurrentForegroundColor());
+      }
+      if (idx.row() < dynamic_history_length()) {
+        return QBrush(kDynamicHistoryColor);
       }
 
       return QVariant();
@@ -630,6 +637,35 @@ void Playlist::set_current_row(int i, bool is_stopping) {
     InformOfCurrentSongChange();
   }
 
+  // The structure of a dynamic playlist is as follows:
+  //   history - active song - future
+  // We have to ensure that this invariant is maintained.
+  if (dynamic_playlist_ && current_item_index_.isValid()) {
+
+    // When advancing to the next track
+    if (i > old_current_item_index.row()) {
+      // Move the new item one position ahead of the last item in the history.
+      MoveItemWithoutUndo(current_item_index_.row(), dynamic_history_length());
+
+      // Compute the number of new items that have to be inserted. This is not
+      // necessarily 1 because the user might have added or removed items
+      // manually. Note that the future excludes the current item.
+      const int count = dynamic_history_length() + 1 + dynamic_playlist_->GetDynamicFuture() - items_.count();
+      if (count > 0) {
+        InsertDynamicItems(count);
+      }
+
+      // Shrink the history, again this is not necessarily by 1, because the
+      // user might have moved items by hand.
+      const int remove_count = dynamic_history_length() - dynamic_playlist_->GetDynamicHistory();
+      if (0 < remove_count) RemoveItemsWithoutUndo(0, remove_count);
+    }
+
+    // the above actions make all commands on the undo stack invalid, so we
+    // better clear it.
+    undo_stack_->clear();
+  }
+
   if (current_item_index_.isValid()) {
     last_played_item_index_ = current_item_index_;
     Save();
@@ -637,6 +673,16 @@ void Playlist::set_current_row(int i, bool is_stopping) {
 
   UpdateScrobblePoint();
   nowplaying_ = false;
+
+}
+
+void Playlist::InsertDynamicItems(int count) {
+
+  PlaylistGeneratorInserter* inserter = new PlaylistGeneratorInserter(task_manager_, collection_, this);
+  connect(inserter, SIGNAL(Error(QString)), SIGNAL(Error(QString)));
+  connect(inserter, SIGNAL(PlayRequested(QModelIndex)), SIGNAL(PlayRequested(QModelIndex)));
+
+  inserter->Load(this, -1, false, false, false, dynamic_playlist_, count);
 
 }
 
@@ -692,6 +738,9 @@ bool Playlist::dropMimeData(const QMimeData *data, Qt::DropAction action, int ro
   }
   else if (const InternetSongMimeData* internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
     InsertInternetItems(internet_song_data->service, internet_song_data->songs, row, play_now, enqueue_now, enqueue_next_now);
+  }
+else if (const PlaylistGeneratorMimeData* generator_data = qobject_cast<const PlaylistGeneratorMimeData*>(data)) {
+    InsertSmartPlaylist(generator_data->generator_, row, play_now, enqueue_now, enqueue_next_now);
   }
   else if (data->hasFormat(kRowsMimetype)) {
     // Dragged from the playlist
@@ -763,6 +812,37 @@ void Playlist::InsertUrls(const QList<QUrl> &urls, int pos, bool play_now, bool 
   inserter->Load(this, pos, play_now, enqueue, enqueue_next, urls);
 
 }
+
+void Playlist::InsertSmartPlaylist(PlaylistGeneratorPtr generator, int pos, bool play_now, bool enqueue, bool enqueue_next) {
+
+  qLog(Debug) << __PRETTY_FUNCTION__ << generator->is_dynamic();
+
+  // Hack: If the generator hasn't got a collection set then use the main one
+  if (!generator->collection()) {
+    generator->set_collection(collection_);
+  }
+
+  PlaylistGeneratorInserter *inserter = new PlaylistGeneratorInserter(task_manager_, collection_, this);
+  connect(inserter, SIGNAL(Error(QString)), SIGNAL(Error(QString)));
+
+  inserter->Load(this, pos, play_now, enqueue, enqueue_next, generator);
+
+  if (generator->is_dynamic()) {
+    TurnOnDynamicPlaylist(generator);
+  }
+
+}
+
+void Playlist::TurnOnDynamicPlaylist(PlaylistGeneratorPtr gen) {
+
+  dynamic_playlist_ = gen;
+  playlist_sequence_->SetUsingDynamicPlaylist(true);
+  ShuffleModeChanged(PlaylistSequence::Shuffle_Off);
+  emit DynamicModeChanged(true);
+  Save();
+
+}
+
 
 void Playlist::MoveItemWithoutUndo(int source, int dest) {
   MoveItemsWithoutUndo(QList<int>() << source, dest);
@@ -1230,6 +1310,9 @@ void Playlist::sort(int column, Qt::SortOrder order) {
   PlaylistItemList new_items(items_);
   PlaylistItemList::iterator begin = new_items.begin();
 
+  if (dynamic_playlist_ && current_item_index_.isValid())
+    begin += current_item_index_.row() + 1;
+
   if (column == Column_Album) {
     // When sorting by album, also take into account discs and tracks.
     std::stable_sort(begin, new_items.end(), std::bind(&Playlist::CompareItems, Column_Track, order, _1, _2));
@@ -1294,7 +1377,7 @@ void Playlist::SetCurrentIsPaused(bool paused) {
 void Playlist::Save() const {
   if (!backend_ || is_loading_) return;
 
-  backend_->SavePlaylistAsync(id_, items_, last_played_row());
+  backend_->SavePlaylistAsync(id_, items_, last_played_row(), dynamic_playlist_);
 
 }
 
@@ -1336,6 +1419,22 @@ void Playlist::ItemsLoaded(QFuture<PlaylistItemList> future) {
 
   // The newly loaded list of items might be shorter than it was before so look out for a bad last_played index
   last_played_item_index_ = p.last_played == -1 || p.last_played >= rowCount() ? QModelIndex() : index(p.last_played);
+
+  if (!p.dynamic_type.isEmpty()) {
+    PlaylistGeneratorPtr gen = PlaylistGenerator::Create(p.dynamic_type);
+    if (gen) {
+
+      CollectionBackend *backend = nullptr;
+      if (p.dynamic_backend == collection_->songs_table()) backend = collection_;
+
+      if (backend) {
+        gen->set_collection(backend);
+        gen->Load(p.dynamic_data);
+        TurnOnDynamicPlaylist(gen);
+      }
+
+    }
+  }
 
   emit RestoreFinished();
 
@@ -1573,7 +1672,26 @@ void Playlist::Clear() {
     undo_stack_->push(new PlaylistUndoCommands::RemoveItems(this, 0, count));
   }
 
+  TurnOffDynamicPlaylist();
+
   Save();
+
+}
+
+void Playlist::RepopulateDynamicPlaylist() {
+
+  if (!dynamic_playlist_) return;
+
+  RemoveItemsNotInQueue();
+  InsertSmartPlaylist(dynamic_playlist_);
+
+}
+
+void Playlist::ExpandDynamicPlaylist() {
+
+  if (!dynamic_playlist_) return;
+
+  InsertDynamicItems(5);
 
 }
 
@@ -1645,6 +1763,9 @@ void Playlist::Shuffle() {
   PlaylistItemList new_items(items_);
 
   int begin = 0;
+
+  if (dynamic_playlist_ && current_item_index_.isValid())
+    begin += current_item_index_.row() + 1;
 
   const int count = items_.count();
   for (int i = begin; i < count; ++i) {
@@ -2003,4 +2124,24 @@ void Playlist::UpdateScrobblePoint(const qint64 seek_point_nanosec) {
   scrobbled_ = false;
 
 }
+
+int Playlist::dynamic_history_length() const {
+  return dynamic_playlist_ && last_played_item_index_.isValid()
+             ? last_played_item_index_.row() + 1
+             : 0;
+}
+
+void Playlist::TurnOffDynamicPlaylist() {
+
+  dynamic_playlist_.reset();
+
+  if (playlist_sequence_) {
+    playlist_sequence_->SetUsingDynamicPlaylist(false);
+    ShuffleModeChanged(playlist_sequence_->shuffle_mode());
+  }
+  emit DynamicModeChanged(false);
+  Save();
+
+}
+
 

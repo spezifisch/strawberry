@@ -63,6 +63,8 @@
 
 #include "internet/internetsearch.h"
 
+#include "smartplaylists/playlistgenerator_fwd.h"
+
 void RegisterMetaTypes() {
 
   qRegisterMetaType<const char*>("const char*");
@@ -119,5 +121,7 @@ void RegisterMetaTypes() {
 
   qRegisterMetaType<InternetSearch::ResultList>("InternetSearch::ResultList");
   qRegisterMetaType<InternetSearch::Result>("InternetSearch::Result");
+
+  qRegisterMetaType<PlaylistGeneratorPtr>("PlaylistGeneratorPtr");
 
 }

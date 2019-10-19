@@ -46,6 +46,7 @@
 #include "core/logging.h"
 #include "core/scopedtransaction.h"
 #include "core/utilities.h"
+#include "smartplaylists/smartplaylistsearch.h"
 
 #include "directory.h"
 #include "collectionbackend.h"
@@ -1279,3 +1280,36 @@ void CollectionBackend::DeleteAll() {
   emit DatabaseReset();
 
 }
+
+SongList CollectionBackend::FindSongs(const SmartPlaylistSearch& search) {
+
+  QMutexLocker l(db_->Mutex());
+  QSqlDatabase db(db_->Connect());
+
+  // Build the query
+  QString sql = search.ToSql(songs_table());
+
+  // Run the query
+  SongList ret;
+  QSqlQuery query(db);
+  query.prepare(sql);
+  query.exec();
+  if (db_->CheckErrors(query)) return ret;
+
+  // Read the results
+  while (query.next()) {
+    Song song;
+    song.InitFromQuery(query, true);
+    ret << song;
+  }
+  return ret;
+
+}
+
+SongList CollectionBackend::GetAllSongs() {
+
+  // Get all the songs!
+  return FindSongs(SmartPlaylistSearch(SmartPlaylistSearch::Type_All, SmartPlaylistSearch::TermList(), SmartPlaylistSearch::Sort_FieldAsc, SmartPlaylistSearchTerm::Field_Artist, -1));
+
+}
+

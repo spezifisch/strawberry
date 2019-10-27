@@ -274,7 +274,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   // Add tabs to the fancy tab widget
   ui_->tabs->AddTab(context_view_, "context", IconLoader::Load("strawberry"), tr("Context"));
-  ui_->tabs->AddTab(collection_view_, "collection", IconLoader::Load("vinyl"), tr("Collection"));
+  ui_->tabs->AddTab(collection_view_, "collection", IconLoader::Load("library-music"), tr("Collection"));
   ui_->tabs->AddTab(file_view_, "files", IconLoader::Load("document-open"), tr("Files"));
   ui_->tabs->AddTab(playlist_list_, "playlists", IconLoader::Load("view-media-playlist"), tr("Playlists"));
   ui_->tabs->AddTab(queue_view_, "queue", IconLoader::Load("footsteps"), tr("Queue"));
@@ -347,11 +347,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   // Music menu
 
   ui_->action_open_file->setIcon(IconLoader::Load("document-open"));
-  ui_->action_open_cd->setIcon(IconLoader::Load("cd"));
+  ui_->action_open_cd->setIcon(IconLoader::Load("media-optical"));
   ui_->action_previous_track->setIcon(IconLoader::Load("media-skip-backward"));
-  ui_->action_play_pause->setIcon(IconLoader::Load("media-play"));
-  ui_->action_stop->setIcon(IconLoader::Load("media-stop"));
-  ui_->action_stop_after_this_track->setIcon(IconLoader::Load("media-stop"));
+  ui_->action_play_pause->setIcon(IconLoader::Load("media-playback-start"));
+  ui_->action_stop->setIcon(IconLoader::Load("media-playback-stop"));
+  ui_->action_stop_after_this_track->setIcon(IconLoader::Load("media-playback-stop"));
   ui_->action_next_track->setIcon(IconLoader::Load("media-skip-forward"));
   ui_->action_quit->setIcon(IconLoader::Load("application-exit"));
 
@@ -595,7 +595,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(playlist_menu_, SIGNAL(aboutToHide()), SLOT(PlaylistMenuHidden()));
   playlist_play_pause_ = playlist_menu_->addAction(tr("Play"), this, SLOT(PlaylistPlay()));
   playlist_menu_->addAction(ui_->action_stop);
-  playlist_stop_after_ = playlist_menu_->addAction(IconLoader::Load("media-stop"), tr("Stop after this track"), this, SLOT(PlaylistStopAfter()));
+  playlist_stop_after_ = playlist_menu_->addAction(IconLoader::Load("media-playback-stop"), tr("Stop after this track"), this, SLOT(PlaylistStopAfter()));
   playlist_queue_ = playlist_menu_->addAction(IconLoader::Load("go-next"), tr("Toggle queue status"), this, SLOT(PlaylistQueue()));
   playlist_queue_->setShortcut(QKeySequence("Ctrl+D"));
   ui_->playlist->addAction(playlist_queue_);
@@ -1039,7 +1039,7 @@ void MainWindow::MediaStopped() {
 
   ui_->action_stop->setEnabled(false);
   ui_->action_stop_after_this_track->setEnabled(false);
-  ui_->action_play_pause->setIcon(IconLoader::Load("media-play"));
+  ui_->action_play_pause->setIcon(IconLoader::Load("media-playback-start"));
   ui_->action_play_pause->setText(tr("Play"));
 
   ui_->action_play_pause->setEnabled(true);
@@ -1068,7 +1068,7 @@ void MainWindow::MediaPaused() {
 
   ui_->action_stop->setEnabled(true);
   ui_->action_stop_after_this_track->setEnabled(true);
-  ui_->action_play_pause->setIcon(IconLoader::Load("media-play"));
+  ui_->action_play_pause->setIcon(IconLoader::Load("media-playback-start"));
   ui_->action_play_pause->setText(tr("Play"));
 
   ui_->action_play_pause->setEnabled(true);
@@ -1084,7 +1084,7 @@ void MainWindow::MediaPlaying() {
 
   ui_->action_stop->setEnabled(true);
   ui_->action_stop_after_this_track->setEnabled(true);
-  ui_->action_play_pause->setIcon(IconLoader::Load("media-pause"));
+  ui_->action_play_pause->setIcon(IconLoader::Load("media-playback-pause"));
   ui_->action_play_pause->setText(tr("Pause"));
 
   bool enable_play_pause(false);
@@ -1254,9 +1254,11 @@ void MainWindow::PlayIndex(const QModelIndex &index) {
 
   app_->playlist_manager()->SetActiveToCurrent();
   app_->player()->PlayAt(row, Engine::Manual, true);
+
 }
 
 void MainWindow::PlaylistDoubleClick(const QModelIndex &index) {
+
   if (!index.isValid()) return;
 
   int row = index.row();
@@ -1281,6 +1283,7 @@ void MainWindow::PlaylistDoubleClick(const QModelIndex &index) {
       }
       break;
   }
+
 }
 
 void MainWindow::VolumeWheelEvent(int delta) {
@@ -1312,6 +1315,7 @@ void MainWindow::ToggleShowHide() {
     activateWindow();
     raise();
   }
+
 }
 
 void MainWindow::StopAfterCurrent() {
@@ -1524,11 +1528,11 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   // Is this song currently playing?
   if (app_->playlist_manager()->current()->current_row() == source_index.row() && app_->player()->GetState() == Engine::Playing) {
     playlist_play_pause_->setText(tr("Pause"));
-    playlist_play_pause_->setIcon(IconLoader::Load("media-pause"));
+    playlist_play_pause_->setIcon(IconLoader::Load("media-playback-pause"));
   }
   else {
     playlist_play_pause_->setText(tr("Play"));
-    playlist_play_pause_->setIcon(IconLoader::Load("media-play"));
+    playlist_play_pause_->setIcon(IconLoader::Load("media-playback-start"));
   }
 
   // Are we allowed to pause?
@@ -1641,7 +1645,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   else playlist_queue_->setIcon(IconLoader::Load("go-next"));
 
   if (in_skipped < selected) playlist_skip_->setIcon(IconLoader::Load("media-skip-forward"));
-  else playlist_skip_->setIcon(IconLoader::Load("media-play"));
+  else playlist_skip_->setIcon(IconLoader::Load("media-playback-start"));
 
 
   if (!index.isValid()) {

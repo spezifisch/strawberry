@@ -199,8 +199,8 @@ void SystemTrayIcon::SetPlaying(bool enable_play_pause) {
 
   action_stop_->setEnabled(true);
   action_stop_after_this_track_->setEnabled(true);
-  action_play_pause_->setIcon(IconLoader::Load("media-pause"));
-  action_play_pause_->setText(tr("Pause"));
+  action_play_pause_->setIcon(IconLoader::Load("media-playback-start"));
+  action_play_pause_->setText(tr("Play"));
   action_play_pause_->setEnabled(enable_play_pause);
 
 }
@@ -212,9 +212,8 @@ void SystemTrayIcon::SetPaused() {
 
   action_stop_->setEnabled(true);
   action_stop_after_this_track_->setEnabled(true);
-  action_play_pause_->setIcon(IconLoader::Load("media-play"));
-  action_play_pause_->setText(tr("Play"));
-
+  action_play_pause_->setIcon(IconLoader::Load("media-playback-pause"));
+  action_play_pause_->setText(tr("Pause"));
   action_play_pause_->setEnabled(true);
 
 }
@@ -226,7 +225,7 @@ void SystemTrayIcon::SetStopped() {
 
   action_stop_->setEnabled(false);
   action_stop_after_this_track_->setEnabled(false);
-  action_play_pause_->setIcon(IconLoader::Load("media-play"));
+  action_play_pause_->setIcon(IconLoader::Load("media-playback-start"));
   action_play_pause_->setText(tr("Play"));
 
   action_play_pause_->setEnabled(true);

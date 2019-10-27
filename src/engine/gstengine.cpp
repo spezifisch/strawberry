@@ -83,6 +83,7 @@ GstEngine::GstEngine(TaskManager *task_manager)
       task_manager_(task_manager),
       buffering_task_id_(-1),
       latest_buffer_(nullptr),
+      stereo_balancer_enabled_(false),
       stereo_balance_(0.0f),
       seek_timer_(new QTimer(this)),
       timer_id_(-1),
@@ -104,6 +105,10 @@ GstEngine::GstEngine(TaskManager *task_manager)
 GstEngine::~GstEngine() {
   EnsureInitialised();
   current_pipeline_.reset();
+  if (latest_buffer_) {
+    gst_buffer_unref(latest_buffer_);
+    latest_buffer_ = nullptr;
+  }
 }
 
 bool GstEngine::Init() {
@@ -170,7 +175,7 @@ bool GstEngine::Load(const QUrl &stream_url, const QUrl &original_url, Engine::T
   current_pipeline_ = pipeline;
 
   SetVolume(volume_);
-  SetStereoBalance(stereo_balance_);
+  SetStereoBalance(stereo_balancer_enabled_, stereo_balance_);
   SetEqualizerParameters(equalizer_preamp_, equalizer_gains_);
 
   // Maybe fade in this track
@@ -437,11 +442,11 @@ void GstEngine::SetEqualizerParameters(const int preamp, const QList<int> &band_
 
 }
 
-void GstEngine::SetStereoBalance(const float value) {
+void GstEngine::SetStereoBalance(const bool enabled, const float value) {
 
   stereo_balance_ = value;
 
-  if (current_pipeline_) current_pipeline_->SetStereoBalance(value);
+  if (current_pipeline_) current_pipeline_->SetStereoBalance(enabled, value);
 
 }
 
@@ -808,15 +813,15 @@ void GstEngine::UpdateScope(const int chunk_length) {
 
   scope_chunk_++;
 
-  if (buffer_format_ == "S16LE" ||
-      buffer_format_ == "S16BE" ||
-      buffer_format_ == "U16LE" ||
-      buffer_format_ == "U16BE" ||
-      buffer_format_ == "S16" ||
-      buffer_format_ == "U16")
+  if (buffer_format_.startsWith("S16") ||
+      buffer_format_.startsWith("S16") ||
+      buffer_format_.startsWith("U16") ||
+      buffer_format_.startsWith("S32")) {
     memcpy(dest, source, bytes);
-  else
+  }
+  else {
     memset(dest, 0, bytes);
+  }
 
   gst_buffer_unmap(latest_buffer_, &map);
 

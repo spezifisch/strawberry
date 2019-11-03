@@ -40,6 +40,7 @@
 #include <QTimeLine>
 #include <QMetaObject>
 #include <QtDebug>
+#include <QUuid>
 
 #include "core/concurrentrun.h"
 #include "core/logging.h"
@@ -197,11 +198,11 @@ bool GstEnginePipeline::InitAudioBin() {
   if (device_.isValid() && g_object_class_find_property(G_OBJECT_GET_CLASS(audiosink), "device")) {
     switch (device_.type()) {
       case QVariant::String:
-	if (device_.toString().isEmpty()) break;
-	g_object_set(G_OBJECT(audiosink), "device", device_.toString().toUtf8().constData(), nullptr);
+        if (device_.toString().isEmpty()) break;
+        g_object_set(G_OBJECT(audiosink), "device", device_.toString().toUtf8().constData(), nullptr);
         break;
       case QVariant::ByteArray:
-	g_object_set(G_OBJECT(audiosink), "device", device_.toByteArray().constData(), nullptr);
+        g_object_set(G_OBJECT(audiosink), "device", device_.toByteArray().constData(), nullptr);
         break;
       case QVariant::LongLong:
         g_object_set(G_OBJECT(audiosink), "device", device_.toLongLong(), nullptr);
@@ -209,10 +210,18 @@ bool GstEnginePipeline::InitAudioBin() {
       case QVariant::Int:
         g_object_set(G_OBJECT(audiosink), "device", device_.toInt(), nullptr);
         break;
+      case QVariant::Uuid:
+        g_object_set(G_OBJECT(audiosink), "device", device_.toUuid(), nullptr);
+        break;
       default:
         qLog(Warning) << "Unknown device type" << device_;
         break;
     }
+  }
+
+  if (output_ == "wasapisink") {
+    g_object_set(G_OBJECT(audiosink), "exclusive", true, nullptr);
+    g_object_set(G_OBJECT(audiosink), "low-latency", true, nullptr);
   }
 
   // Create all the other elements

@@ -141,8 +141,10 @@ GstEnginePipeline::~GstEnginePipeline() {
       g_signal_handler_disconnect(G_OBJECT(pipeline_), notify_source_cb_id_);
 
     gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(pipeline_)), nullptr, nullptr, nullptr);
+
     if (bus_cb_id_ != -1)
       g_source_remove(bus_cb_id_);
+
     gst_element_set_state(pipeline_, GST_STATE_NULL);
 
     gst_object_unref(GST_OBJECT(pipeline_));
@@ -220,7 +222,8 @@ bool GstEnginePipeline::InitAudioBin() {
   }
 
   if (output_ == "wasapisink") {
-    g_object_set(G_OBJECT(audiosink), "exclusive", true, nullptr);
+    // Dont set exclusive, there is a bug in gstreamer causing freeze/crash:
+    // https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/issues/868
     g_object_set(G_OBJECT(audiosink), "low-latency", true, nullptr);
   }
 
@@ -956,8 +959,7 @@ GstState GstEnginePipeline::state() const {
 
 }
 
-QFuture<GstStateChangeReturn> GstEnginePipeline::SetState(GstState state) {
-
+QFuture<GstStateChangeReturn> GstEnginePipeline::SetState(const GstState state) {
   return ConcurrentRun::Run<GstStateChangeReturn, GstElement*, GstState>(&set_state_threadpool_, &gst_element_set_state, pipeline_, state);
 
 }

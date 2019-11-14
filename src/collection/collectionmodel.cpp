@@ -434,8 +434,9 @@ void CollectionModel::SongsDeleted(const SongList &songs) {
 
       if (node->parent != root_) parents << node->parent;
 
-      // Remove from pixmap cache
       QModelIndex idx = ItemToIndex(node->parent);
+
+      // Remove from pixmap cache
       const QString cache_key = AlbumIconPixmapCacheKey(idx);
       QPixmapCache::remove(cache_key);
       if (pending_cache_keys_.contains(cache_key)) pending_cache_keys_.remove(cache_key);
@@ -486,22 +487,6 @@ void CollectionModel::SongsDeleted(const SongList &songs) {
       else
         container_nodes_[node->container_level].remove(node->key);
 
-      // Remove from pixmap cache
-      QModelIndex idx = ItemToIndex(node->parent);
-      const QString cache_key = AlbumIconPixmapCacheKey(idx);
-      QPixmapCache::remove(cache_key);
-      if (pending_cache_keys_.contains(cache_key)) pending_cache_keys_.remove(cache_key);
-
-      // Remove from pending art loading
-      QMapIterator<quint64, ItemAndCacheKey> i(pending_art_);
-      while (i.hasNext()) {
-        i.next();
-        if (i.value().first == node) {
-          pending_art_.remove(i.key());
-          break;
-        }
-      }
-
       // It was empty - delete it
       beginRemoveRows(ItemToIndex(node->parent), node->row, node->row);
       node->parent->Delete(node->row);
@@ -539,15 +524,7 @@ QString CollectionModel::AlbumIconPixmapCacheKey(const QModelIndex &idx) const {
   QStringList path;
   QModelIndex idx_copy(idx);
   while (idx_copy.isValid()) {
-    //const CollectionItem *item = IndexToItem(idx_copy);
-    //if (item && group_by_[item->container_level] == GroupBy_Album) {
-    //  QString album = idx_copy.data().toString();
-    //  album.remove(Song::kAlbumRemoveDisc);
-    //  path.prepend(album);
-    //}
-    //else {
-      path.prepend(idx_copy.data().toString());
-    //}
+    path.prepend(idx_copy.data().toString());
     idx_copy = idx_copy.parent();
   }
 

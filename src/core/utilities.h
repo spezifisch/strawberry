@@ -96,6 +96,7 @@ void ConsumeCurrentElement(QXmlStreamReader *reader);
 // Advances the stream reader until it finds an element with the given name.
 // Returns false if the end of the document was reached before finding a matching element.
 bool ParseUntilElement(QXmlStreamReader *reader, const QString &name);
+bool ParseUntilElementCI(QXmlStreamReader *reader, const QString &name);
 
 // Parses a string containing an RFC822 time and date.
 QDateTime ParseRFC822DateTime(const QString &text);
@@ -123,7 +124,6 @@ QString FiddleFileExtension(const QString &filename, const QString &new_extensio
 QString GetEnv(const QString &key);
 void SetEnv(const char *key, const QString &value);
 void IncreaseFDLimit();
-void CheckPortable();
 
 // Borrowed from schedutils
 enum IoPriority {

@@ -514,6 +514,26 @@ bool ParseUntilElement(QXmlStreamReader *reader, const QString &name) {
 
 }
 
+bool ParseUntilElementCI(QXmlStreamReader *reader, const QString &name) {
+
+  while (!reader->atEnd()) {
+    QXmlStreamReader::TokenType type = reader->readNext();
+    switch (type) {
+      case QXmlStreamReader::StartElement:{
+        QString element = reader->name().toString().toLower();
+        if (element == name) {
+          return true;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return false;
+
+}
+
 QDateTime ParseRFC822DateTime(const QString &text) {
 
   QRegExp regexp("(\\d{1,2}) (\\w{3,12}) (\\d+) (\\d{1,2}):(\\d{1,2}):(\\d{1,2})");
@@ -713,19 +733,6 @@ void IncreaseFDLimit() {
     qLog(Debug) << "Max fd:" << max_fd;
   }
 #endif
-
-}
-
-void CheckPortable() {
-
-  QFile f(QApplication::applicationDirPath() + QDir::separator() + "data");
-  if (f.exists()) {
-    // We are portable. Set the bool and change the qsettings path
-    Application::kIsPortable = true;
-
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, f.fileName());
-  }
 
 }
 

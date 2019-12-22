@@ -240,6 +240,7 @@ set(SOURCES
   settings/behavioursettingspage.cpp
   settings/collectionsettingspage.cpp
   settings/backendsettingspage.cpp
+  settings/contextsettingspage.cpp
   settings/playlistsettingspage.cpp
   settings/networkproxysettingspage.cpp
   settings/appearancesettingspage.cpp
@@ -423,6 +424,7 @@ set(HEADERS
   settings/behavioursettingspage.h
   settings/collectionsettingspage.h
   settings/backendsettingspage.h
+  settings/contextsettingspage.h
   settings/playlistsettingspage.h
   settings/networkproxysettingspage.h
   settings/appearancesettingspage.h
@@ -520,6 +522,7 @@ set(UI
   settings/behavioursettingspage.ui
   settings/collectionsettingspage.ui
   settings/backendsettingspage.ui
+  settings/contextsettingspage.ui
   settings/playlistsettingspage.ui
   settings/networkproxysettingspage.ui
   settings/appearancesettingspage.ui

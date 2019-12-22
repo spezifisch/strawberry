@@ -33,7 +33,7 @@
 #include "core/logging.h"
 #include "imobiledeviceconnection.h"
 
-iMobileDeviceConnection::iMobileDeviceConnection(const QString &uuid) : device_(nullptr), afc_(nullptr), afc_port_(0) {
+iMobileDeviceConnection::iMobileDeviceConnection(const QString &uuid) : device_(nullptr), afc_(nullptr) {
 
   idevice_error_t err = idevice_new(&device_, uuid.toUtf8().constData());
   if (err != IDEVICE_E_SUCCESS) {
@@ -60,7 +60,7 @@ iMobileDeviceConnection::iMobileDeviceConnection(const QString &uuid) : device_(
   }
 
   afc_error_t afc_err = afc_client_new(device_, lockdown_service_desc, &afc_);
-  if (afc_err != 0) {
+  if (afc_err != AFC_E_SUCCESS) {
     qLog(Warning) << "afc error:" << afc_err;
     lockdownd_service_descriptor_free(lockdown_service_desc);
     lockdownd_client_free(lockdown);

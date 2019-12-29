@@ -147,7 +147,7 @@ void ScrobblingAPI20::Authenticate(const bool https) {
   QUrl url(auth_url_);
   url.setQuery(url_query);
 
-  QMessageBox messagebox(QMessageBox::Information, tr("%1 Scrobbler Authentication").arg(name_), tr("Open URL in web browser?<br /><a href=\"%1\">%1</a><br />Press \"Save\" to copy the URL to clipboard and manually open it in a web browser.").arg(url.toString()), QMessageBox::Open|QMessageBox::Save|QMessageBox::Cancel);
+  QMessageBox messagebox(QMessageBox::Information, tr("%1 Scrobbler Authentication").arg(name_), tr("Open URL in web browser?") + QString("<br /><a href=\"%1\">%1</a><br />").arg(url.toString()) + tr("Press \"Save\" to copy the URL to clipboard and manually open it in a web browser."), QMessageBox::Open|QMessageBox::Save|QMessageBox::Cancel);
   messagebox.setTextFormat(Qt::RichText);
   int result = messagebox.exec();
   switch (result) {
@@ -156,7 +156,7 @@ void ScrobblingAPI20::Authenticate(const bool https) {
       if (openurl_result) {
         break;
       }
-      QMessageBox messagebox_error(QMessageBox::Warning, tr("%1 Scrobbler Authentication").arg(name_), tr("Could not open URL. Please open this URL in your browser:<br /><a href=\"%1\">%1</a>").arg(url.toString()), QMessageBox::Ok);
+      QMessageBox messagebox_error(QMessageBox::Warning, tr("%1 Scrobbler Authentication").arg(name_), tr("Could not open URL. Please open this URL in your browser") + QString(":<br /><a href=\"%1\">%1</a>").arg(url.toString()), QMessageBox::Ok);
       messagebox_error.setTextFormat(Qt::RichText);
       messagebox_error.exec();
     }

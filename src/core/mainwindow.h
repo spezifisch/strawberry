@@ -160,6 +160,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void PlaylistSkip();
   void PlaylistRemoveCurrent();
   void PlaylistEditFinished(const QModelIndex& index);
+  void PlaylistClearCurrent();
   void RescanSongs();
   void EditTracks();
   void EditTagDialogAccepted();

@@ -778,10 +778,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   // Set last used geometry to position window on the correct monitor
   // Set window state only if the window was last maximized
+  if (settings_.contains("geometry")) {
+    restoreGeometry(settings_.value("geometry").toByteArray());
+  }
   was_maximized_ = settings_.value("maximized", true).toBool();
-
   if (was_maximized_) setWindowState(windowState() | Qt::WindowMaximized);
-  else restoreGeometry(settings_.value("geometry").toByteArray());
 
   if (!ui_->splitter->restoreState(settings_.value("splitter_state").toByteArray())) {
     ui_->splitter->setSizes(QList<int>() << 250 << width() - 250);
@@ -948,6 +949,7 @@ void MainWindow::ReloadAllSettings() {
   osd_->ReloadSettings();
   collection_view_->ReloadSettings();
   ui_->playlist->view()->ReloadSettings();
+  app_->playlist_manager()->playlist_container()->ReloadSettings();
   app_->album_cover_loader()->ReloadSettings();
   album_cover_choice_controller_->ReloadSettings();
   if (cover_manager_.get()) cover_manager_->ReloadSettings();
@@ -1163,10 +1165,8 @@ void MainWindow::SaveGeometry() {
 
   if (!initialised_) return;
 
-  was_maximized_ = isMaximized();
-  settings_.setValue("maximized", was_maximized_);
-  if (was_maximized_) settings_.remove("geometry");
-  else settings_.setValue("geometry", saveGeometry());
+  settings_.setValue("maximized", isMaximized());
+  settings_.setValue("geometry", saveGeometry());
   settings_.setValue("splitter_state", ui_->splitter->saveState());
 
 }

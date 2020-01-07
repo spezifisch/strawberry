@@ -447,7 +447,7 @@ msgstr ""
 "<p>Steht ein Textbereich in geschweiften Klammern, wird dieser nicht "
 "angezeigt, falls das Schlüsselwort leer ist.</p>"
 
-#: ../build/src/ui_playlistsettingspage.h:151
+#: ../build/src/ui_playlistsettingspage.h:158
 msgid "A&utomatic"
 msgstr "A&utomatisch"
 
@@ -485,7 +485,7 @@ msgstr "Über &Qt"
 msgid "About Strawberry"
 msgstr "Über Strawberry"
 
-#: ../build/src/ui_playlistsettingspage.h:152
+#: ../build/src/ui_playlistsettingspage.h:159
 msgid "Absolu&te"
 msgstr "Absolu&t"
 
@@ -755,7 +755,7 @@ msgstr "Alle Alben"
 msgid "All artists"
 msgstr "Alle Interpreten"
 
-#: covermanager/albumcoverchoicecontroller.cpp:69
+#: covermanager/albumcoverchoicecontroller.cpp:70
 msgid "All files (*)"
 msgstr "Alle Dateien (*)"
 
@@ -876,7 +876,7 @@ msgstr "Künster"
 msgid "Artists search limit"
 msgstr "Künster such Limit"
 
-#: ../build/src/ui_playlistsettingspage.h:154
+#: ../build/src/ui_playlistsettingspage.h:161
 msgid "As&k when saving"
 msgstr "Nachfragen beim speichern"
 
@@ -923,7 +923,7 @@ msgstr "Automatisches Aktualisieren"
 msgid "Automatically open single categories in the collection tree"
 msgstr "Im Bibliotheksbaum automatisch Einzelkategorien öffnen"
 
-#: ../build/src/ui_playlistsettingspage.h:149
+#: ../build/src/ui_playlistsettingspage.h:155
 msgid "Automatically select current playing track"
 msgstr "automatisch den aktuellen Song auswählen"
 
@@ -1108,7 +1108,7 @@ msgstr "Klassisch"
 msgid "Clear"
 msgstr "Leeren"
 
-#: ../build/src/ui_mainwindow.h:623
+#: core/mainwindow.cpp:1966 ../build/src/ui_mainwindow.h:623
 msgid "Clear playlist"
 msgstr "Wiedergabeliste leeren"
 
@@ -1174,7 +1174,7 @@ msgstr ""
 msgid "Collection advanced grouping"
 msgstr "Erweiterte Bibliothekssortierung"
 
-#: core/mainwindow.cpp:2389
+#: core/mainwindow.cpp:2408
 msgid "Collection rescan notice"
 msgstr "Hinweis beim erneuten durchsuchen der Bibliothek"
 
@@ -1244,7 +1244,7 @@ msgstr "Konstante Bitrate"
 msgid "Context"
 msgstr "Kontext"
 
-#: ../build/src/ui_playlistsettingspage.h:146
+#: ../build/src/ui_playlistsettingspage.h:152
 msgid "Continue to the next item in the playlist if a song is unavailable"
 msgstr ""
 "Zum nächsten Lied in der PlayList weitergehen, wenn das Lieb nicht verfügbar "
@@ -1681,7 +1681,11 @@ msgstr ""
 msgid "Enable equalizer"
 msgstr "Equalizer aktivieren"
 
-#: ../build/src/ui_playlistsettingspage.h:159
+#: ../build/src/ui_playlistsettingspage.h:156
+msgid "Enable playlist clear button"
+msgstr ""
+
+#: ../build/src/ui_playlistsettingspage.h:166
 msgid "Enable song metadata inline edition with click"
 msgstr "Direktausgabe der Titelmetadaten mit Klick aktivieren"
 
@@ -1766,7 +1770,7 @@ msgstr "Äquivalent zu --log-levels *:1"
 msgid "Equivalent to --log-levels *:3"
 msgstr "Äquivalent zu --log-levels *:3"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "Error"
 msgstr "Fehler"
@@ -2067,11 +2071,11 @@ msgstr "Zum vorherigen Wiedergabelistenreiter wechseln"
 msgid "Got %1 covers out of %2 (%3 failed)"
 msgstr "%1 Titelbilder von %2 wurden gefunden (%3 fehlgeschlagen)"
 
-#: ../build/src/ui_playlistsettingspage.h:147
+#: ../build/src/ui_playlistsettingspage.h:153
 msgid "Grey out unavailable songs in playlists on playback"
 msgstr "Ausgrauen von Lieder die nicht verfügbar sind während des abspielens"
 
-#: ../build/src/ui_playlistsettingspage.h:148
+#: ../build/src/ui_playlistsettingspage.h:154
 msgid "Grey out unavailable songs in playlists on startup"
 msgstr "Ausgrauen von Lieder die nicht verfügbar sind während des startens"
 
@@ -2198,7 +2202,7 @@ msgstr "Symbole oben"
 msgid "Identifying song"
 msgstr "Titel werden erkannt"
 
-#: ../build/src/ui_playlistsettingspage.h:157
+#: ../build/src/ui_playlistsettingspage.h:164
 msgid ""
 "If activated, clicking a selected song in the playlist view will let you "
 "edit the tag value directly"
@@ -2214,11 +2218,11 @@ msgstr ""
 "Wenn Sie fortfahren, wird das Gerät langsam arbeiten und kopierte Titel "
 "könnten nicht abspielbar sein."
 
-#: covermanager/albumcoverchoicecontroller.cpp:67
+#: covermanager/albumcoverchoicecontroller.cpp:68
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 msgstr "Bilder (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 
-#: covermanager/albumcoverchoicecontroller.cpp:68
+#: covermanager/albumcoverchoicecontroller.cpp:69
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 msgstr "Bilder (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 
@@ -2357,19 +2361,19 @@ msgstr "Laden"
 msgid "Load cover from URL"
 msgstr "Titelbild von Adresse laden"
 
-#: covermanager/albumcoverchoicecontroller.cpp:89
+#: covermanager/albumcoverchoicecontroller.cpp:90
 msgid "Load cover from URL..."
 msgstr "Titelbild von Adresse laden …"
 
-#: covermanager/albumcoverchoicecontroller.cpp:139
+#: covermanager/albumcoverchoicecontroller.cpp:140
 msgid "Load cover from disk"
 msgstr "Titelbild aus Datei laden"
 
-#: covermanager/albumcoverchoicecontroller.cpp:87
+#: covermanager/albumcoverchoicecontroller.cpp:88
 msgid "Load cover from disk..."
 msgstr "Titelbild von Datenträger wählen …"
 
-#: playlist/playlistcontainer.cpp:291
+#: playlist/playlistcontainer.cpp:305
 msgid "Load playlist"
 msgstr "Wiedergabeliste laden"
 
@@ -2479,7 +2483,7 @@ msgstr ""
 msgid "Medium (%1 fps)"
 msgstr "Mittel (%1 fps)"
 
-#: ../build/src/ui_playlistsettingspage.h:155
+#: ../build/src/ui_playlistsettingspage.h:162
 msgid "Metadata"
 msgstr ""
 
@@ -2663,7 +2667,7 @@ msgstr "Keine langen Blöcke"
 msgid "No match."
 msgstr ""
 
-#: playlist/playlistcontainer.cpp:372
+#: playlist/playlistcontainer.cpp:386
 msgid ""
 "No matches found.  Clear the search box to show the whole playlist again."
 msgstr ""
@@ -2683,7 +2687,7 @@ msgstr ""
 msgid "None"
 msgstr "Nichts"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "None of the selected songs were suitable for copying to a device"
 msgstr "Keiner der gewählten Titel war zum Kopieren auf ein Gerät geeignet."
@@ -2876,7 +2880,7 @@ msgstr "Passwort:"
 msgid "Password Protected"
 msgstr ""
 
-#: core/mainwindow.cpp:1089 core/mainwindow.cpp:1531
+#: core/mainwindow.cpp:1091 core/mainwindow.cpp:1531
 #: core/qtsystemtrayicon.cpp:207
 msgid "Pause"
 msgstr "Pause"
@@ -2904,7 +2908,7 @@ msgstr "Pixel"
 msgid "Plain sidebar"
 msgstr "Einfache Seitenleiste"
 
-#: core/mainwindow.cpp:592 core/mainwindow.cpp:1042 core/mainwindow.cpp:1071
+#: core/mainwindow.cpp:592 core/mainwindow.cpp:1044 core/mainwindow.cpp:1073
 #: core/mainwindow.cpp:1535 core/qtsystemtrayicon.cpp:194
 #: core/qtsystemtrayicon.cpp:219
 msgid "Play"
@@ -2932,16 +2936,23 @@ msgstr "Titelnummer <n> der Wiedergabeliste abspielen"
 msgid "Player options"
 msgstr "Spielereinstellungen"
 
-#: playlist/playlistcontainer.cpp:286 playlist/playlistlistcontainer.cpp:258
+#: playlist/playlistcontainer.cpp:300 playlist/playlistlistcontainer.cpp:258
 #: playlist/playlistlistcontainer.cpp:346 playlist/playlistmanager.cpp:103
 #: playlist/playlistmanager.cpp:180 playlist/playlistmanager.cpp:536
-#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:143
+#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:149
 msgid "Playlist"
 msgstr "Wiedergabeliste"
 
 #: widgets/osd.cpp:193
 msgid "Playlist finished"
 msgstr "Wiedergabeliste beendet"
+
+#: core/mainwindow.cpp:1966
+#, qt-format
+msgid ""
+"Playlist has %1 songs, too large to undo, are you sure you want to clear the "
+"playlist?"
+msgstr ""
 
 #: core/commandlineoptions.cpp:177
 #: ../build/src/ui_playlistsaveoptionsdialog.h:94
@@ -3107,7 +3118,7 @@ msgstr ""
 msgid "Radio (equal loudness for all tracks)"
 msgstr "Radio (gleicher Pegel für alle Titel)"
 
-#: ../build/src/ui_playlistsettingspage.h:153
+#: ../build/src/ui_playlistsettingspage.h:160
 msgid "Re&lative"
 msgstr ""
 
@@ -3374,7 +3385,7 @@ msgstr "Abtastrate"
 msgid "Save &playlist..."
 msgstr ""
 
-#: covermanager/albumcoverchoicecontroller.cpp:169
+#: covermanager/albumcoverchoicecontroller.cpp:170
 msgid "Save album cover"
 msgstr "Titelbild speichern"
 
@@ -3382,7 +3393,7 @@ msgstr "Titelbild speichern"
 msgid "Save album covers in album directory"
 msgstr ""
 
-#: covermanager/albumcoverchoicecontroller.cpp:88
+#: covermanager/albumcoverchoicecontroller.cpp:89
 msgid "Save cover to disk..."
 msgstr "Titelbild auf Datenträger speichern …"
 
@@ -3452,7 +3463,7 @@ msgstr "Mausrad auf dem Benachrichtigungsfeld ändert Titel statt Lautstärke."
 msgid "Search"
 msgstr "Suche"
 
-#: covermanager/albumcoverchoicecontroller.cpp:94
+#: covermanager/albumcoverchoicecontroller.cpp:95
 msgid "Search automatically"
 msgstr "Automatisch suchen"
 
@@ -3461,7 +3472,7 @@ msgstr "Automatisch suchen"
 msgid "Search delay"
 msgstr ""
 
-#: covermanager/albumcoverchoicecontroller.cpp:90
+#: covermanager/albumcoverchoicecontroller.cpp:91
 msgid "Search for album covers..."
 msgstr "Nach Titelbild suchen …"
 
@@ -3578,7 +3589,7 @@ msgstr "Anzeigen"
 msgid "Show a &native desktop notification"
 msgstr ""
 
-#: ../build/src/ui_playlistsettingspage.h:144
+#: ../build/src/ui_playlistsettingspage.h:150
 msgid "Show a glowing animation on the current track"
 msgstr "Den aktuellen Titel mit einem animierten Glühen hervorheben"
 
@@ -3636,7 +3647,7 @@ msgstr "Trenner anzeigen"
 msgid "Show engine and device"
 msgstr ""
 
-#: covermanager/albumcoverchoicecontroller.cpp:92
+#: covermanager/albumcoverchoicecontroller.cpp:93
 msgid "Show fullsize..."
 msgstr "In Originalgröße anzeigen …"
 
@@ -4018,7 +4029,7 @@ msgstr "Die aufgerufene Seite existiert nicht!"
 msgid "The site you requested is not an image!"
 msgstr "Die angeforderte Seite ist kein Bild!"
 
-#: core/mainwindow.cpp:2383
+#: core/mainwindow.cpp:2402
 msgid ""
 "The version of Strawberry you've just updated to requires a full collection "
 "rescan because of the new features listed below:"
@@ -4249,7 +4260,7 @@ msgstr "Unbekannt"
 msgid "Unknown error"
 msgstr ""
 
-#: covermanager/albumcoverchoicecontroller.cpp:91
+#: covermanager/albumcoverchoicecontroller.cpp:92
 msgid "Unset cover"
 msgstr "Titelbild entfernen"
 
@@ -4429,7 +4440,7 @@ msgstr "Lautstärke %1%"
 msgid "Vorbis"
 msgstr "Vorbis"
 
-#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:145
+#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:151
 msgid "Warn me when closing a playlist tab"
 msgstr "Hinweis beim Schließen eines Wiedergabelistenreiters anzeigen"
 
@@ -4448,7 +4459,7 @@ msgstr ""
 "Falls es keine Treffer gibt, wird das größte Bild aus dem Verzeichnis "
 "ausgewählt."
 
-#: ../build/src/ui_playlistsettingspage.h:150
+#: ../build/src/ui_playlistsettingspage.h:157
 msgid "When saving a playlist, file paths should be"
 msgstr ""
 "Beim Speichern einer Wiedergabeliste sollte der Dateipfad folgendes sein"
@@ -4477,11 +4488,11 @@ msgstr ""
 "Möchten Sie die anderen Titel dieses Albums ebenfalls unter »Verschiedene "
 "Interpreten« anzeigen?"
 
-#: core/mainwindow.cpp:2387
+#: core/mainwindow.cpp:2406
 msgid "Would you like to run a full rescan right now?"
 msgstr "Möchten Sie jetzt Ihre Musiksammlung erneut einlesen?"
 
-#: ../build/src/ui_playlistsettingspage.h:160
+#: ../build/src/ui_playlistsettingspage.h:167
 msgid "Write metadata when saving playlists"
 msgstr ""
 
@@ -4673,6 +4684,6 @@ msgstr ""
 msgid "track %1"
 msgstr "Titel %1"
 
-#: covermanager/albumcoverchoicecontroller.cpp:164
+#: covermanager/albumcoverchoicecontroller.cpp:165
 msgid "unknown"
 msgstr ""

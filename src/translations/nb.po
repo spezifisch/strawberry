@@ -417,7 +417,7 @@ msgstr ""
 "<p>Hvis du setter klammeparenteser rundt tekst som inneholder en kode, vil "
 "teksten skjules om koden er tom.</p>"
 
-#: ../build/src/ui_playlistsettingspage.h:151
+#: ../build/src/ui_playlistsettingspage.h:158
 msgid "A&utomatic"
 msgstr "A&utomatisk"
 
@@ -455,7 +455,7 @@ msgstr "Om &Qt"
 msgid "About Strawberry"
 msgstr "Om Strawberry"
 
-#: ../build/src/ui_playlistsettingspage.h:152
+#: ../build/src/ui_playlistsettingspage.h:159
 msgid "Absolu&te"
 msgstr "Absolu&tt"
 
@@ -723,7 +723,7 @@ msgstr "Alle album"
 msgid "All artists"
 msgstr "Alle artister"
 
-#: covermanager/albumcoverchoicecontroller.cpp:69
+#: covermanager/albumcoverchoicecontroller.cpp:70
 msgid "All files (*)"
 msgstr "Alle filer (*)"
 
@@ -840,7 +840,7 @@ msgstr "Artister"
 msgid "Artists search limit"
 msgstr "Artist søkebegrensning"
 
-#: ../build/src/ui_playlistsettingspage.h:154
+#: ../build/src/ui_playlistsettingspage.h:161
 msgid "As&k when saving"
 msgstr "Spør ved lagring"
 
@@ -887,7 +887,7 @@ msgstr "Automatisk oppdatering"
 msgid "Automatically open single categories in the collection tree"
 msgstr "Åpne enkeltkategorier i bibliotektreet automatisk"
 
-#: ../build/src/ui_playlistsettingspage.h:149
+#: ../build/src/ui_playlistsettingspage.h:155
 msgid "Automatically select current playing track"
 msgstr "Velg spor automatisk"
 
@@ -1072,7 +1072,7 @@ msgstr "Klassisk"
 msgid "Clear"
 msgstr "Tøm"
 
-#: ../build/src/ui_mainwindow.h:623
+#: core/mainwindow.cpp:1966 ../build/src/ui_mainwindow.h:623
 msgid "Clear playlist"
 msgstr "Tøm spillelisten"
 
@@ -1137,7 +1137,7 @@ msgstr "Collection Filter"
 msgid "Collection advanced grouping"
 msgstr "Avansert samlingsgruppering"
 
-#: core/mainwindow.cpp:2389
+#: core/mainwindow.cpp:2408
 msgid "Collection rescan notice"
 msgstr "Melding om gjennomsøk av samlingen"
 
@@ -1207,7 +1207,7 @@ msgstr "Konstant bitrate"
 msgid "Context"
 msgstr "Kontekst"
 
-#: ../build/src/ui_playlistsettingspage.h:146
+#: ../build/src/ui_playlistsettingspage.h:152
 msgid "Continue to the next item in the playlist if a song is unavailable"
 msgstr ""
 "Fortsett til neste sang i stillelisten dersom en sang ikke er tilgjengelig"
@@ -1643,7 +1643,11 @@ msgstr "Aktiver items"
 msgid "Enable equalizer"
 msgstr "Slå på tonekontroll (EQ)"
 
-#: ../build/src/ui_playlistsettingspage.h:159
+#: ../build/src/ui_playlistsettingspage.h:156
+msgid "Enable playlist clear button"
+msgstr ""
+
+#: ../build/src/ui_playlistsettingspage.h:166
 msgid "Enable song metadata inline edition with click"
 msgstr "Slå på direkteredigering med ett klikk"
 
@@ -1725,7 +1729,7 @@ msgstr "Tilsvarer --log-levels *:1"
 msgid "Equivalent to --log-levels *:3"
 msgstr "Tilsvarer --log-levels *:3"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "Error"
 msgstr "Feil"
@@ -2026,11 +2030,11 @@ msgstr "Gå til forrige fane på spillelista"
 msgid "Got %1 covers out of %2 (%3 failed)"
 msgstr "Hentet %1 av %2 omslag (%3 feilet)"
 
-#: ../build/src/ui_playlistsettingspage.h:147
+#: ../build/src/ui_playlistsettingspage.h:153
 msgid "Grey out unavailable songs in playlists on playback"
 msgstr "Merk ikke-eksisterende sanger med grått når de spilles"
 
-#: ../build/src/ui_playlistsettingspage.h:148
+#: ../build/src/ui_playlistsettingspage.h:154
 msgid "Grey out unavailable songs in playlists on startup"
 msgstr "Merk ikke-eksisterende sanger med grått på oppstart"
 
@@ -2156,7 +2160,7 @@ msgstr "Ikoner øverst"
 msgid "Identifying song"
 msgstr "Identifiserer sangen"
 
-#: ../build/src/ui_playlistsettingspage.h:157
+#: ../build/src/ui_playlistsettingspage.h:164
 msgid ""
 "If activated, clicking a selected song in the playlist view will let you "
 "edit the tag value directly"
@@ -2170,11 +2174,11 @@ msgstr ""
 "Hvis du fortsetter, vil enheten bli treg, og du vil kanskje ikke kunne "
 "spille av sanger kopiert til den."
 
-#: covermanager/albumcoverchoicecontroller.cpp:67
+#: covermanager/albumcoverchoicecontroller.cpp:68
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 msgstr "Bilder (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 
-#: covermanager/albumcoverchoicecontroller.cpp:68
+#: covermanager/albumcoverchoicecontroller.cpp:69
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 msgstr "Bilder (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 
@@ -2315,19 +2319,19 @@ msgstr "Hent"
 msgid "Load cover from URL"
 msgstr "Hent omslag fra URL"
 
-#: covermanager/albumcoverchoicecontroller.cpp:89
+#: covermanager/albumcoverchoicecontroller.cpp:90
 msgid "Load cover from URL..."
 msgstr "Hent omslag fra URL…"
 
-#: covermanager/albumcoverchoicecontroller.cpp:139
+#: covermanager/albumcoverchoicecontroller.cpp:140
 msgid "Load cover from disk"
 msgstr "Hent omslag fra disk"
 
-#: covermanager/albumcoverchoicecontroller.cpp:87
+#: covermanager/albumcoverchoicecontroller.cpp:88
 msgid "Load cover from disk..."
 msgstr "Hent omslag fra disk…"
 
-#: playlist/playlistcontainer.cpp:291
+#: playlist/playlistcontainer.cpp:305
 msgid "Load playlist"
 msgstr "Åpne spilleliste"
 
@@ -2437,7 +2441,7 @@ msgstr "Maks antall påloggingsforsøk nådd."
 msgid "Medium (%1 fps)"
 msgstr "Medium (%1 bilder/sekund)"
 
-#: ../build/src/ui_playlistsettingspage.h:155
+#: ../build/src/ui_playlistsettingspage.h:162
 msgid "Metadata"
 msgstr "Metadata"
 
@@ -2621,7 +2625,7 @@ msgstr "Ingen lange blokker"
 msgid "No match."
 msgstr "Ingen treff."
 
-#: playlist/playlistcontainer.cpp:372
+#: playlist/playlistcontainer.cpp:386
 msgid ""
 "No matches found.  Clear the search box to show the whole playlist again."
 msgstr "Ingen treff.  Visk ut søkefeltet for å vise hele spillelisten igjen."
@@ -2639,7 +2643,7 @@ msgstr "Ingen sang spilles"
 msgid "None"
 msgstr "Ingen"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "None of the selected songs were suitable for copying to a device"
 msgstr "Kunne ikke kopiere noen av de valgte sangene til en enhet"
@@ -2832,7 +2836,7 @@ msgstr "Passord"
 msgid "Password Protected"
 msgstr "Passordbeskyttet"
 
-#: core/mainwindow.cpp:1089 core/mainwindow.cpp:1531
+#: core/mainwindow.cpp:1091 core/mainwindow.cpp:1531
 #: core/qtsystemtrayicon.cpp:207
 msgid "Pause"
 msgstr "Pause"
@@ -2860,7 +2864,7 @@ msgstr "Piksel"
 msgid "Plain sidebar"
 msgstr "Enkelt sidefelt"
 
-#: core/mainwindow.cpp:592 core/mainwindow.cpp:1042 core/mainwindow.cpp:1071
+#: core/mainwindow.cpp:592 core/mainwindow.cpp:1044 core/mainwindow.cpp:1073
 #: core/mainwindow.cpp:1535 core/qtsystemtrayicon.cpp:194
 #: core/qtsystemtrayicon.cpp:219
 msgid "Play"
@@ -2887,16 +2891,23 @@ msgstr "Spill av <n>ende spor i spillelista"
 msgid "Player options"
 msgstr "Innstillinger for avspiller"
 
-#: playlist/playlistcontainer.cpp:286 playlist/playlistlistcontainer.cpp:258
+#: playlist/playlistcontainer.cpp:300 playlist/playlistlistcontainer.cpp:258
 #: playlist/playlistlistcontainer.cpp:346 playlist/playlistmanager.cpp:103
 #: playlist/playlistmanager.cpp:180 playlist/playlistmanager.cpp:536
-#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:143
+#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:149
 msgid "Playlist"
 msgstr "Spilleliste"
 
 #: widgets/osd.cpp:193
 msgid "Playlist finished"
 msgstr "Spillelisten er ferdigspilt"
+
+#: core/mainwindow.cpp:1966
+#, qt-format
+msgid ""
+"Playlist has %1 songs, too large to undo, are you sure you want to clear the "
+"playlist?"
+msgstr ""
 
 #: core/commandlineoptions.cpp:177
 #: ../build/src/ui_playlistsaveoptionsdialog.h:94
@@ -3063,7 +3074,7 @@ msgstr "Køoversikt"
 msgid "Radio (equal loudness for all tracks)"
 msgstr "Radio (lik lydstyrkeutgjevning for alle spor)"
 
-#: ../build/src/ui_playlistsettingspage.h:153
+#: ../build/src/ui_playlistsettingspage.h:160
 msgid "Re&lative"
 msgstr "Relativ"
 
@@ -3331,7 +3342,7 @@ msgstr "Samplingsrate"
 msgid "Save &playlist..."
 msgstr "Lagre &spilleliste..."
 
-#: covermanager/albumcoverchoicecontroller.cpp:169
+#: covermanager/albumcoverchoicecontroller.cpp:170
 msgid "Save album cover"
 msgstr "Lagre albumomslag"
 
@@ -3339,7 +3350,7 @@ msgstr "Lagre albumomslag"
 msgid "Save album covers in album directory"
 msgstr "Lagre album kover i album mappen"
 
-#: covermanager/albumcoverchoicecontroller.cpp:88
+#: covermanager/albumcoverchoicecontroller.cpp:89
 msgid "Save cover to disk..."
 msgstr "Lagre bilde til disk…"
 
@@ -3409,7 +3420,7 @@ msgstr "Rull over ikon for å endre spor"
 msgid "Search"
 msgstr "Søk"
 
-#: covermanager/albumcoverchoicecontroller.cpp:94
+#: covermanager/albumcoverchoicecontroller.cpp:95
 msgid "Search automatically"
 msgstr "Automatisk søk"
 
@@ -3418,7 +3429,7 @@ msgstr "Automatisk søk"
 msgid "Search delay"
 msgstr "Søke forsinkelse"
 
-#: covermanager/albumcoverchoicecontroller.cpp:90
+#: covermanager/albumcoverchoicecontroller.cpp:91
 msgid "Search for album covers..."
 msgstr "Søk etter albumomslag…"
 
@@ -3535,7 +3546,7 @@ msgstr "Vis"
 msgid "Show a &native desktop notification"
 msgstr "Vis en skrivebordsmedledelse som passer inn i ditt operativsystem"
 
-#: ../build/src/ui_playlistsettingspage.h:144
+#: ../build/src/ui_playlistsettingspage.h:150
 msgid "Show a glowing animation on the current track"
 msgstr "Vis aura rundt gjeldende spor"
 
@@ -3591,7 +3602,7 @@ msgstr "Vis adskillere"
 msgid "Show engine and device"
 msgstr "Vis motor og enhet"
 
-#: covermanager/albumcoverchoicecontroller.cpp:92
+#: covermanager/albumcoverchoicecontroller.cpp:93
 msgid "Show fullsize..."
 msgstr "Fullskjermvisning…"
 
@@ -3982,7 +3993,7 @@ msgstr "Siden du forespurte finnes ikke!"
 msgid "The site you requested is not an image!"
 msgstr "Siden du forespurte er ikke et bilde!"
 
-#: core/mainwindow.cpp:2383
+#: core/mainwindow.cpp:2402
 msgid ""
 "The version of Strawberry you've just updated to requires a full collection "
 "rescan because of the new features listed below:"
@@ -4209,7 +4220,7 @@ msgstr "Ukjent"
 msgid "Unknown error"
 msgstr "Ukjent feil"
 
-#: covermanager/albumcoverchoicecontroller.cpp:91
+#: covermanager/albumcoverchoicecontroller.cpp:92
 msgid "Unset cover"
 msgstr "Fjern omslagsvalg"
 
@@ -4391,7 +4402,7 @@ msgstr "Volum %1%"
 msgid "Vorbis"
 msgstr "Vorbis"
 
-#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:145
+#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:151
 msgid "Warn me when closing a playlist tab"
 msgstr "Advarsel når jeg lukker en spilleliste-fane"
 
@@ -4408,7 +4419,7 @@ msgstr ""
 "Strawberry søker først etter bildefiler som inneholder ett av disse ordene.\n"
 "Hvis ingen ord passer, blir det største bildet i mappen brukt."
 
-#: ../build/src/ui_playlistsettingspage.h:150
+#: ../build/src/ui_playlistsettingspage.h:157
 msgid "When saving a playlist, file paths should be"
 msgstr "Når du lagrer spillelisten, skal fil plasseringen"
 
@@ -4435,11 +4446,11 @@ msgid ""
 msgstr ""
 "Ønsker du å også flytte resten av sangene fra albumet til diverse artister?"
 
-#: core/mainwindow.cpp:2387
+#: core/mainwindow.cpp:2406
 msgid "Would you like to run a full rescan right now?"
 msgstr "Vil du søke gjennom hele samlingen på ny nå?"
 
-#: ../build/src/ui_playlistsettingspage.h:160
+#: ../build/src/ui_playlistsettingspage.h:167
 msgid "Write metadata when saving playlists"
 msgstr "Skrev metadata når spilleliste lagres"
 
@@ -4634,6 +4645,6 @@ msgstr "subsonic"
 msgid "track %1"
 msgstr "spor %1"
 
-#: covermanager/albumcoverchoicecontroller.cpp:164
+#: covermanager/albumcoverchoicecontroller.cpp:165
 msgid "unknown"
 msgstr "ukjent"

@@ -419,7 +419,7 @@ msgstr ""
 "graffe, queste sezioni saranno nascoste se la variabile non contiene alcun \n"
 "valore.</p>"
 
-#: ../build/src/ui_playlistsettingspage.h:151
+#: ../build/src/ui_playlistsettingspage.h:158
 msgid "A&utomatic"
 msgstr "A&utomatico"
 
@@ -457,7 +457,7 @@ msgstr "Circa &Qt"
 msgid "About Strawberry"
 msgstr "Circa Strawberry"
 
-#: ../build/src/ui_playlistsettingspage.h:152
+#: ../build/src/ui_playlistsettingspage.h:159
 msgid "Absolu&te"
 msgstr "Absolu&te"
 
@@ -726,7 +726,7 @@ msgstr "Tutti gli album"
 msgid "All artists"
 msgstr "Tutti gli artisti"
 
-#: covermanager/albumcoverchoicecontroller.cpp:69
+#: covermanager/albumcoverchoicecontroller.cpp:70
 msgid "All files (*)"
 msgstr "Tutti i file (*)"
 
@@ -843,7 +843,7 @@ msgstr "Artisti"
 msgid "Artists search limit"
 msgstr "Limite di ricerca degli artisti"
 
-#: ../build/src/ui_playlistsettingspage.h:154
+#: ../build/src/ui_playlistsettingspage.h:161
 msgid "As&k when saving"
 msgstr "&Chiedi durante il salvataggio"
 
@@ -890,7 +890,7 @@ msgstr "Aggiornamento automatico"
 msgid "Automatically open single categories in the collection tree"
 msgstr "Apri automaticamente categorie singole nell'albero della raccolta"
 
-#: ../build/src/ui_playlistsettingspage.h:149
+#: ../build/src/ui_playlistsettingspage.h:155
 msgid "Automatically select current playing track"
 msgstr "Seleziona automaticamente la traccia che sta venendo riprodotta"
 
@@ -1076,7 +1076,7 @@ msgstr "Classica"
 msgid "Clear"
 msgstr "Svuota"
 
-#: ../build/src/ui_mainwindow.h:623
+#: core/mainwindow.cpp:1966 ../build/src/ui_mainwindow.h:623
 msgid "Clear playlist"
 msgstr "Svuota la scaletta"
 
@@ -1142,7 +1142,7 @@ msgstr "Filtro della Collezione"
 msgid "Collection advanced grouping"
 msgstr "Raggruppamento avanzato della raccolta"
 
-#: core/mainwindow.cpp:2389
+#: core/mainwindow.cpp:2408
 msgid "Collection rescan notice"
 msgstr "Notifica nuova scansione della raccolta"
 
@@ -1212,7 +1212,7 @@ msgstr "Bitrate costante"
 msgid "Context"
 msgstr "Contesto"
 
-#: ../build/src/ui_playlistsettingspage.h:146
+#: ../build/src/ui_playlistsettingspage.h:152
 msgid "Continue to the next item in the playlist if a song is unavailable"
 msgstr ""
 "Continua verso il prossimo elemento della playlist se una canzone non è "
@@ -1649,7 +1649,11 @@ msgstr "Abilita Elementi"
 msgid "Enable equalizer"
 msgstr "Abilita equalizzatore"
 
-#: ../build/src/ui_playlistsettingspage.h:159
+#: ../build/src/ui_playlistsettingspage.h:156
+msgid "Enable playlist clear button"
+msgstr ""
+
+#: ../build/src/ui_playlistsettingspage.h:166
 msgid "Enable song metadata inline edition with click"
 msgstr "Abilita la modifica in linea dei metadati di un brano con un clic"
 
@@ -1733,7 +1737,7 @@ msgstr "Equivalente a --log-levels *:1"
 msgid "Equivalent to --log-levels *:3"
 msgstr "Equivalente a --log-levels *:3"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "Error"
 msgstr "Errore"
@@ -2035,12 +2039,12 @@ msgstr "Vai alla scheda della scaletta precedente"
 msgid "Got %1 covers out of %2 (%3 failed)"
 msgstr "Ottenute %1 copertine di %2 (%3 non riuscito)"
 
-#: ../build/src/ui_playlistsettingspage.h:147
+#: ../build/src/ui_playlistsettingspage.h:153
 msgid "Grey out unavailable songs in playlists on playback"
 msgstr ""
 "Disabilita le canzoni non disponibili nelle playlist durante la riproduzione"
 
-#: ../build/src/ui_playlistsettingspage.h:148
+#: ../build/src/ui_playlistsettingspage.h:154
 msgid "Grey out unavailable songs in playlists on startup"
 msgstr "Disabilita le canzoni non disponibili nelle playlist all'avvio"
 
@@ -2167,7 +2171,7 @@ msgstr "Icone in alto"
 msgid "Identifying song"
 msgstr "Identificazione del brano in corso"
 
-#: ../build/src/ui_playlistsettingspage.h:157
+#: ../build/src/ui_playlistsettingspage.h:164
 msgid ""
 "If activated, clicking a selected song in the playlist view will let you "
 "edit the tag value directly"
@@ -2183,12 +2187,12 @@ msgstr ""
 "Se continui, il dispositivo funzionerà lentamente e i brani copiati su di "
 "esso potrebbero non essere riproducibili."
 
-#: covermanager/albumcoverchoicecontroller.cpp:67
+#: covermanager/albumcoverchoicecontroller.cpp:68
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 msgstr ""
 "Immagini (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 
-#: covermanager/albumcoverchoicecontroller.cpp:68
+#: covermanager/albumcoverchoicecontroller.cpp:69
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 msgstr "Immagini (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 
@@ -2329,19 +2333,19 @@ msgstr "Carica"
 msgid "Load cover from URL"
 msgstr "Carica copertina da URL"
 
-#: covermanager/albumcoverchoicecontroller.cpp:89
+#: covermanager/albumcoverchoicecontroller.cpp:90
 msgid "Load cover from URL..."
 msgstr "Carica copertina da URL..."
 
-#: covermanager/albumcoverchoicecontroller.cpp:139
+#: covermanager/albumcoverchoicecontroller.cpp:140
 msgid "Load cover from disk"
 msgstr "Carica copertina dal disco"
 
-#: covermanager/albumcoverchoicecontroller.cpp:87
+#: covermanager/albumcoverchoicecontroller.cpp:88
 msgid "Load cover from disk..."
 msgstr "Carica copertina da disco..."
 
-#: playlist/playlistcontainer.cpp:291
+#: playlist/playlistcontainer.cpp:305
 msgid "Load playlist"
 msgstr "Carica la scaletta"
 
@@ -2451,7 +2455,7 @@ msgstr "Massimo numero di tentativi di login raggiunto."
 msgid "Medium (%1 fps)"
 msgstr "Medio (%1 fps)"
 
-#: ../build/src/ui_playlistsettingspage.h:155
+#: ../build/src/ui_playlistsettingspage.h:162
 msgid "Metadata"
 msgstr "Metadata"
 
@@ -2635,7 +2639,7 @@ msgstr "Nessun blocco lungo"
 msgid "No match."
 msgstr "Nessuna corrispondenza."
 
-#: playlist/playlistcontainer.cpp:372
+#: playlist/playlistcontainer.cpp:386
 msgid ""
 "No matches found.  Clear the search box to show the whole playlist again."
 msgstr ""
@@ -2655,7 +2659,7 @@ msgstr "Nessuna canzone in riproduzione"
 msgid "None"
 msgstr "Nessuna"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "None of the selected songs were suitable for copying to a device"
 msgstr ""
@@ -2851,7 +2855,7 @@ msgstr "Password"
 msgid "Password Protected"
 msgstr "Protetto da Password"
 
-#: core/mainwindow.cpp:1089 core/mainwindow.cpp:1531
+#: core/mainwindow.cpp:1091 core/mainwindow.cpp:1531
 #: core/qtsystemtrayicon.cpp:207
 msgid "Pause"
 msgstr "Pausa"
@@ -2879,7 +2883,7 @@ msgstr "Pixel"
 msgid "Plain sidebar"
 msgstr "Barra laterale semplice"
 
-#: core/mainwindow.cpp:592 core/mainwindow.cpp:1042 core/mainwindow.cpp:1071
+#: core/mainwindow.cpp:592 core/mainwindow.cpp:1044 core/mainwindow.cpp:1073
 #: core/mainwindow.cpp:1535 core/qtsystemtrayicon.cpp:194
 #: core/qtsystemtrayicon.cpp:219
 msgid "Play"
@@ -2906,16 +2910,23 @@ msgstr "Riproduci la traccia numero <n> della scaletta"
 msgid "Player options"
 msgstr "Opzioni del lettore"
 
-#: playlist/playlistcontainer.cpp:286 playlist/playlistlistcontainer.cpp:258
+#: playlist/playlistcontainer.cpp:300 playlist/playlistlistcontainer.cpp:258
 #: playlist/playlistlistcontainer.cpp:346 playlist/playlistmanager.cpp:103
 #: playlist/playlistmanager.cpp:180 playlist/playlistmanager.cpp:536
-#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:143
+#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:149
 msgid "Playlist"
 msgstr "Scaletta"
 
 #: widgets/osd.cpp:193
 msgid "Playlist finished"
 msgstr "Scaletta terminata"
+
+#: core/mainwindow.cpp:1966
+#, qt-format
+msgid ""
+"Playlist has %1 songs, too large to undo, are you sure you want to clear the "
+"playlist?"
+msgstr ""
 
 #: core/commandlineoptions.cpp:177
 #: ../build/src/ui_playlistsaveoptionsdialog.h:94
@@ -3087,7 +3098,7 @@ msgstr "QueueView"
 msgid "Radio (equal loudness for all tracks)"
 msgstr "Radio (volume uguale per tutte le tracce)"
 
-#: ../build/src/ui_playlistsettingspage.h:153
+#: ../build/src/ui_playlistsettingspage.h:160
 msgid "Re&lative"
 msgstr "Re&lativo"
 
@@ -3355,7 +3366,7 @@ msgstr "Campionamento"
 msgid "Save &playlist..."
 msgstr "Salva la &playlist"
 
-#: covermanager/albumcoverchoicecontroller.cpp:169
+#: covermanager/albumcoverchoicecontroller.cpp:170
 msgid "Save album cover"
 msgstr "Salva la copertina dell'album"
 
@@ -3363,7 +3374,7 @@ msgstr "Salva la copertina dell'album"
 msgid "Save album covers in album directory"
 msgstr "Salva le copertine nella cartella dell'album"
 
-#: covermanager/albumcoverchoicecontroller.cpp:88
+#: covermanager/albumcoverchoicecontroller.cpp:89
 msgid "Save cover to disk..."
 msgstr "Salva la copertina su disco..."
 
@@ -3433,7 +3444,7 @@ msgstr "Scorri sull'icona per cambiare traccia"
 msgid "Search"
 msgstr "Cerca"
 
-#: covermanager/albumcoverchoicecontroller.cpp:94
+#: covermanager/albumcoverchoicecontroller.cpp:95
 msgid "Search automatically"
 msgstr "Cerca automaticamente"
 
@@ -3442,7 +3453,7 @@ msgstr "Cerca automaticamente"
 msgid "Search delay"
 msgstr "Ritardo nella ricerca"
 
-#: covermanager/albumcoverchoicecontroller.cpp:90
+#: covermanager/albumcoverchoicecontroller.cpp:91
 msgid "Search for album covers..."
 msgstr "Cerca copertine degli album..."
 
@@ -3561,7 +3572,7 @@ msgstr "Mostra"
 msgid "Show a &native desktop notification"
 msgstr "Mostra una notifica a desktop &nativa"
 
-#: ../build/src/ui_playlistsettingspage.h:144
+#: ../build/src/ui_playlistsettingspage.h:150
 msgid "Show a glowing animation on the current track"
 msgstr "Mostra un'animazione luminosa sulla traccia corrente"
 
@@ -3618,7 +3629,7 @@ msgstr "Mostra separatori"
 msgid "Show engine and device"
 msgstr "Mostra l'engine ed il dispositivo"
 
-#: covermanager/albumcoverchoicecontroller.cpp:92
+#: covermanager/albumcoverchoicecontroller.cpp:93
 msgid "Show fullsize..."
 msgstr "Mostra a dimensioni originali..."
 
@@ -4012,7 +4023,7 @@ msgstr "Il sito richiesto non esiste!"
 msgid "The site you requested is not an image!"
 msgstr "Il sito richiesto non è un'immagine!"
 
-#: core/mainwindow.cpp:2383
+#: core/mainwindow.cpp:2402
 msgid ""
 "The version of Strawberry you've just updated to requires a full collection "
 "rescan because of the new features listed below:"
@@ -4247,7 +4258,7 @@ msgstr "Sconosciuto"
 msgid "Unknown error"
 msgstr "Errore sconosciuto"
 
-#: covermanager/albumcoverchoicecontroller.cpp:91
+#: covermanager/albumcoverchoicecontroller.cpp:92
 msgid "Unset cover"
 msgstr "Rimuovi copertina"
 
@@ -4431,7 +4442,7 @@ msgstr "Volume %1%"
 msgid "Vorbis"
 msgstr "Vorbis"
 
-#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:145
+#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:151
 msgid "Warn me when closing a playlist tab"
 msgstr "Avvisami alla chiusura di una scheda della scaletta"
 
@@ -4450,7 +4461,7 @@ msgstr ""
 "Se non ci saranno corrispondenze, utilizzerà l'immagine più grande che si "
 "trova nella cartella."
 
-#: ../build/src/ui_playlistsettingspage.h:150
+#: ../build/src/ui_playlistsettingspage.h:157
 msgid "When saving a playlist, file paths should be"
 msgstr "Quando salvi una scaletta, i percorsi dei file dovrebbero essere"
 
@@ -4476,11 +4487,11 @@ msgid ""
 "well?"
 msgstr "Vuoi spostare anche gli altri brani di questo album in Artisti vari?"
 
-#: core/mainwindow.cpp:2387
+#: core/mainwindow.cpp:2406
 msgid "Would you like to run a full rescan right now?"
 msgstr "Vuoi eseguire subito una nuova scansione completa?"
 
-#: ../build/src/ui_playlistsettingspage.h:160
+#: ../build/src/ui_playlistsettingspage.h:167
 msgid "Write metadata when saving playlists"
 msgstr "Scrivi i metadata quando si salvano le playlist"
 
@@ -4678,6 +4689,6 @@ msgstr "subsonic"
 msgid "track %1"
 msgstr "traccia %1"
 
-#: covermanager/albumcoverchoicecontroller.cpp:164
+#: covermanager/albumcoverchoicecontroller.cpp:165
 msgid "unknown"
 msgstr "sconosciuto"

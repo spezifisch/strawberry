@@ -423,7 +423,7 @@ msgstr ""
 "kurawal, maka bagian tersebut akan disembunyikan jika token tersebut kosong."
 "</p>"
 
-#: ../build/src/ui_playlistsettingspage.h:151
+#: ../build/src/ui_playlistsettingspage.h:158
 msgid "A&utomatic"
 msgstr "&Otomatis"
 
@@ -461,7 +461,7 @@ msgstr "Tentang &Qt"
 msgid "About Strawberry"
 msgstr "Tentang Strawberry"
 
-#: ../build/src/ui_playlistsettingspage.h:152
+#: ../build/src/ui_playlistsettingspage.h:159
 msgid "Absolu&te"
 msgstr "Absolu&t"
 
@@ -729,7 +729,7 @@ msgstr "Semua album"
 msgid "All artists"
 msgstr "Semua artis"
 
-#: covermanager/albumcoverchoicecontroller.cpp:69
+#: covermanager/albumcoverchoicecontroller.cpp:70
 msgid "All files (*)"
 msgstr "Semua berkas (*)"
 
@@ -845,7 +845,7 @@ msgstr "Artis"
 msgid "Artists search limit"
 msgstr "Batasan pencarian artis"
 
-#: ../build/src/ui_playlistsettingspage.h:154
+#: ../build/src/ui_playlistsettingspage.h:161
 msgid "As&k when saving"
 msgstr "Tanya&kan saat menyimpan"
 
@@ -892,7 +892,7 @@ msgstr "Pembaruan otomatis"
 msgid "Automatically open single categories in the collection tree"
 msgstr "Secara otomatis membuka kategori tunggal di pohon pustaka"
 
-#: ../build/src/ui_playlistsettingspage.h:149
+#: ../build/src/ui_playlistsettingspage.h:155
 msgid "Automatically select current playing track"
 msgstr "Pilih trek yang sedang diputar secara otomatis"
 
@@ -1077,7 +1077,7 @@ msgstr "Klasik"
 msgid "Clear"
 msgstr "Bersihkan"
 
-#: ../build/src/ui_mainwindow.h:623
+#: core/mainwindow.cpp:1966 ../build/src/ui_mainwindow.h:623
 msgid "Clear playlist"
 msgstr "Bersihkan daftar putar"
 
@@ -1142,7 +1142,7 @@ msgstr ""
 msgid "Collection advanced grouping"
 msgstr "Pengelompokan pustaka lanjutan"
 
-#: core/mainwindow.cpp:2389
+#: core/mainwindow.cpp:2408
 msgid "Collection rescan notice"
 msgstr "Pemberitahuan pemindaian ulang pustaka"
 
@@ -1212,7 +1212,7 @@ msgstr "Lajubit konstan"
 msgid "Context"
 msgstr "Konteks"
 
-#: ../build/src/ui_playlistsettingspage.h:146
+#: ../build/src/ui_playlistsettingspage.h:152
 msgid "Continue to the next item in the playlist if a song is unavailable"
 msgstr ""
 "Lanjutkan ke lagu berikutnya jika suatu lagu di daftar putar tidak tersedia"
@@ -1648,7 +1648,11 @@ msgstr ""
 msgid "Enable equalizer"
 msgstr "Fungsikan ekualiser"
 
-#: ../build/src/ui_playlistsettingspage.h:159
+#: ../build/src/ui_playlistsettingspage.h:156
+msgid "Enable playlist clear button"
+msgstr ""
+
+#: ../build/src/ui_playlistsettingspage.h:166
 msgid "Enable song metadata inline edition with click"
 msgstr "Fungsikan edisi metadata lagu sebaris dengan mengkliknya"
 
@@ -1730,7 +1734,7 @@ msgstr "Setara dengan --log-level *: 1"
 msgid "Equivalent to --log-levels *:3"
 msgstr "Setara dengan --log-level *: 3"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "Error"
 msgstr "Kesalahan"
@@ -2031,11 +2035,11 @@ msgstr "Buka tab daftar putar sebelumnya"
 msgid "Got %1 covers out of %2 (%3 failed)"
 msgstr "Mendapatkan %1 sampul dari %2 ( %3 gagal)"
 
-#: ../build/src/ui_playlistsettingspage.h:147
+#: ../build/src/ui_playlistsettingspage.h:153
 msgid "Grey out unavailable songs in playlists on playback"
 msgstr "Abu-abukan lagu yang tidak tersedia di daftar putar saat pemutaran"
 
-#: ../build/src/ui_playlistsettingspage.h:148
+#: ../build/src/ui_playlistsettingspage.h:154
 msgid "Grey out unavailable songs in playlists on startup"
 msgstr "Abu-abukan lagu yang tidak tersedia di daftar putar saat membuka"
 
@@ -2160,7 +2164,7 @@ msgstr "Ikon di atas"
 msgid "Identifying song"
 msgstr "Mengidentifikasi lagu"
 
-#: ../build/src/ui_playlistsettingspage.h:157
+#: ../build/src/ui_playlistsettingspage.h:164
 msgid ""
 "If activated, clicking a selected song in the playlist view will let you "
 "edit the tag value directly"
@@ -2176,11 +2180,11 @@ msgstr ""
 "Jika Anda lanjutkan, perangkat ini akan bekerja lambat dan lagu-lagu yang "
 "disalin mungkin tidak bekerja."
 
-#: covermanager/albumcoverchoicecontroller.cpp:67
+#: covermanager/albumcoverchoicecontroller.cpp:68
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 msgstr "Gambar (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 
-#: covermanager/albumcoverchoicecontroller.cpp:68
+#: covermanager/albumcoverchoicecontroller.cpp:69
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 msgstr "Gambar (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 
@@ -2319,19 +2323,19 @@ msgstr "Muat"
 msgid "Load cover from URL"
 msgstr "Muat sampul dari URL"
 
-#: covermanager/albumcoverchoicecontroller.cpp:89
+#: covermanager/albumcoverchoicecontroller.cpp:90
 msgid "Load cover from URL..."
 msgstr "Muat sampul dari URL..."
 
-#: covermanager/albumcoverchoicecontroller.cpp:139
+#: covermanager/albumcoverchoicecontroller.cpp:140
 msgid "Load cover from disk"
 msgstr "Muat sampul dari diska"
 
-#: covermanager/albumcoverchoicecontroller.cpp:87
+#: covermanager/albumcoverchoicecontroller.cpp:88
 msgid "Load cover from disk..."
 msgstr "Muat sampul dari diska..."
 
-#: playlist/playlistcontainer.cpp:291
+#: playlist/playlistcontainer.cpp:305
 msgid "Load playlist"
 msgstr "Muat daftar putar"
 
@@ -2441,7 +2445,7 @@ msgstr "Jumlah maksimum upaya masuk tercapai."
 msgid "Medium (%1 fps)"
 msgstr "Sedang (%1 fps)"
 
-#: ../build/src/ui_playlistsettingspage.h:155
+#: ../build/src/ui_playlistsettingspage.h:162
 msgid "Metadata"
 msgstr "Metadata"
 
@@ -2625,7 +2629,7 @@ msgstr "Tanpa blok panjang"
 msgid "No match."
 msgstr "Tidak ada yang cocok."
 
-#: playlist/playlistcontainer.cpp:372
+#: playlist/playlistcontainer.cpp:386
 msgid ""
 "No matches found.  Clear the search box to show the whole playlist again."
 msgstr ""
@@ -2645,7 +2649,7 @@ msgstr "Tidak ada lagu yang berputar"
 msgid "None"
 msgstr "Nihil"
 
-#: core/mainwindow.cpp:2179 core/mainwindow.cpp:2285
+#: core/mainwindow.cpp:2198 core/mainwindow.cpp:2304
 #: context/contextalbumsview.cpp:401 collection/collectionview.cpp:556
 msgid "None of the selected songs were suitable for copying to a device"
 msgstr ""
@@ -2840,7 +2844,7 @@ msgstr "Sandi"
 msgid "Password Protected"
 msgstr "Terlindungi dengan Kata Sandi"
 
-#: core/mainwindow.cpp:1089 core/mainwindow.cpp:1531
+#: core/mainwindow.cpp:1091 core/mainwindow.cpp:1531
 #: core/qtsystemtrayicon.cpp:207
 msgid "Pause"
 msgstr "Jeda"
@@ -2868,7 +2872,7 @@ msgstr "Piksel"
 msgid "Plain sidebar"
 msgstr "Bilah sisi polos"
 
-#: core/mainwindow.cpp:592 core/mainwindow.cpp:1042 core/mainwindow.cpp:1071
+#: core/mainwindow.cpp:592 core/mainwindow.cpp:1044 core/mainwindow.cpp:1073
 #: core/mainwindow.cpp:1535 core/qtsystemtrayicon.cpp:194
 #: core/qtsystemtrayicon.cpp:219
 msgid "Play"
@@ -2895,16 +2899,23 @@ msgstr "Putar trek ke <n> dalam daftar putar"
 msgid "Player options"
 msgstr "Opsi pemutar"
 
-#: playlist/playlistcontainer.cpp:286 playlist/playlistlistcontainer.cpp:258
+#: playlist/playlistcontainer.cpp:300 playlist/playlistlistcontainer.cpp:258
 #: playlist/playlistlistcontainer.cpp:346 playlist/playlistmanager.cpp:103
 #: playlist/playlistmanager.cpp:180 playlist/playlistmanager.cpp:536
-#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:143
+#: playlist/playlisttabbar.cpp:396 ../build/src/ui_playlistsettingspage.h:149
 msgid "Playlist"
 msgstr "Daftar putar"
 
 #: widgets/osd.cpp:193
 msgid "Playlist finished"
 msgstr "Daftar putar selesai"
+
+#: core/mainwindow.cpp:1966
+#, qt-format
+msgid ""
+"Playlist has %1 songs, too large to undo, are you sure you want to clear the "
+"playlist?"
+msgstr ""
 
 #: core/commandlineoptions.cpp:177
 #: ../build/src/ui_playlistsaveoptionsdialog.h:94
@@ -3070,7 +3081,7 @@ msgstr "QueueView"
 msgid "Radio (equal loudness for all tracks)"
 msgstr "Radio (kenyaringan sama untuk semua trek)"
 
-#: ../build/src/ui_playlistsettingspage.h:153
+#: ../build/src/ui_playlistsettingspage.h:160
 msgid "Re&lative"
 msgstr "Re&latif"
 
@@ -3338,7 +3349,7 @@ msgstr "Lajusampel"
 msgid "Save &playlist..."
 msgstr "Simpan &daftar putar..."
 
-#: covermanager/albumcoverchoicecontroller.cpp:169
+#: covermanager/albumcoverchoicecontroller.cpp:170
 msgid "Save album cover"
 msgstr "Simpan sampul album"
 
@@ -3346,7 +3357,7 @@ msgstr "Simpan sampul album"
 msgid "Save album covers in album directory"
 msgstr "Simpan sampul album di direktori album"
 
-#: covermanager/albumcoverchoicecontroller.cpp:88
+#: covermanager/albumcoverchoicecontroller.cpp:89
 msgid "Save cover to disk..."
 msgstr "Simpan sampul ke diska..."
 
@@ -3416,7 +3427,7 @@ msgstr "Gulir pada ikon untuk mengganti trek"
 msgid "Search"
 msgstr "Cari"
 
-#: covermanager/albumcoverchoicecontroller.cpp:94
+#: covermanager/albumcoverchoicecontroller.cpp:95
 msgid "Search automatically"
 msgstr "Cari secara otomatis"
 
@@ -3425,7 +3436,7 @@ msgstr "Cari secara otomatis"
 msgid "Search delay"
 msgstr "Jeda pencarian"
 
-#: covermanager/albumcoverchoicecontroller.cpp:90
+#: covermanager/albumcoverchoicecontroller.cpp:91
 msgid "Search for album covers..."
 msgstr "Cari sampul album..."
 
@@ -3542,7 +3553,7 @@ msgstr "Tampilkan"
 msgid "Show a &native desktop notification"
 msgstr "Tampilkan &notifikasi desktop asli"
 
-#: ../build/src/ui_playlistsettingspage.h:144
+#: ../build/src/ui_playlistsettingspage.h:150
 msgid "Show a glowing animation on the current track"
 msgstr "Tampilkan animasi bersinar di trek saat ini"
 
@@ -3598,7 +3609,7 @@ msgstr "Tampilkan pembagi"
 msgid "Show engine and device"
 msgstr "Tampilkan mesin dan perangkat"
 
-#: covermanager/albumcoverchoicecontroller.cpp:92
+#: covermanager/albumcoverchoicecontroller.cpp:93
 msgid "Show fullsize..."
 msgstr "Tampilkan ukuran penuh..."
 
@@ -3986,7 +3997,7 @@ msgstr "Situs yang Anda minta tidak ada!"
 msgid "The site you requested is not an image!"
 msgstr "Situs yang Anda minta bukan sebuah gambar!"
 
-#: core/mainwindow.cpp:2383
+#: core/mainwindow.cpp:2402
 msgid ""
 "The version of Strawberry you've just updated to requires a full collection "
 "rescan because of the new features listed below:"
@@ -4217,7 +4228,7 @@ msgstr "Tidak diketahui"
 msgid "Unknown error"
 msgstr "Kesalahan tak terduga"
 
-#: covermanager/albumcoverchoicecontroller.cpp:91
+#: covermanager/albumcoverchoicecontroller.cpp:92
 msgid "Unset cover"
 msgstr "Tak set sampul"
 
@@ -4399,7 +4410,7 @@ msgstr "Volume %1%"
 msgid "Vorbis"
 msgstr "Vorbis"
 
-#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:145
+#: playlist/playlisttabbar.cpp:219 ../build/src/ui_playlistsettingspage.h:151
 msgid "Warn me when closing a playlist tab"
 msgstr "Peringatkan saya ketika menutup tab daftar putar"
 
@@ -4418,7 +4429,7 @@ msgstr ""
 "Jika tidak ada yang cocok maka akan menggunakan gambar terbesar dalam "
 "direktori."
 
-#: ../build/src/ui_playlistsettingspage.h:150
+#: ../build/src/ui_playlistsettingspage.h:157
 msgid "When saving a playlist, file paths should be"
 msgstr "Ketika menyimpan daftar putar, lokasi berkas sebaiknya"
 
@@ -4446,11 +4457,11 @@ msgstr ""
 "Apakah Anda ingin memindahkan lagu lainnya di dalam album ini ke Artis "
 "Beragam?"
 
-#: core/mainwindow.cpp:2387
+#: core/mainwindow.cpp:2406
 msgid "Would you like to run a full rescan right now?"
 msgstr "Apakah Anda ingin menjalankan pemindaian ulang menyeluruh sekarang?"
 
-#: ../build/src/ui_playlistsettingspage.h:160
+#: ../build/src/ui_playlistsettingspage.h:167
 msgid "Write metadata when saving playlists"
 msgstr "Tulis metadata saat menyimpan daftar putar"
 
@@ -4646,6 +4657,6 @@ msgstr "subsonic"
 msgid "track %1"
 msgstr "trek %1"
 
-#: covermanager/albumcoverchoicecontroller.cpp:164
+#: covermanager/albumcoverchoicecontroller.cpp:165
 msgid "unknown"
 msgstr "tidak diketahui"

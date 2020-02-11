@@ -20,19 +20,20 @@
 #ifndef SUBSONICURLHANDLER_H
 #define SUBSONICURLHANDLER_H
 
+#include "config.h"
+
 #include <QObject>
 #include <QPair>
+#include <QSet>
 #include <QList>
 #include <QByteArray>
 #include <QString>
 #include <QUrl>
 
 #include "core/urlhandler.h"
-#include "core/song.h"
 #include "subsonic/subsonicservice.h"
 
 class Application;
-class SubsonicService;
 
 class SubsonicUrlHandler : public UrlHandler {
   Q_OBJECT

@@ -23,13 +23,12 @@
 
 #include "config.h"
 
-
 #include <QObject>
 #include <QWidget>
 #include <QString>
 #include <QSize>
-#include <QLabel>
 
+class QLabel;
 class QEvent;
 
 class Application;

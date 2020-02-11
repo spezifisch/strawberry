@@ -27,12 +27,10 @@
 #include <taglib/id3v1genres.h>
 
 #include <QtGlobal>
-#include <QCoreApplication>
 #include <QObject>
 #include <QFile>
 #include <QFileInfo>
 #include <QSharedData>
-#include <QtAlgorithms>
 #include <QHash>
 #include <QByteArray>
 #include <QVariant>
@@ -469,17 +467,17 @@ Song::Source Song::SourceFromURL(const QUrl &url) {
 QString Song::TextForSource(Source source) {
 
   switch (source) {
-    case Song::Source_LocalFile:   return QObject::tr("File");
-    case Song::Source_Collection:  return QObject::tr("Collection");
-    case Song::Source_CDDA:        return QObject::tr("CD");
-    case Song::Source_Device:      return QObject::tr("Device");
-    case Song::Source_Stream:      return QObject::tr("Stream");
-    case Song::Source_Tidal:       return QObject::tr("Tidal");
-    case Song::Source_Subsonic:    return QObject::tr("subsonic");
-    case Song::Source_Qobuz:       return QObject::tr("qobuz");
-    case Song::Source_Unknown:     return QObject::tr("Unknown");
+    case Song::Source_LocalFile:   return "file";
+    case Song::Source_Collection:  return "collection";
+    case Song::Source_CDDA:        return "cd";
+    case Song::Source_Device:      return "device";
+    case Song::Source_Stream:      return "stream";
+    case Song::Source_Tidal:       return "tidal";
+    case Song::Source_Subsonic:    return "subsonic";
+    case Song::Source_Qobuz:       return "qobuz";
+    case Song::Source_Unknown:     return "unknown";
   }
-  return QObject::tr("Unknown");
+  return "unknown";
 
 }
 

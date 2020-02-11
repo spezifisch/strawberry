@@ -18,6 +18,7 @@
  *
  */
 
+#include "config.h"
 
 #include <QtGlobal>
 #include <QWidget>
@@ -48,9 +49,6 @@
 
 #include "core/multisortfilterproxy.h"
 #include "groupediconview.h"
-
-class QModelIndex;
-class QResizeEvent;
 
 const int GroupedIconView::kBarThickness = 2;
 const int GroupedIconView::kBarMarginTop = 3;

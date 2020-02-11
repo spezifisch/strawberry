@@ -24,30 +24,31 @@
 
 #include "config.h"
 
-
 #include <QtGlobal>
 #include <QObject>
 #include <QAbstractItemModel>
 #include <QAbstractListModel>
-#include <QSortFilterProxyModel>
 #include <QPersistentModelIndex>
 #include <QFuture>
 #include <QList>
 #include <QMap>
 #include <QMetaType>
-#include <QMimeData>
 #include <QVariant>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
 #include <QColor>
-#include <QUndoStack>
+#include <QRgb>
 
 #include "core/song.h"
 #include "core/tagreaderclient.h"
 #include "playlistitem.h"
 #include "playlistsequence.h"
 #include "smartplaylists/playlistgenerator_fwd.h"
+
+class QMimeData;
+class QSortFilterProxyModel;
+class QUndoStack;
 
 class CollectionBackend;
 class PlaylistBackend;
@@ -223,6 +224,7 @@ class Playlist : public QAbstractListModel {
   bool nowplaying() const { return nowplaying_; }
   void set_scrobbled(bool state) { scrobbled_ = state; }
   void set_nowplaying(bool state) { nowplaying_ = state; }
+  void set_editing(const int row) { editing_ = row; }
   qint64 scrobble_point_nanosec() const { return scrobble_point_; }
   void UpdateScrobblePoint(const qint64 seek_point_nanosec = 0);
 
@@ -405,6 +407,8 @@ class Playlist : public QAbstractListModel {
   bool scrobbled_;
   bool nowplaying_;
   qint64 scrobble_point_;
+
+  int editing_;
 
 };
 

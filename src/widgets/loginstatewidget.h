@@ -20,12 +20,15 @@
 #ifndef LOGINSTATEWIDGET_H
 #define LOGINSTATEWIDGET_H
 
+#include "config.h"
+
 #include <QWidget>
 #include <QObject>
 #include <QList>
 #include <QString>
 #include <QDate>
-#include <QtEvents>
+
+class QEvent;
 
 class Ui_LoginStateWidget;
 

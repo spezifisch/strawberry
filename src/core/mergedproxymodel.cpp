@@ -25,6 +25,7 @@
 
 #include <QObject>
 #include <QMimeData>
+#include <QList>
 #include <QStringList>
 #include <QtAlgorithms>
 #include <QAbstractItemModel>

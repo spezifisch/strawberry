@@ -18,6 +18,8 @@
  *
  */
 
+#include "config.h"
+
 #include <QtGlobal>
 #include <QWidget>
 #include <QVariant>
@@ -26,7 +28,7 @@
 #include <QSize>
 #include <QLabel>
 #include <QSettings>
-#include <QtEvents>
+#include <QEvent>
 
 #include "core/timeconstants.h"
 #include "core/utilities.h"

@@ -28,13 +28,14 @@
 #include <memory>
 
 #include <QObject>
-#include <QThread>
 #include <QList>
 #include <QString>
 
 #include "settings/settingsdialog.h"
 
 using std::unique_ptr;
+
+class QThread;
 
 class TaskManager;
 class ApplicationImpl;
@@ -126,6 +127,7 @@ signals:
   void SettingsChanged();
   void SettingsDialogRequested(SettingsDialog::Page page);
   void ExitFinished();
+  void ClearPixmapDiskCache();
 
  private:
   std::unique_ptr<ApplicationImpl> p_;

@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 #include <xine.h>
 #ifdef XINE_ANALYZER
 #  include <xine/metronom.h>
@@ -34,20 +35,14 @@
 
 #include <memory>
 #include <cstdlib>
-#include <algorithm>
 #include <climits>
-#include <vector>
 
 #include <QtGlobal>
-#include <QApplication>
-#include <QThread>
 #include <QMutex>
+#include <QCoreApplication>
 #include <QByteArray>
 #include <QChar>
-#include <QDir>
-#include <QFile>
 #include <QFileInfo>
-#include <QDateTime>
 #include <QLocale>
 #include <QVariant>
 #include <QString>
@@ -56,7 +51,6 @@
 #include <QUrl>
 #include <QTimer>
 #include <QtDebug>
-#include <QSettings>
 
 #include "core/logging.h"
 #include <core/timeconstants.h>
@@ -67,8 +61,6 @@
 #ifdef XINE_ANALYZER
 #  include "xinescope.h"
 #endif
-
-#include "settings/backendsettingspage.h"
 
 using std::shared_ptr;
 

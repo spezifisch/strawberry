@@ -23,10 +23,10 @@
 #include <functional>
 
 #include <QDialog>
+#include <QWidget>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <QWidget>
 
 #include "collectionmodel.h"
 #include "groupbydialog.h"

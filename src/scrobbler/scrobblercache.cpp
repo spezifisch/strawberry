@@ -19,19 +19,19 @@
 
 #include "config.h"
 
-
 #include <QObject>
 #include <QStandardPaths>
+#include <QHash>
+#include <QVariant>
 #include <QString>
 #include <QFile>
 #include <QIODevice>
 #include <QTextStream>
-#include <QHash>
 #include <QJsonDocument>
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QJsonParseError>
+#include <QtDebug>
 
 #include "core/song.h"
 #include "core/logging.h"

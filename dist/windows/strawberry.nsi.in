@@ -201,7 +201,7 @@ Section "Strawberry" Strawberry
   File "libspeex-1.dll"
   File "libsqlite3-0.dll"
   File "libstdc++-6.dll"
-  File "libtag.dll"
+  ;File "libtag.dll"
   File "libunistring-2.dll"
   File "libvorbis-0.dll"
   File "libvorbisenc-2.dll"
@@ -296,6 +296,11 @@ Section "Qt image format plugins" imageformats
   File "/oname=qjpeg.dll" "imageformats\qjpeg.dll"
 SectionEnd
 
+Section "Qt style plugins" styles
+  SetOutPath "$INSTDIR\styles"
+  File "/oname=qwindowsvistastyle.dll" "styles\qwindowsvistastyle.dll"
+SectionEnd
+
 Section "Gstreamer plugins" gstreamer-plugins
   SetOutPath "$INSTDIR\gstreamer-plugins"
 
@@ -317,7 +322,7 @@ Section "Gstreamer plugins" gstreamer-plugins
   File "/oname=libgsttypefindfunctions.dll" "gstreamer-plugins\libgsttypefindfunctions.dll"
   File "/oname=libgstgio.dll" "gstreamer-plugins\libgstgio.dll"
   File "/oname=libgstdirectsound.dll" "gstreamer-plugins\libgstdirectsound.dll"
-  File "/oname=libgstwasapi.dll" "gstreamer-plugins\libgstwasapi.dll"
+  ;File "/oname=libgstwasapi.dll" "gstreamer-plugins\libgstwasapi.dll"
   File "/oname=libgstapetag.dll" "gstreamer-plugins\libgstapetag.dll"
   File "/oname=libgsticydemux.dll" "gstreamer-plugins\libgsticydemux.dll"
   File "/oname=libgstid3demux.dll" "gstreamer-plugins\libgstid3demux.dll"
@@ -502,6 +507,7 @@ Section "Uninstall"
   Delete "$INSTDIR\gio-modules\libgiognutls.dll"
   Delete "$INSTDIR\platforms\qwindows.dll"
   Delete "$INSTDIR\sqldrivers\qsqlite.dll"
+  Delete "$INSTDIR\styles\qwindowsvistastyle.dll"
 
   Delete "$INSTDIR\imageformats\qgif.dll"
   Delete "$INSTDIR\imageformats\qico.dll"

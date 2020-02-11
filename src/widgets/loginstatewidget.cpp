@@ -17,6 +17,8 @@
 
 */
 
+#include "config.h"
+
 #include "loginstatewidget.h"
 #include "ui_loginstatewidget.h"
 #include "core/iconloader.h"
@@ -26,7 +28,8 @@
 #include <QDate>
 #include <QString>
 #include <QLineEdit>
-#include <QtEvents>
+#include <QEvent>
+#include <QKeyEvent>
 
 LoginStateWidget::LoginStateWidget(QWidget *parent)
     : QWidget(parent), ui_(new Ui_LoginStateWidget), state_(LoggedOut) {

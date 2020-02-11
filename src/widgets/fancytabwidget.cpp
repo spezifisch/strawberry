@@ -19,37 +19,42 @@
  *
  */
 
-#include "fancytabwidget.h"
-#include "core/stylehelper.h"
-#include "core/logging.h"
-#include "settings/appearancesettingspage.h"
+#include "config.h"
 
-#include <QDebug>
+#include <algorithm>
 
+#include <QtGlobal>
 #include <QObject>
 #include <QTabBar>
 #include <QWidget>
+#include <QTimer>
+#include <QList>
 #include <QMap>
-#include <QHash>
+#include <QVariant>
 #include <QString>
 #include <QIcon>
 #include <QPainter>
+#include <QStylePainter>
 #include <QColor>
 #include <QRect>
 #include <QFont>
-#include <QStylePainter>
-#include <QTimer>
-#include <QLayout>
-#include <QVBoxLayout>
 #include <QSize>
 #include <QPoint>
+#include <QBrush>
+#include <QPen>
 #include <QTransform>
 #include <QMenu>
 #include <QAction>
 #include <QActionGroup>
 #include <QSettings>
-#include <QMouseEvent>
 #include <QPixmapCache>
+#include <QLayout>
+#include <QBoxLayout>
+#include <QtEvents>
+
+#include "fancytabwidget.h"
+#include "core/stylehelper.h"
+#include "settings/appearancesettingspage.h"
 
 const QSize FancyTabWidget::IconSize_LargeSidebar = QSize(24, 24);
 const QSize FancyTabWidget::IconSize_SmallSidebar = QSize(22, 22);

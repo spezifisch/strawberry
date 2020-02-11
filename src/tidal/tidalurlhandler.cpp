@@ -17,14 +17,14 @@
  *
  */
 
+#include "config.h"
+
 #include <QObject>
 #include <QString>
 #include <QUrl>
 
 #include "core/application.h"
 #include "core/taskmanager.h"
-#include "core/iconloader.h"
-#include "core/logging.h"
 #include "core/song.h"
 #include "tidal/tidalservice.h"
 #include "tidalurlhandler.h"

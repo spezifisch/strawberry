@@ -35,6 +35,7 @@
 #include "core/lazy.h"
 #include "core/tagreaderclient.h"
 #include "core/song.h"
+#include "core/logging.h"
 
 #include "database.h"
 #include "taskmanager.h"
@@ -57,11 +58,9 @@
 #include "covermanager/deezercoverprovider.h"
 
 #include "lyrics/lyricsproviders.h"
-#include "lyrics/lyricsprovider.h"
 #include "lyrics/auddlyricsprovider.h"
 #include "lyrics/ovhlyricsprovider.h"
 #include "lyrics/lololyricsprovider.h"
-#include "lyrics/chartlyricsprovider.h"
 
 #include "scrobbler/audioscrobbler.h"
 
@@ -138,7 +137,6 @@ class ApplicationImpl {
           lyrics_providers->AddProvider(new AuddLyricsProvider(app));
           lyrics_providers->AddProvider(new OVHLyricsProvider(app));
           lyrics_providers->AddProvider(new LoloLyricsProvider(app));
-          lyrics_providers->AddProvider(new ChartLyricsProvider(app));
           return lyrics_providers;
         }),
         internet_services_([=]() {

@@ -105,7 +105,7 @@ Features:
   - Edit tags on music files
   - Fetch tags from MusicBrainz
   - Album cover art from Last.fm, Musicbrainz, Discogs, Deezer and Tidal
-  - Song lyrics from AudD, ChartLyrics, lyrics.ovh and lololyrics.com
+  - Song lyrics from AudD, lyrics.ovh and lololyrics.com
   - Support for multiple backends
   - Audio analyzer
   - Audio equalizer
@@ -194,5 +194,5 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.strawberrymusicpl
 %{_mandir}/man1/%{name}-tagreader.1.*
 
 %changelog
-* @RPM_DATE@ Jonas Kvinge <jonas@strawbs.net> - @STRAWBERRY_VERSION_RPM_V@
+* @RPM_DATE@ Jonas Kvinge <jonas@jkvinge.net> - @STRAWBERRY_VERSION_RPM_V@
 - Version @STRAWBERRY_VERSION_PACKAGE@

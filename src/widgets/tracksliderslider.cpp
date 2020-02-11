@@ -20,14 +20,16 @@
 
 #include "config.h"
 
-
 #include <QWidget>
 #include <QSlider>
 #include <QPoint>
 #include <QRect>
 #include <QStyle>
 #include <QStyleOption>
-#include <QtEvents>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
 #include "core/timeconstants.h"
 #include "core/utilities.h"

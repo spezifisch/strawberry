@@ -23,15 +23,14 @@
 
 #include "config.h"
 
-
 #include <QObject>
 #include <QStandardItemModel>
 #include <QMap>
 #include <QIcon>
 #include <QVariant>
 #include <QString>
-#include <QMimeData>
 
+class QMimeData;
 class QModelIndex;
 
 class PlaylistListModel : public QStandardItemModel {

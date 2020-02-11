@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-
+#include <QObject>
 #include <QSystemTrayIcon>
 #include <QString>
 #include <QUrl>

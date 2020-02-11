@@ -39,8 +39,10 @@
 #include <QPoint>
 #include <QMimeData>
 #include <QList>
+#include <QByteArray>
 #include <QString>
 #include <QUrl>
+#include <QImage>
 #include <QPixmap>
 #include <QTimer>
 #include <QSettings>
@@ -48,6 +50,7 @@
 
 #include "core/lazy.h"
 #include "core/tagreaderclient.h"
+#include "core/song.h"
 #include "engine/enginetype.h"
 #include "engine/engine_fwd.h"
 #ifdef Q_OS_MACOS
@@ -72,7 +75,6 @@ class CollectionViewContainer;
 class AlbumCoverChoiceController;
 class CommandlineOptions;
 #ifndef Q_OS_WIN
-class DeviceView;
 class DeviceViewContainer;
 #endif
 class EditTagDialog;
@@ -84,7 +86,6 @@ class MimeData;
 class OrganiseDialog;
 class PlaylistListContainer;
 class QueueView;
-class Song;
 class SystemTrayIcon;
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
 class TagFetcher;

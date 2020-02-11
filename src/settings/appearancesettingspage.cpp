@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h"
+
 #include <QApplication>
 #include <QWidget>
 #include <QVariant>
@@ -32,13 +34,16 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSlider>
+#include <QBoxLayout>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QSpinBox>
 #include <QSettings>
 
 #include "appearancesettingspage.h"
 #include "core/appearance.h"
 #include "core/iconloader.h"
 #include "core/stylehelper.h"
-#include "playlist/playlistview.h"
 #include "covermanager/albumcoverchoicecontroller.h"
 #include "settingspage.h"
 #include "settingsdialog.h"

@@ -28,8 +28,13 @@
 
 #include <QtGlobal>
 #include <QObject>
-#include <QWidget>
+#include <QAbstractItemDelegate>
+#include <QAbstractItemModel>
+#include <QStyleOptionViewItem>
+#include <QAbstractItemView>
+#include <QTreeView>
 #include <QList>
+#include <QByteArray>
 #include <QString>
 #include <QImage>
 #include <QPixmap>
@@ -38,22 +43,18 @@
 #include <QStyle>
 #include <QStyleOption>
 #include <QProxyStyle>
-#include <QTreeView>
 #include <QPoint>
-#include <QTimer>
 #include <QBasicTimer>
-#include <QTimeLine>
 #include <QCommonStyle>
-#include <QPainter>
-#include <QAbstractItemDelegate>
-#include <QAbstractItemModel>
-#include <QStyleOptionViewItem>
-#include <QtEvents>
 
 #include "core/song.h"
 #include "settings/appearancesettingspage.h"
 #include "playlist.h"
 
+class QWidget;
+class QTimer;
+class QTimeLine;
+class QPainter;
 class QEvent;
 class QShowEvent;
 class QContextMenuEvent;
@@ -78,7 +79,7 @@ class PlaylistHeader;
 // This proxy style uses QCommonStyle to paint the affected elements.
 // This class is used by internet search view as well.
 class PlaylistProxyStyle : public QProxyStyle {
-public:
+ public:
   PlaylistProxyStyle(QStyle *base);
 
   void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
@@ -121,6 +122,7 @@ class PlaylistView : public QTreeView {
   void SaveSettings();
   void SetColumnAlignment(int section, Qt::Alignment alignment);
   void JumpToCurrentlyPlayingTrack();
+  void edit(const QModelIndex &index) { return QAbstractItemView::edit(index); }
 
  signals:
   void PlayItem(const QModelIndex &index);
@@ -155,6 +157,7 @@ class PlaylistView : public QTreeView {
 
   // QAbstractItemView
   void rowsInserted(const QModelIndex &parent, int start, int end);
+  bool edit(const QModelIndex &index, QAbstractItemView::EditTrigger trigger, QEvent *event);
   void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
 
  private slots:

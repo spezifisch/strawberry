@@ -21,19 +21,19 @@
 #ifndef ASXPARSER_H
 #define ASXPARSER_H
 
-
 #include <QObject>
-#include <QIODevice>
 #include <QByteArray>
-#include <QDir>
 #include <QString>
 #include <QStringList>
-#include <QXmlStreamReader>
+#include <QDir>
 
 #include "config.h"
 #include "core/song.h"
 #include "playlist/playlist.h"
 #include "xmlparser.h"
+
+class QIODevice;
+class QXmlStreamReader;
 
 class CollectionBackendInterface;
 

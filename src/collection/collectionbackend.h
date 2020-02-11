@@ -24,13 +24,10 @@
 
 #include "config.h"
 
-
 #include <QtGlobal>
 #include <QObject>
 #include <QFileInfo>
 #include <QList>
-#include <QVector>
-#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -187,6 +184,8 @@ class CollectionBackend : public CollectionBackendInterface {
   Song GetSongBySongId(int song_id);
   SongList GetSongsBySongId(const QList<int> &song_ids);
   SongList GetSongsBySongId(const QStringList &song_ids);
+
+  Song::Source Source() const;
 
  public slots:
   void Exit();

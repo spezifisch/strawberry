@@ -38,11 +38,12 @@ parts:
       - adwaita-icon-theme
       - oxygen-icon-theme
       - breeze-icon-theme
+      - qtwayland5
       - try: [appmenu-qt5]
 
   alsa-lib:
     plugin: autotools
-    source: https://www.alsa-project.org/files/pub/lib/alsa-lib-1.1.5.tar.bz2
+    source: https://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.1.2.tar.bz2
     configflags:
       - --prefix=/usr
       - --sysconfdir=/etc
@@ -66,7 +67,7 @@ parts:
   strawberry:
     plugin: cmake
     source-type: git
-    source: https://github.com/jonaski/strawberry
+    source: https://github.com/strawberrymusicplayer/strawberry
     after:
       - alsa-lib
       - desktop-qt5
@@ -170,6 +171,7 @@ apps:
     environment:
       ALSA_CONFIG_PATH: /snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/alsa/alsa.conf
       LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+      DISABLE_WAYLAND: 1
     plugs:
       - home
       - udisks2

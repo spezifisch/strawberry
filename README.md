@@ -1,11 +1,11 @@
-:strawberry: Strawberry Music Player [![Build Status](https://github.com/jonaski/strawberry/workflows/C/C++%20CI/badge.svg)](https://github.com/jonaski/strawberry/actions)
+:strawberry: Strawberry Music Player [![Build Status](https://github.com/strawberrymusicplayer/strawberry/workflows/C/C++%20CI/badge.svg)](https://github.com/strawberrymusicplayer/strawberry/actions)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/jonaskvinge)
 =======================
 
 Strawberry is a music player and music collection organizer. It is a fork of Clementine released in 2018 aimed at music collectors, audio enthusiasts and audiophiles. The name is inspired by the band Strawbs. It's based on a heavily modified version of Clementine created in 2012-2013. It's written in C++ and Qt 5.
 
   * Website: https://www.strawberrymusicplayer.org/
-  * Github: https://github.com/jonaski/strawberry
+  * Github: https://github.com/strawberrymusicplayer/strawberry
   * Buildbot: http://buildbot.strawberrymusicplayer.org/
   * Latest builds: https://builds.strawberrymusicplayer.org/
 
@@ -20,7 +20,7 @@ Strawberry is a music player and music collection organizer. It is a fork of Cle
   * Edit tags on music files
   * Fetch tags from MusicBrainz
   * Album cover art from [Last.fm](https://www.last.fm/), [Musicbrainz](https://musicbrainz.org/), [Discogs](https://www.discogs.com/), [Deezer](https://www.deezer.com/) and [Tidal](https://tidal.com/)
-  * Song lyrics from [AudD](https://audd.io/), [ChartLyrics](http://www.chartlyrics.com/), [lyrics.ovh](https://lyrics.ovh/) and [lololyrics.com](https://www.lololyrics.com/)
+  * Song lyrics from [AudD](https://audd.io/), [lyrics.ovh](https://lyrics.ovh/) and [lololyrics.com](https://www.lololyrics.com/)
   * Support for multiple backends
   * Audio analyzer
   * Audio equalizer
@@ -31,9 +31,9 @@ Strawberry is a music player and music collection organizer. It is a fork of Cle
   
 **Tidal and Qobuz streaming in Strawberry is unofficial. You need an official API token (or App ID/Secret) to use it, we can not provide API tokens, or help getting them. Tidal will not work with Tidal Masters (MQA), because MQA is a proprietary format in lossy quality without an open source decoder, we can't support it.**
 
-It has so far been tested to work on Linux, OpenBSD, macOS and Windows.
+It has so far been tested to work on Linux, OpenBSD and Windows.
 
-**We do not provide releases for macOS, only experimental builds, they may have issues. There currently isn't any macOS developers actively working on this project.**
+**We do not provide releases for macOS. There currently isn't any macOS developers actively working on this project.**
 
 ### :heavy_exclamation_mark: Requirements
 
@@ -70,7 +70,7 @@ You should also install the gstreamer plugins base and good, and optionally bad 
 
 ### Get the code:
 
-    git clone https://github.com/jonaski/strawberry
+    git clone https://github.com/strawberrymusicplayer/strawberry
 
 ### Compile and install:
 

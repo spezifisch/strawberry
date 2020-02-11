@@ -18,18 +18,19 @@
  *
  */
 
+#include "config.h"
+
 #include <algorithm>
 
 #include <QWidget>
 #include <QAbstractItemModel>
 #include <QItemSelectionModel>
-#include <QKeySequence>
-#include <QList>
-#include <QPushButton>
-#include <QShortcut>
 #include <QTreeView>
-#include <QtAlgorithms>
+#include <QList>
 #include <QTimer>
+#include <QKeySequence>
+#include <QLabel>
+#include <QToolButton>
 
 #include "core/iconloader.h"
 #include "playlist/playlist.h"

@@ -20,19 +20,18 @@
 
 #include "config.h"
 
-
 #include <QtGlobal>
 #include <QObject>
 #include <QDir>
 #include <QString>
 #include <QStringBuilder>
 #include <QImage>
-#include <QStandardPaths>
 #include <QTemporaryFile>
 
 #include "core/application.h"
 #include "playlist/playlistmanager.h"
 #include "albumcoverloader.h"
+#include "albumcoverloaderoptions.h"
 #include "currentalbumcoverloader.h"
 
 CurrentAlbumCoverLoader::CurrentAlbumCoverLoader(Application *app, QObject *parent)

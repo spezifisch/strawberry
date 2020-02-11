@@ -22,7 +22,6 @@
 
 #include "config.h"
 
-
 #include <QtGlobal>
 #include <QObject>
 #include <QList>
@@ -39,8 +38,6 @@ class QNetworkReply;
 class Application;
 class NetworkAccessManager;
 class LocalRedirectServer;
-class ScrobblerService;
-class ScrobblerCache;
 class ScrobblerCacheItem;
 
 class ScrobblingAPI20 : public ScrobblerService {

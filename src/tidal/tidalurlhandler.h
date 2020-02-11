@@ -20,6 +20,9 @@
 #ifndef TIDALURLHANDLER_H
 #define TIDALURLHANDLER_H
 
+#include "config.h"
+
+#include <QtGlobal>
 #include <QObject>
 #include <QString>
 #include <QUrl>
@@ -29,7 +32,6 @@
 #include "tidal/tidalservice.h"
 
 class Application;
-class TidalService;
 
 class TidalUrlHandler : public UrlHandler {
   Q_OBJECT

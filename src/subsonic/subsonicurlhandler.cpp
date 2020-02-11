@@ -17,10 +17,14 @@
  *
  */
 
-#include <QObject>
+#include "config.h"
+
+#include <QtGlobal>
 #include <QString>
 #include <QUrl>
 #include <QUrlQuery>
+
+#include "core/song.h"
 
 #include "subsonicservice.h"
 #include "subsonicurlhandler.h"

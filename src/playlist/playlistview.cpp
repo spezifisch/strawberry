@@ -27,18 +27,19 @@
 #include <QApplication>
 #include <QObject>
 #include <QWidget>
-#include <QList>
 #include <QAbstractItemView>
+#include <QItemSelectionModel>
+#include <QSortFilterProxyModel>
+#include <QTreeView>
+#include <QHeaderView>
 #include <QByteArray>
 #include <QClipboard>
 #include <QCommonStyle>
 #include <QFontMetrics>
-#include <QHeaderView>
-#include <QItemSelectionModel>
 #include <QKeySequence>
 #include <QMimeData>
+#include <QList>
 #include <QSize>
-#include <QSortFilterProxyModel>
 #include <QTimeLine>
 #include <QTimer>
 #include <QVariant>
@@ -56,11 +57,9 @@
 #include <QPoint>
 #include <QRect>
 #include <QRegion>
-#include <QtAlgorithms>
 #include <QStyleOptionHeader>
 #include <QStyleOptionViewItem>
 #include <QProxyStyle>
-#include <QTreeView>
 #include <QLinearGradient>
 #include <QScrollBar>
 #include <QtEvents>
@@ -674,6 +673,16 @@ QModelIndex PlaylistView::PrevEditableIndex(const QModelIndex &current) {
 
 }
 
+bool PlaylistView::edit(const QModelIndex &index, QAbstractItemView::EditTrigger trigger, QEvent *event) {
+
+  bool result = QAbstractItemView::edit(index, trigger, event);
+  if (result && trigger == QAbstractItemView::AllEditTriggers && !event) {
+    playlist_->set_editing(index.row());
+  }
+  return result;
+
+}
+
 void PlaylistView::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint) {
 
   if (hint == QAbstractItemDelegate::NoHint) {
@@ -693,12 +702,14 @@ void PlaylistView::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHi
     else {
       QTreeView::closeEditor(editor, QAbstractItemDelegate::NoHint);
       setCurrentIndex(index);
-      edit(index);
+      QAbstractItemView::edit(index);
     }
   }
   else {
     QTreeView::closeEditor(editor, hint);
   }
+
+  playlist_->set_editing(-1);
 
 }
 

@@ -2,12 +2,24 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/jonaskvinge)
 =======================
 
-Strawberry is a music player and music collection organizer. It is a fork of Clementine released in 2018 aimed at music collectors, audio enthusiasts and audiophiles. The name is inspired by the band Strawbs. It's based on a heavily modified version of Clementine created in 2012-2013. It's written in C++ and Qt 5.
+Strawberry is a music player and music collection organizer. It is a fork of Clementine released in 2018 aimed at music collectors and audiophiles. It's written in C++ using the Qt 5 framework.
+
+![Browse](https://www.strawberrymusicplayer.org/pictures/screenshot-002-large.png)
+
+Resources:
 
   * Website: https://www.strawberrymusicplayer.org/
   * Github: https://github.com/strawberrymusicplayer/strawberry
   * Buildbot: http://buildbot.strawberrymusicplayer.org/
   * Latest builds: https://builds.strawberrymusicplayer.org/
+  * openSUSE buildservice: https://build.opensuse.org/package/show/home:jonaski:audio/strawberry
+  * PPA: https://launchpad.net/~jonaski/+archive/ubuntu/strawberry
+  * Translations: https://translate.zanata.org/iteration/view/strawberry/master
+
+The program is free software, released under GPL. If you like this program and can make use of it, consider sponsoring or donating to help funding the project.
+To sponsor, visit [my GitHub sponsors profile](https://github.com/sponsors/jonaski).
+Funding developers through GitHub Sponsors is one more way to contribute to open source projects you appreciate, it helps developers get the resources they need, and recognize contributors working behind the scenes to make open source better for everyone.
+You can also make a one-time payment through [paypal.me/jonaskvinge](https://paypal.me/jonaskvinge)
 
 ### :heavy_check_mark: Features:
 
@@ -19,21 +31,19 @@ Strawberry is a music player and music collection organizer. It is a fork of Cle
   * Advanced audio output and device configuration for bit-perfect playback on Linux
   * Edit tags on music files
   * Fetch tags from MusicBrainz
-  * Album cover art from [Last.fm](https://www.last.fm/), [Musicbrainz](https://musicbrainz.org/), [Discogs](https://www.discogs.com/), [Deezer](https://www.deezer.com/) and [Tidal](https://tidal.com/)
+  * Album cover art from [Last.fm](https://www.last.fm/), [Musicbrainz](https://musicbrainz.org/), [Discogs](https://www.discogs.com/) and [Deezer](https://www.deezer.com/)
   * Song lyrics from [AudD](https://audd.io/), [lyrics.ovh](https://lyrics.ovh/) and [lololyrics.com](https://www.lololyrics.com/)
   * Support for multiple backends
   * Audio analyzer
   * Audio equalizer
   * Transfer music to iPod, iPhone, MTP or mass-storage USB player
-  * Subsonic streaming support
-  * Unofficial streaming support for [Tidal](https://tidal.com/) and [Qobuz](https://www.qobuz.com/)
   * Scrobbler with support for [Last.fm](https://www.last.fm/), [Libre.fm](https://libre.fm/) and [ListenBrainz](https://listenbrainz.org/)
-  
-**Tidal and Qobuz streaming in Strawberry is unofficial. You need an official API token (or App ID/Secret) to use it, we can not provide API tokens, or help getting them. Tidal will not work with Tidal Masters (MQA), because MQA is a proprietary format in lossy quality without an open source decoder, we can't support it.**
+  * Subsonic streaming support
+
 
 It has so far been tested to work on Linux, OpenBSD and Windows.
 
-**We do not provide releases for macOS. There currently isn't any macOS developers actively working on this project.**
+**We currently do not provide releases for macOS because there aren't any macOS developers actively working on this project. It is still possible to compile by following the instructions in the Wiki**
 
 ### :heavy_exclamation_mark: Requirements
 
@@ -45,7 +55,7 @@ To build Strawberry from source you need the following installed on your system 
 * [POSIX thread (pthread)](http://www.yolinux.com/TUTORIALS/LinuxTutorialPosixThreads.html)
 * [GLib](https://developer.gnome.org/glib/)
 * [Protobuf library and compiler](https://developers.google.com/protocol-buffers/)
-* [Qt 5.5 or higher with components Core, Gui, Widgets, Concurrent, Network and Sql](https://www.qt.io/)
+* [Qt 5.6 or higher with components Core, Gui, Widgets, Concurrent, Network and Sql](https://www.qt.io/)
 * [Qt 5 components X11Extras and DBus for Linux/BSD, MacExtras for macOS and WinExtras for Windows](https://www.qt.io/)
 * [SQLite 3.9 or newer with FTS5](https://www.sqlite.org)
 * [Chromaprint library](https://acoustid.org/chromaprint)
@@ -84,11 +94,3 @@ You should also install the gstreamer plugins base and good, and optionally bad 
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/strawberry.svg)](https://repology.org/metapackage/strawberry/versions)
 
-### :computer:	Screenshot
-
-
-![Browse](https://www.strawberrymusicplayer.org/pictures/screenshot-002-large.png)
-
-### :moneybag: Donate
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/jonaskvinge)

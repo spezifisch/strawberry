@@ -114,7 +114,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
     Startup_AlwaysHide = 3,
   };
 
-  void SetHiddenInTray(bool hidden);
+  void SetHiddenInTray(const bool hidden);
   void CommandlineOptionsReceived(const CommandlineOptions& options);
 
  protected:
@@ -172,7 +172,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void PlaylistCopyToCollection();
   void PlaylistMoveToCollection();
   void PlaylistCopyToDevice();
-  void PlaylistOrganiseSelected(bool copy);
+  void PlaylistOrganiseSelected(const bool copy);
   void PlaylistOpenInBrowser();
   void ShowInCollection();
 
@@ -183,7 +183,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void StopAfterCurrent();
 
   void SongChanged(const Song& song);
-  void VolumeChanged(int volume);
+  void VolumeChanged(const int volume);
 
   void CopyFilesToCollection(const QList<QUrl>& urls);
   void MoveFilesToCollection(const QList<QUrl>& urls);
@@ -193,14 +193,14 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void AddToPlaylist(QMimeData *data);
   void AddToPlaylist(QAction *action);
 
-  void VolumeWheelEvent(int delta);
+  void VolumeWheelEvent(const int delta);
   void ToggleShowHide();
 
-  void Seeked(qlonglong microseconds);
+  void Seeked(const qlonglong microseconds);
   void UpdateTrackPosition();
   void UpdateTrackSliderPosition();
 
-  void TaskCountChanged(int count);
+  void TaskCountChanged(const int count);
 
   void ShowCollectionConfig();
   void ReloadSettings();
@@ -216,7 +216,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
   void CheckForUpdates();
 
-  void PlayingWidgetPositionChanged(bool above_status_bar);
+  void PlayingWidgetPositionChanged(const bool above_status_bar);
 
   void SongSaveComplete(TagReaderReply *reply, const QPersistentModelIndex& index);
 
@@ -241,7 +241,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void Exit();
   void DoExit();
 
-  void HandleNotificationPreview(OSD::Behaviour type, QString line1, QString line2);
+  void HandleNotificationPreview(const OSD::Behaviour type, QString line1, QString line2);
 
   void ShowConsole();
 
@@ -254,9 +254,9 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void SearchCoverAutomatically();
   void AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image);
 
-  void ScrobblingEnabledChanged(bool value);
-  void ScrobbleButtonVisibilityChanged(bool value);
-  void LoveButtonVisibilityChanged(bool value);
+  void ScrobblingEnabledChanged(const bool value);
+  void ScrobbleButtonVisibilityChanged(const bool value);
+  void LoveButtonVisibilityChanged(const bool value);
   void Love();
 
   void ExitFinished();
@@ -271,11 +271,11 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void CheckFullRescanRevisions();
 
   // creates the icon by painting the full one depending on the current position
-  QPixmap CreateOverlayedIcon(int position, int scrobble_point);
+  QPixmap CreateOverlayedIcon(const int position, const int scrobble_point);
 
   void GetCoverAutomatically();
 
-  void SetToggleScrobblingIcon(bool value);
+  void SetToggleScrobblingIcon(const bool value);
 
  private:
   Ui_MainWindow *ui_;
@@ -316,8 +316,6 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   std::unique_ptr<TrackSelectionDialog> track_selection_dialog_;
   PlaylistItemList autocomplete_tag_items_;
 
-  InternetTabsView *tidal_view_;
-  InternetTabsView *qobuz_view_;
   InternetSongsView *subsonic_view_;
 
   SmartPlaylistsViewContainer *smartplaylists_view_;

@@ -40,7 +40,6 @@
 #include <QPixmap>
 #include <QRect>
 #include <QRegion>
-#include <QStyle>
 #include <QStyleOption>
 #include <QProxyStyle>
 #include <QPoint>
@@ -81,7 +80,7 @@ class DynamicPlaylistControls;
 // This class is used by internet search view as well.
 class PlaylistProxyStyle : public QProxyStyle {
  public:
-  PlaylistProxyStyle(QStyle *base);
+  PlaylistProxyStyle();
 
   void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
   void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;

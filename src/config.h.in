@@ -25,6 +25,7 @@
 #define CMAKE_EXECUTABLE_SUFFIX "${CMAKE_EXECUTABLE_SUFFIX}"
 
 #cmakedefine DEBUG
+#cmakedefine HAVE_BACKTRACE
 #cmakedefine HAVE_GIO
 #cmakedefine HAVE_DBUS
 #cmakedefine HAVE_X11
@@ -47,9 +48,7 @@
 #cmakedefine HAVE_PHONON
 #cmakedefine XINE_ANALYZER
 
-#cmakedefine HAVE_TIDAL
 #cmakedefine HAVE_SUBSONIC
-#cmakedefine HAVE_QOBUZ
 
 #cmakedefine HAVE_MOODBAR
 

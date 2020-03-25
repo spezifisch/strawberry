@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "MIME-Version: 1.0\n"
-"PO-Revision-Date: 2020-02-15 10:36+0000\n"
+"PO-Revision-Date: 2020-02-15 10:36-0500\n"
 "Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -127,12 +127,12 @@ msgstr "음악가 %1명"
 msgid "%1 dB"
 msgstr "%1 dB"
 
-#: core/utilities.cpp:144
+#: core/utilities.cpp:142
 #, qt-format
 msgid "%1 days"
 msgstr "%1일"
 
-#: core/utilities.cpp:164
+#: core/utilities.cpp:162
 #, qt-format
 msgid "%1 days ago"
 msgstr "%1일 전"
@@ -162,7 +162,7 @@ msgstr "노래 %1곡"
 msgid "%1 songs"
 msgstr "노래 %1곡"
 
-#: core/utilities.cpp:358
+#: core/utilities.cpp:413
 #, qt-format
 msgid "%1 songs selected, are you sure you want to open them all?"
 msgstr "%1곡을 선택했습니다. 모두 여시겠습니까?"
@@ -391,7 +391,7 @@ msgstr "0:00:00"
 msgid "0px"
 msgstr "0px"
 
-#: core/utilities.cpp:144
+#: core/utilities.cpp:142
 msgid "1 day"
 msgstr "1일"
 
@@ -775,7 +775,7 @@ msgid "Append files/URLs to the playlist"
 msgstr "재생 목록에 파일/URL 추가"
 
 #: context/contextalbumsview.cpp:252 collection/collectionview.cpp:321
-#: widgets/fileviewlist.cpp:41 internet/internetsearchview.cpp:431
+#: widgets/fileviewlist.cpp:42 internet/internetsearchview.cpp:431
 #: internet/internetcollectionview.cpp:305 device/deviceview.cpp:226
 msgid "Append to current playlist"
 msgstr "현재 재생 목록에 추가"
@@ -1175,14 +1175,14 @@ msgstr "장치에서 재생할 수 없는 곡 변환"
 msgid "Copy album cover artwork"
 msgstr "앨범 표지 그림 복사"
 
-#: core/mainwindow.cpp:596 widgets/fileviewlist.cpp:45
+#: core/mainwindow.cpp:596 widgets/fileviewlist.cpp:46
 #: device/deviceview.cpp:231
 msgid "Copy to collection..."
 msgstr "모음집으로 복사..."
 
 #: core/mainwindow.cpp:594 context/contextalbumsview.cpp:262
 #: collection/collectionview.cpp:332 playlist/playlistlistcontainer.cpp:100
-#: widgets/fileviewlist.cpp:47
+#: widgets/fileviewlist.cpp:48
 msgid "Copy to device..."
 msgstr "장치로 복사..."
 
@@ -1400,7 +1400,7 @@ msgstr "파일 삭제"
 msgid "Delete from device..."
 msgstr "장치에서 삭제..."
 
-#: widgets/fileviewlist.cpp:48
+#: widgets/fileviewlist.cpp:49
 msgid "Delete from disk..."
 msgstr "디스크에서 삭제..."
 
@@ -1560,7 +1560,7 @@ msgid "Edit track information"
 msgstr "트랙 정보 편집"
 
 #: context/contextalbumsview.cpp:266 collection/collectionview.cpp:337
-#: widgets/fileviewlist.cpp:51 ../build/src/ui_mainwindow.h:628
+#: widgets/fileviewlist.cpp:52 ../build/src/ui_mainwindow.h:628
 msgid "Edit track information..."
 msgstr "트랙 정보 편집..."
 
@@ -2101,7 +2101,7 @@ msgid ""
 "edit the tag value directly"
 msgstr "활성화하면 재생 목록에서 선택한 노래를 클릭하여 태그 값을 직접 수정할 수 있습니다."
 
-#: device/devicemanager.cpp:611 device/devicemanager.cpp:619
+#: device/devicemanager.cpp:615 device/devicemanager.cpp:623
 msgid ""
 "If you continue, this device will work slowly and songs copied to it may not "
 "work."
@@ -2119,12 +2119,12 @@ msgstr "그림 (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
 msgid "Import..."
 msgstr "가져오기..."
 
-#: core/utilities.cpp:178
+#: core/utilities.cpp:176
 #, qt-format
 msgid "In %1 days"
 msgstr "%1일 후"
 
-#: core/utilities.cpp:181
+#: core/utilities.cpp:179
 #, qt-format
 msgid "In %1 weeks"
 msgstr "%1주 후"
@@ -2427,7 +2427,7 @@ msgstr "마운트 지점"
 msgid "Move down"
 msgstr "아래로 이동"
 
-#: core/mainwindow.cpp:597 widgets/fileviewlist.cpp:46
+#: core/mainwindow.cpp:597 widgets/fileviewlist.cpp:47
 msgid "Move to collection..."
 msgstr "모음집으로 이동..."
 
@@ -2486,7 +2486,7 @@ msgstr "새로운 음악"
 msgid "Next"
 msgstr "다음"
 
-#: core/utilities.cpp:179
+#: core/utilities.cpp:177
 msgid "Next week"
 msgstr "다음 주"
 
@@ -2594,7 +2594,7 @@ msgid "Open device"
 msgstr "장치 열기"
 
 #: context/contextalbumsview.cpp:254 collection/collectionview.cpp:323
-#: widgets/fileviewlist.cpp:43 internet/internetsearchview.cpp:433
+#: widgets/fileviewlist.cpp:44 internet/internetsearchview.cpp:433
 #: internet/internetcollectionview.cpp:307 device/deviceview.cpp:228
 #: ../build/src/ui_behavioursettingspage.h:274
 msgid "Open in new playlist"
@@ -3032,7 +3032,7 @@ msgid "Repeat track"
 msgstr "한 곡 반복"
 
 #: context/contextalbumsview.cpp:253 collection/collectionview.cpp:322
-#: widgets/fileviewlist.cpp:42 internet/internetsearchview.cpp:432
+#: widgets/fileviewlist.cpp:43 internet/internetsearchview.cpp:432
 #: internet/internetcollectionview.cpp:306 device/deviceview.cpp:227
 msgid "Replace current playlist"
 msgstr "현재 재생 목록 대체"
@@ -3211,7 +3211,7 @@ msgstr "그룹 관리자 저장됨"
 msgid "Saving album covers"
 msgstr "앨범 표지 저장 중"
 
-#: dialogs/edittagdialog.cpp:755 dialogs/trackselectiondialog.cpp:290
+#: dialogs/edittagdialog.cpp:755 dialogs/trackselectiondialog.cpp:291
 msgid "Saving tracks"
 msgstr "트랙 저장 중"
 
@@ -3422,12 +3422,12 @@ msgstr "전체 크기 표시..."
 msgid "Show in collection..."
 msgstr "모음집에 표시..."
 
-#: core/utilities.cpp:352 core/utilities.cpp:358
+#: core/utilities.cpp:407 core/utilities.cpp:413
 msgid "Show in file browser"
 msgstr "파일 탐색기에 표시"
 
 #: core/mainwindow.cpp:599 context/contextalbumsview.cpp:268
-#: collection/collectionview.cpp:339 widgets/fileviewlist.cpp:52
+#: collection/collectionview.cpp:339 widgets/fileviewlist.cpp:53
 msgid "Show in file browser..."
 msgstr "파일 탐색기에 표시..."
 
@@ -3853,16 +3853,16 @@ msgstr "Strawberry에서 이 장치가 지원하는 파일 형식을 파악하�
 msgid "This device supports the following file formats:"
 msgstr "이 장치는 다음 파일 형식을 지원합니다:"
 
-#: device/devicemanager.cpp:609 device/devicemanager.cpp:617
+#: device/devicemanager.cpp:613 device/devicemanager.cpp:621
 msgid "This device will not work properly"
 msgstr "이 장치는 올바르게 작동하지 않을 수 있음"
 
-#: device/devicemanager.cpp:610
+#: device/devicemanager.cpp:614
 msgid ""
 "This is an MTP device, but you compiled Strawberry without libmtp support."
 msgstr "이 장치는 MTP 장치이지만 Strawberry를 컴파일할 때 libmtp 지원이 빠졌습니다."
 
-#: device/devicemanager.cpp:618
+#: device/devicemanager.cpp:622
 msgid "This is an iPod, but you compiled Strawberry without libgpod support."
 msgstr "이 장치는 iPod이지만 Strawberry를 컴파일할 때 libgpod 지원이 빠졌습니다."
 
@@ -3876,7 +3876,7 @@ msgstr "이 장치를 처음 연결했습니다. Strawberry에서 장치에 있�
 msgid "This option can be changed in the \"Behavior\" preferences"
 msgstr "이 옵션은 \"행동\" 설정에서 변경할 수 있습니다"
 
-#: device/devicemanager.cpp:632
+#: device/devicemanager.cpp:636
 #, qt-format
 msgid "This type of device is not supported: %1"
 msgstr "다음 장치의 형식은 지원하지 않습니다: %1"
@@ -3896,7 +3896,7 @@ msgstr "시간대"
 msgid "Title"
 msgstr "제목"
 
-#: core/utilities.cpp:162 core/utilities.cpp:176
+#: core/utilities.cpp:160 core/utilities.cpp:174
 msgid "Today"
 msgstr "오늘"
 
@@ -3916,11 +3916,11 @@ msgstr "건너뛰기 상태 전환"
 msgid "Toggle visibility for the pretty on-screen-display"
 msgstr "예쁜 OSD 표시 여부 전환"
 
-#: core/utilities.cpp:177
+#: core/utilities.cpp:175
 msgid "Tomorrow"
 msgstr "내일"
 
-#: core/utilities.cpp:352
+#: core/utilities.cpp:407
 msgid "Too many songs selected."
 msgstr "너무 많은 곡을 선택했습니다."
 
@@ -4236,7 +4236,7 @@ msgstr "년도 - 앨범"
 msgid "Year - Album - Disc"
 msgstr "년도 - 앨범 - 디스크"
 
-#: core/utilities.cpp:163
+#: core/utilities.cpp:161
 msgid "Yesterday"
 msgstr "어제"
 

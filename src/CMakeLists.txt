@@ -154,6 +154,7 @@ set(SOURCES
   equalizer/equalizerslider.cpp
 
   context/contextview.cpp
+  context/contextalbum.cpp
   context/contextalbumsmodel.cpp
   context/contextalbumsview.cpp
 
@@ -362,6 +363,7 @@ set(HEADERS
   equalizer/equalizerslider.h
 
   context/contextview.h
+  context/contextalbum.h
   context/contextalbumsmodel.h
   context/contextalbumsview.h
 
@@ -527,8 +529,6 @@ set(HEADERS
 set(UI
 
   core/mainwindow.ui
-
-  context/contextviewcontainer.ui
 
   collection/groupbydialog.ui
   collection/collectionfilterwidget.ui

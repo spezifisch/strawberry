@@ -57,8 +57,6 @@
 #include "settings/settingsdialog.h"
 #include "settings/subsonicsettingspage.h"
 
-using std::shared_ptr;
-
 const Song::Source SubsonicService::kSource = Song::Source_Subsonic;
 const char *SubsonicService::kClientName = "Strawberry";
 const char *SubsonicService::kApiVersion = "1.11.0";
@@ -67,7 +65,7 @@ const char *SubsonicService::kSongsFtsTable = "subsonic_songs_fts";
 const int SubsonicService::kMaxRedirects = 3;
 
 SubsonicService::SubsonicService(Application *app, QObject *parent)
-    : InternetService(Song::Source_Subsonic, "Subsonic", "subsonic", app, parent),
+    : InternetService(Song::Source_Subsonic, "Subsonic", "subsonic", SubsonicSettingsPage::kSettingsGroup, SettingsDialog::Page_Subsonic, app, parent),
       app_(app),
       network_(new QNetworkAccessManager),
       url_handler_(new SubsonicUrlHandler(app, this)),
@@ -272,7 +270,7 @@ void SubsonicService::HandlePingReply(QNetworkReply *reply, const QUrl &url, con
     return;
   }
 
-  if (json_doc.isNull() || json_doc.isEmpty()) {
+  if (json_doc.isEmpty()) {
     PingError("Ping reply from server has empty Json document.");
     return;
   }
@@ -292,39 +290,38 @@ void SubsonicService::HandlePingReply(QNetworkReply *reply, const QUrl &url, con
     PingError("Ping reply from server is missing subsonic-response", json_obj);
     return;
   }
-  QJsonValue json_response = json_obj["subsonic-response"];
-  if (!json_response.isObject()) {
-    PingError("Ping reply from server subsonic-response is not an object", json_response);
+  QJsonValue value_response = json_obj["subsonic-response"];
+  if (!value_response.isObject()) {
+    PingError("Ping reply from server subsonic-response is not an object", value_response);
     return;
   }
-  
-  json_obj = json_response.toObject();
-  
-  if (json_obj.contains("error")) {
-    QJsonValue json_error = json_obj["error"];
-    if (!json_error.isObject()) {
-      PingError("Authentication error reply from server is not an object", json_response);
+  QJsonObject obj_response = value_response.toObject();
+
+  if (obj_response.contains("error")) {
+    QJsonValue value_error = obj_response["error"];
+    if (!value_error.isObject()) {
+      PingError("Authentication error reply from server is not an object", value_error);
       return;
     }
-    json_obj = json_error.toObject();
-    if (!json_obj.contains("code") || !json_obj.contains("message")) {
+    QJsonObject obj_error = value_error.toObject();
+    if (!obj_error.contains("code") || !obj_error.contains("message")) {
       PingError("Authentication error reply from server is missing status or message", json_obj);
       return;
     }
-    //int status = json_obj["code"].toInt();
-    QString message = json_obj["message"].toString();
+    //int status = obj_error["code"].toInt();
+    QString message = obj_error["message"].toString();
     emit TestComplete(false, message);
     emit TestFailure(message);
     return;
   }
 
-  if (!json_obj.contains("status")) {
-    PingError("Ping reply from server is missing status", json_obj);
+  if (!obj_response.contains("status")) {
+    PingError("Ping reply from server is missing status", obj_response);
     return;
   }
 
-  QString status = json_obj["status"].toString().toLower();
-  QString message = json_obj["message"].toString();
+  QString status = obj_response["status"].toString().toLower();
+  QString message = obj_response["message"].toString();
 
   if (status == "failed") {
     emit TestComplete(false, message);
@@ -384,10 +381,10 @@ void SubsonicService::GetSongs() {
 
   ResetSongsRequest();
   songs_request_.reset(new SubsonicRequest(this, url_handler_, app_, this));
-  connect(songs_request_.get(), SIGNAL(Results(const SongList&, const QString&)), SLOT(SongsResultsReceived(const SongList&, const QString&)));
-  connect(songs_request_.get(), SIGNAL(UpdateStatus(const QString&)), SIGNAL(SongsUpdateStatus(const QString&)));
-  connect(songs_request_.get(), SIGNAL(ProgressSetMaximum(const int)), SIGNAL(SongsProgressSetMaximum(const int)));
-  connect(songs_request_.get(), SIGNAL(UpdateProgress(const int)), SIGNAL(SongsUpdateProgress(const int)));
+  connect(songs_request_.get(), SIGNAL(Results(SongList, QString)), SLOT(SongsResultsReceived(SongList, QString)));
+  connect(songs_request_.get(), SIGNAL(UpdateStatus(QString)), SIGNAL(SongsUpdateStatus(QString)));
+  connect(songs_request_.get(), SIGNAL(ProgressSetMaximum(int)), SIGNAL(SongsProgressSetMaximum(int)));
+  connect(songs_request_.get(), SIGNAL(UpdateProgress(int)), SIGNAL(SongsUpdateProgress(int)));
 
   songs_request_->GetAlbums();
 
@@ -404,9 +401,9 @@ void SubsonicService::PingError(const QString &error, const QVariant &debug) {
   if (!error.isEmpty()) errors_ << error;
 
   QString error_html;
-  for (const QString &error : errors_) {
-    qLog(Error) << "Subsonic:" << error;
-    error_html += error + "<br />";
+  for (const QString &e : errors_) {
+    qLog(Error) << "Subsonic:" << e;
+    error_html += e + "<br />";
   }
   if (debug.isValid()) qLog(Debug) << debug;
 

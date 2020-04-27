@@ -40,7 +40,7 @@ class InternetSongsView : public QWidget {
   Q_OBJECT
 
  public:
-  InternetSongsView(Application *app, InternetService *service, const QString &settings_group, const SettingsDialog::Page settings_page, QWidget *parent = nullptr);
+  explicit InternetSongsView(Application *app, InternetService *service, const QString &settings_group, const SettingsDialog::Page settings_page, QWidget *parent = nullptr);
   ~InternetSongsView();
 
   void ReloadSettings();
@@ -48,7 +48,7 @@ class InternetSongsView : public QWidget {
   InternetCollectionView *view() const { return ui_->view; }
 
  private slots:
-  void contextMenuEvent(QContextMenuEvent *e);
+  void OpenSettingsDialog();
   void GetSongs();
   void AbortGetSongs();
   void SongsFinished(const SongList &songs, const QString &error);

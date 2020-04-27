@@ -54,9 +54,6 @@
 #ifdef HAVE_XINE
 #  include "engine/xineengine.h"
 #endif
-#ifdef HAVE_PHONON
-#  include "engine/phononengine.h"
-#endif
 #ifdef HAVE_VLC
 #  include "engine/vlcengine.h"
 #endif
@@ -74,9 +71,6 @@
 #include "internet/internetservices.h"
 #include "internet/internetservice.h"
 #include "scrobbler/audioscrobbler.h"
-
-using std::shared_ptr;
-using std::unique_ptr;
 
 const char *Player::kSettingsGroup = "Player";
 
@@ -125,7 +119,7 @@ Engine::EngineType Player::CreateEngine(Engine::EngineType enginetype) {
 #ifdef HAVE_GSTREAMER
       case Engine::GStreamer:{
         use_enginetype=Engine::GStreamer;
-        unique_ptr<GstEngine> gst_engine(new GstEngine(app_->task_manager()));
+        std::unique_ptr<GstEngine> gst_engine(new GstEngine(app_->task_manager()));
         gst_engine->SetStartup(gst_startup_);
         engine_.reset(gst_engine.release());
         break;
@@ -141,12 +135,6 @@ Engine::EngineType Player::CreateEngine(Engine::EngineType enginetype) {
       case Engine::VLC:
         use_enginetype=Engine::VLC;
         engine_.reset(new VLCEngine(app_->task_manager()));
-        break;
-#endif
-#ifdef HAVE_PHONON
-      case Engine::Phonon:
-        use_enginetype=Engine::Phonon;
-        engine_.reset(new PhononEngine(app_->task_manager()));
         break;
 #endif
       default:
@@ -625,9 +613,8 @@ void Player::CurrentMetadataChanged(const Song &metadata) {
   if (app_->scrobbler()->IsEnabled() && engine_->state() == Engine::Playing) {
     Playlist *playlist = app_->playlist_manager()->active();
     current_item_ = playlist->current_item();
-    if (playlist && current_item_ && !playlist->nowplaying() && current_item_->Metadata() == metadata && current_item_->Metadata().length_nanosec() > 0) {
-      app_->scrobbler()->UpdateNowPlaying(metadata);
-      playlist->set_nowplaying(true);
+    if (playlist && current_item_ && !playlist->nowplaying() && current_item_->Metadata() == metadata && current_item_->Metadata().is_metadata_good()) {
+      emit SendNowPlaying();
     }
   }
 

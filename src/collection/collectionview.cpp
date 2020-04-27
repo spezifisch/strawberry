@@ -64,8 +64,6 @@
 #include "organise/organisedialog.h"
 #include "settings/collectionsettingspage.h"
 
-using std::unique_ptr;
-
 CollectionView::CollectionView(QWidget *parent)
     : AutoExpandingTreeView(parent),
       app_(nullptr),
@@ -463,11 +461,11 @@ void CollectionView::ShowInVarious(bool on) {
 
 void CollectionView::Load() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->clear_first_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->clear_first_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -479,31 +477,31 @@ void CollectionView::AddToPlaylist() {
 
 void CollectionView::AddToPlaylistEnqueue() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData* mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void CollectionView::AddToPlaylistEnqueueNext() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_next_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_next_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void CollectionView::OpenInNewPlaylist() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->open_in_new_playlist_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData* mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->open_in_new_playlist_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -534,7 +532,7 @@ SongList CollectionView::GetSelectedSongs() const {
 void CollectionView::Organise() {
 
   if (!organise_dialog_)
-    organise_dialog_.reset(new OrganiseDialog(app_->task_manager(), app_->collection_backend()));
+    organise_dialog_.reset(new OrganiseDialog(app_->task_manager(), app_->collection_backend(), this));
 
   organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
   organise_dialog_->SetCopy(false);
@@ -568,15 +566,17 @@ void CollectionView::RescanSongs() {
 }
 
 void CollectionView::CopyToDevice() {
+
 #ifndef Q_OS_WIN
   if (!organise_dialog_)
-    organise_dialog_.reset(new OrganiseDialog(app_->task_manager()));
+    organise_dialog_.reset(new OrganiseDialog(app_->task_manager(), nullptr, this));
 
   organise_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
   organise_dialog_->SetCopy(true);
   organise_dialog_->SetSongs(GetSelectedSongs());
   organise_dialog_->show();
 #endif
+
 }
 
 void CollectionView::FilterReturnPressed() {

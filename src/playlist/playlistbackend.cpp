@@ -58,7 +58,6 @@
 #include "smartplaylists/playlistgenerator.h"
 
 using std::placeholders::_1;
-using std::shared_ptr;
 
 const int PlaylistBackend::kSongTableJoins = 2;
 

@@ -23,6 +23,7 @@
 #include <QtGlobal>
 #include <QDialog>
 #include <QWidget>
+#include <QMainWindow>
 #include <QScreen>
 #include <QWindow>
 #include <QAbstractItemModel>
@@ -45,6 +46,8 @@
 #include <QLayout>
 #include <QStackedWidget>
 #include <QSettings>
+#include <QShowEvent>
+#include <QCloseEvent>
 
 #include "core/application.h"
 #include "core/player.h"
@@ -70,10 +73,11 @@
 #ifdef HAVE_SUBSONIC
 #  include "subsonicsettingspage.h"
 #endif
+#ifdef HAVE_TIDAL
+#  include "tidalsettingspage.h"
+#endif
 
 #include "ui_settingsdialog.h"
-
-class QShowEvent;
 
 const char *SettingsDialog::kSettingsGroup = "SettingsDialog";
 
@@ -106,8 +110,9 @@ void SettingsItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
 
 }
 
-SettingsDialog::SettingsDialog(Application *app, QWidget *parent)
+SettingsDialog::SettingsDialog(Application *app, QMainWindow *mainwindow, QWidget *parent)
     : QDialog(parent),
+      mainwindow_(mainwindow),
       app_(app),
       player_(app_->player()),
       engine_(app_->player()->engine()),
@@ -143,11 +148,15 @@ SettingsDialog::SettingsDialog(Application *app, QWidget *parent)
   AddPage(Page_Moodbar, new MoodbarSettingsPage(this), iface);
 #endif
 
-#if defined(HAVE_SUBSONIC)
+#if defined(HAVE_SUBSONIC) || defined(HAVE_TIDAL)
   QTreeWidgetItem *streaming = AddCategory(tr("Streaming"));
 #endif
+
 #ifdef HAVE_SUBSONIC
   AddPage(Page_Subsonic, new SubsonicSettingsPage(this), streaming);
+#endif
+#ifdef HAVE_TIDAL
+  AddPage(Page_Tidal, new TidalSettingsPage(this), streaming);
 #endif
 
   // List box
@@ -159,6 +168,56 @@ SettingsDialog::SettingsDialog(Application *app, QWidget *parent)
 
   ui_->buttonBox->button(QDialogButtonBox::Cancel)->setShortcut(QKeySequence::Close);
 
+}
+
+SettingsDialog::~SettingsDialog() {
+  delete ui_;
+}
+
+void SettingsDialog::showEvent(QShowEvent *e) {
+
+  LoadGeometry();
+
+  // Load settings
+  loading_settings_ = true;
+  for (const PageData &page : pages_.values()) {
+    page.page_->Load();
+  }
+  loading_settings_ = false;
+
+  QDialog::showEvent(e);
+
+}
+
+void SettingsDialog::closeEvent(QCloseEvent*) {
+
+  SaveGeometry();
+
+}
+
+void SettingsDialog::accept() {
+
+  Save();
+  SaveGeometry();
+
+  QDialog::accept();
+
+}
+
+void SettingsDialog::reject() {
+
+  // Notify each page that user clicks on Cancel
+  for (const PageData &page : pages_.values()) {
+    page.page_->Cancel();
+  }
+  SaveGeometry();
+
+  QDialog::reject();
+
+}
+
+void SettingsDialog::LoadGeometry() {
+
   QSettings s;
   s.beginGroup(kSettingsGroup);
   if (s.contains("geometry")) {
@@ -166,10 +225,19 @@ SettingsDialog::SettingsDialog(Application *app, QWidget *parent)
   }
   s.endGroup();
 
-}
+  // Center the dialog on the same screen as mainwindow.
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+  QScreen *screen = mainwindow_->screen();
+#else
+  QScreen *screen = (mainwindow_->window() && mainwindow_->window()->windowHandle() ? mainwindow_->window()->windowHandle()->screen() : nullptr);
+#endif
+  if (screen) {
+    const QRect sr = screen->availableGeometry();
+    const QRect wr({}, size().boundedTo(sr.size()));
+    resize(wr.size());
+    move(sr.center() - wr.center());
+  }
 
-SettingsDialog::~SettingsDialog() {
-  delete ui_;
 }
 
 void SettingsDialog::SaveGeometry() {
@@ -226,38 +294,21 @@ void SettingsDialog::AddPage(Page id, SettingsPage *page, QTreeWidgetItem *paren
   ui_->stacked_widget->addWidget(area);
 
   // Remember where the page is
-  PageData data;
-  data.item_ = item;
-  data.scroll_area_ = area;
-  data.page_ = page;
-  pages_[id] = data;
+  PageData page_data;
+  page_data.item_ = item;
+  page_data.scroll_area_ = area;
+  page_data.page_ = page;
+  pages_[id] = page_data;
 
 }
 
 void SettingsDialog::Save() {
 
-  for (const PageData &data : pages_.values()) {
-    data.page_->Save();
+  for (const PageData &page : pages_.values()) {
+    page.page_->Save();
   }
   emit ReloadSettings();
 
-}
-
-void SettingsDialog::accept() {
-  Save();
-  SaveGeometry();
-  QDialog::accept();
-}
-
-void SettingsDialog::reject() {
-
-  // Notify each page that user clicks on Cancel
-  for (const PageData &data : pages_.values()) {
-    data.page_->Cancel();
-  }
-  SaveGeometry();
-
-  QDialog::reject();
 }
 
 void SettingsDialog::DialogButtonClicked(QAbstractButton *button) {
@@ -266,29 +317,6 @@ void SettingsDialog::DialogButtonClicked(QAbstractButton *button) {
   if (ui_->buttonBox->button(QDialogButtonBox::Apply) == button) {
     Save();
   }
-}
-
-void SettingsDialog::showEvent(QShowEvent *e) {
-
-  // Load settings
-  loading_settings_ = true;
-  for (const PageData &data : pages_.values()) {
-    data.page_->Load();
-  }
-  loading_settings_ = false;
-
-  // Resize the dialog if it's too big
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-  QScreen *screen = QWidget::screen();
-#else
-  QScreen *screen = (window() && window()->windowHandle() ? window()->windowHandle()->screen() : QGuiApplication::primaryScreen());
-#endif
-  if (screen->availableGeometry().height() < height()) {
-    resize(width(), sizeHint().height());
-  }
-
-  QDialog::showEvent(e);
-
 }
 
 void SettingsDialog::OpenAtPage(Page page) {
@@ -312,9 +340,9 @@ void SettingsDialog::CurrentItemChanged(QTreeWidgetItem *item) {
   ui_->title->setText("<b>" + item->text(0) + "</b>");
 
   // Display the right page
-  for (const PageData &data : pages_.values()) {
-    if (data.item_ == item) {
-      ui_->stacked_widget->setCurrentWidget(data.scroll_area_);
+  for (const PageData &page : pages_.values()) {
+    if (page.item_ == item) {
+      ui_->stacked_widget->setCurrentWidget(page.scroll_area_);
       break;
     }
   }

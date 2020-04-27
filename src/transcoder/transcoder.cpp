@@ -46,9 +46,6 @@
 #include "core/signalchecker.h"
 #include "transcoder.h"
 
-using std::shared_ptr;
-using std::sort;
-
 int Transcoder::JobFinishedEvent::sEventType = -1;
 
 TranscoderPreset::TranscoderPreset(Song::FileType type, const QString &name, const QString &extension, const QString &codec_mimetype, const QString &muxer_mimetype)
@@ -108,15 +105,15 @@ GstElement *Transcoder::CreateElementForMimeType(const QString &element_type, co
   GstRegistry *registry = gst_registry_get();
   GList *const features = gst_registry_get_feature_list(registry, GST_TYPE_ELEMENT_FACTORY);
 
-  for (GList *p = features; p; p = g_list_next(p)) {
-    GstElementFactory *factory = GST_ELEMENT_FACTORY(p->data);
+  for (GList *f = features ; f ; f = g_list_next(f)) {
+    GstElementFactory *factory = GST_ELEMENT_FACTORY(f->data);
 
     // Is this the right type of plugin?
     if (QString(gst_element_factory_get_klass(factory)).contains(element_type)) {
       const GList *const templates = gst_element_factory_get_static_pad_templates(factory);
-      for (const GList *p = templates; p; p = g_list_next(p)) {
+      for (const GList *t = templates ; t ; t = g_list_next(t)) {
         // Only interested in source pads
-        GstStaticPadTemplate *pad_template = reinterpret_cast<GstStaticPadTemplate*>(p->data);
+        GstStaticPadTemplate *pad_template = reinterpret_cast<GstStaticPadTemplate*>(t->data);
         if (pad_template->direction != GST_PAD_SRC) continue;
 
         // Does this pad support the mime type we want?
@@ -414,7 +411,7 @@ void Transcoder::JobState::ReportError(GstMessage *msg) {
 
 bool Transcoder::StartJob(const Job &job) {
 
-  shared_ptr<JobState> state(new JobState(job, this));
+  std::shared_ptr<JobState> state(new JobState(job, this));
 
   emit LogLine(tr("Starting %1").arg(QDir::toNativeSeparators(job.input)));
 
@@ -526,7 +523,7 @@ void Transcoder::Cancel() {
   // Stop the running ones
   JobStateList::iterator it = current_jobs_.begin();
   while (it != current_jobs_.end()) {
-    shared_ptr<JobState> state(*it);
+    std::shared_ptr<JobState> state(*it);
 
     // Remove event handlers from the gstreamer pipeline so they don't get called after the pipeline is shutting down
     gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(state->pipeline_)), nullptr, nullptr, nullptr);

@@ -75,6 +75,7 @@
 #include "playlistheader.h"
 #include "playlistview.h"
 #include "covermanager/currentalbumcoverloader.h"
+#include "covermanager/albumcoverloaderresult.h"
 #include "settings/appearancesettingspage.h"
 #include "settings/playlistsettingspage.h"
 #include "dynamicplaylistcontrols.h"
@@ -82,8 +83,6 @@
 #ifdef HAVE_MOODBAR
 #  include "moodbar/moodbaritemdelegate.h"
 #endif
-
-using std::sort;
 
 const int PlaylistView::kGlowIntensitySteps = 24;
 const int PlaylistView::kAutoscrollGraceTimeout = 30;  // seconds
@@ -176,17 +175,20 @@ PlaylistView::PlaylistView(QWidget *parent)
 
   setHeader(header_);
   header_->setSectionsMovable(true);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+  header_->setFirstSectionMovable(true);
+#endif
   setStyle(style_);
   setMouseTracking(true);
 
-  connect(header_, SIGNAL(sectionResized(int,int,int)), SLOT(SaveGeometry()));
-  connect(header_, SIGNAL(sectionMoved(int,int,int)), SLOT(SaveGeometry()));
-  connect(header_, SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), SLOT(SaveGeometry()));
-  connect(header_, SIGNAL(SectionVisibilityChanged(int,bool)), SLOT(SaveGeometry()));
+  connect(header_, SIGNAL(sectionResized(int, int, int)), SLOT(SaveGeometry()));
+  connect(header_, SIGNAL(sectionMoved(int, int, int)), SLOT(SaveGeometry()));
+  connect(header_, SIGNAL(sortIndicatorChanged(int, Qt::SortOrder)), SLOT(SaveGeometry()));
+  connect(header_, SIGNAL(SectionVisibilityChanged(int, bool)), SLOT(SaveGeometry()));
 
-  connect(header_, SIGNAL(sectionResized(int,int,int)), SLOT(InvalidateCachedCurrentPixmap()));
-  connect(header_, SIGNAL(sectionMoved(int,int,int)), SLOT(InvalidateCachedCurrentPixmap()));
-  connect(header_, SIGNAL(SectionVisibilityChanged(int,bool)), SLOT(InvalidateCachedCurrentPixmap()));
+  connect(header_, SIGNAL(sectionResized(int, int, int)), SLOT(InvalidateCachedCurrentPixmap()));
+  connect(header_, SIGNAL(sectionMoved(int, int, int)), SLOT(InvalidateCachedCurrentPixmap()));
+  connect(header_, SIGNAL(SectionVisibilityChanged(int, bool)), SLOT(InvalidateCachedCurrentPixmap()));
   connect(header_, SIGNAL(StretchEnabledChanged(bool)), SLOT(StretchChanged(bool)));
 
   inhibit_autoscroll_timer_->setInterval(kAutoscrollGraceTimeout * 1000);
@@ -221,8 +223,8 @@ void PlaylistView::SetApplication(Application *app) {
 
   Q_ASSERT(app);
   app_ = app;
-  connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(const Song&)), this, SLOT(SongChanged(const Song&)));
-  connect(app_->current_albumcover_loader(), SIGNAL(AlbumCoverLoaded(const Song&, const QUrl&, const QImage&)), SLOT(AlbumCoverLoaded(const Song&, const QUrl&, const QImage&)));
+  connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(Song)), this, SLOT(SongChanged(Song)));
+  connect(app_->current_albumcover_loader(), SIGNAL(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)));
   connect(app_->player(), SIGNAL(Playing()), SLOT(StartGlowing()));
   connect(app_->player(), SIGNAL(Paused()), SLOT(StopGlowing()));
   connect(app_->player(), SIGNAL(Stopped()), SLOT(Stopped()));
@@ -544,9 +546,11 @@ void PlaylistView::showEvent(QShowEvent *) {
 
 }
 
+namespace {
 bool CompareSelectionRanges(const QItemSelectionRange &a, const QItemSelectionRange &b) {
   return b.bottom() < a.bottom();
 }
+}  // namespace
 
 void PlaylistView::keyPressEvent(QKeyEvent *event) {
 
@@ -1246,9 +1250,9 @@ void PlaylistView::CopyCurrentSongToClipboard() const {
       continue;
     }
 
-    const QVariant data = model()->data(currentIndex().sibling(currentIndex().row(), i));
-    if (data.type() == QVariant::String) {
-      columns << data.toString();
+    const QVariant var_data = model()->data(currentIndex().sibling(currentIndex().row(), i));
+    if (var_data.type() == QVariant::String) {
+      columns << var_data.toString();
     }
   }
 
@@ -1282,17 +1286,15 @@ void PlaylistView::Stopped() {
   if (song_playing_ == Song()) return;
   song_playing_ = Song();
   StopGlowing();
-  AlbumCoverLoaded(Song(), QUrl(), QImage());
+  AlbumCoverLoaded(Song());
 
 }
 
-void PlaylistView::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &song_art) {
+void PlaylistView::AlbumCoverLoaded(const Song &song, AlbumCoverLoaderResult result) {
 
-  Q_UNUSED(cover_url);
+  if ((song != Song() && song_playing_ == Song()) || result.image_original == current_song_cover_art_) return;
 
-  if ((song != Song() && song_playing_ == Song()) || song_art == current_song_cover_art_) return;
-
-  current_song_cover_art_ = song_art;
+  current_song_cover_art_ = result.image_original;
   if (background_image_type_ == AppearanceSettingsPage::BackgroundImageType_Album) {
     if (song.art_automatic().isEmpty() && song.art_manual().isEmpty()) {
       set_background_image(QImage());

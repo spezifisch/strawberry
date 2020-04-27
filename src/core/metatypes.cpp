@@ -53,6 +53,7 @@
 #include "collection/directory.h"
 #include "playlist/playlistitem.h"
 #include "playlist/playlistsequence.h"
+#include "covermanager/albumcoverloaderresult.h"
 #include "covermanager/albumcoverfetcher.h"
 #include "equalizer/equalizer.h"
 
@@ -61,7 +62,7 @@
 #  include "dbus/metatypes.h"
 #endif
 
-#include "internet/internetsearch.h"
+#include "internet/internetsearchview.h"
 
 #include "smartplaylists/playlistgenerator_fwd.h"
 
@@ -100,6 +101,8 @@ void RegisterMetaTypes() {
   qRegisterMetaType<QList<PlaylistItemPtr> >("QList<PlaylistItemPtr>");
   qRegisterMetaType<PlaylistSequence::RepeatMode>("PlaylistSequence::RepeatMode");
   qRegisterMetaType<PlaylistSequence::ShuffleMode>("PlaylistSequence::ShuffleMode");
+  qRegisterMetaType<AlbumCoverLoaderResult>("AlbumCoverLoaderResult");
+  qRegisterMetaType<AlbumCoverLoaderResult::Type>("AlbumCoverLoaderResult::Type");
   qRegisterMetaType<CoverSearchResult>("CoverSearchResult");
   qRegisterMetaType<QList<CoverSearchResult> >("QList<CoverSearchResult>");
   qRegisterMetaType<CoverSearchResults>("CoverSearchResults");
@@ -108,7 +111,7 @@ void RegisterMetaTypes() {
 #ifdef HAVE_DBUS
   qDBusRegisterMetaType<QList<QByteArray>>();
   qDBusRegisterMetaType<TrackMetadata>();
-  qDBusRegisterMetaType<TrackIds>();
+  qDBusRegisterMetaType<Track_Ids>();
   qDBusRegisterMetaType<MprisPlaylist>();
   qDBusRegisterMetaType<MprisPlaylistList>();
   qDBusRegisterMetaType<MaybePlaylist>();
@@ -119,8 +122,8 @@ void RegisterMetaTypes() {
 #endif
 #endif
 
-  qRegisterMetaType<InternetSearch::ResultList>("InternetSearch::ResultList");
-  qRegisterMetaType<InternetSearch::Result>("InternetSearch::Result");
+  qRegisterMetaType<InternetSearchView::ResultList>("InternetSearchView::ResultList");
+  qRegisterMetaType<InternetSearchView::Result>("InternetSearchView::Result");
 
   qRegisterMetaType<PlaylistGeneratorPtr>("PlaylistGeneratorPtr");
 

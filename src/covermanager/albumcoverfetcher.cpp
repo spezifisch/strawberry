@@ -44,14 +44,15 @@ AlbumCoverFetcher::AlbumCoverFetcher(CoverProviders *cover_providers, QObject *p
   connect(request_starter_, SIGNAL(timeout()), SLOT(StartRequests()));
 }
 
-quint64 AlbumCoverFetcher::FetchAlbumCover(const QString &artist, const QString &album, bool fetchall) {
+quint64 AlbumCoverFetcher::FetchAlbumCover(const QString &artist, const QString &album, const QString &title, bool fetchall) {
 
   CoverSearchRequest request;
   request.id = next_id_++;
   request.artist = artist;
   request.album = album;
-  request.album.remove(Song::kAlbumRemoveDisc);
-  request.album.remove(Song::kAlbumRemoveMisc);
+  request.album = request.album.remove(Song::kAlbumRemoveDisc);
+  request.album = request.album.remove(Song::kAlbumRemoveMisc);
+  request.title = title;
   request.search = false;
   request.fetchall = fetchall;
 
@@ -60,14 +61,15 @@ quint64 AlbumCoverFetcher::FetchAlbumCover(const QString &artist, const QString 
 
 }
 
-quint64 AlbumCoverFetcher::SearchForCovers(const QString &artist, const QString &album) {
+quint64 AlbumCoverFetcher::SearchForCovers(const QString &artist, const QString &album, const QString &title) {
 
   CoverSearchRequest request;
   request.id = next_id_++;
   request.artist = artist;
   request.album = album;
-  request.album.remove(Song::kAlbumRemoveDisc);
-  request.album.remove(Song::kAlbumRemoveMisc);
+  request.album = request.album.remove(Song::kAlbumRemoveDisc);
+  request.album = request.album.remove(Song::kAlbumRemoveMisc);
+  request.title = title;
   request.search = true;
   request.fetchall = false;
 
@@ -113,8 +115,8 @@ void AlbumCoverFetcher::StartRequests() {
     AlbumCoverFetcherSearch *search = new AlbumCoverFetcherSearch(request, network_, this);
     active_requests_.insert(request.id, search);
 
-    connect(search, SIGNAL(SearchFinished(const quint64, const CoverSearchResults)), SLOT(SingleSearchFinished(const quint64, const CoverSearchResults)));
-    connect(search, SIGNAL(AlbumCoverFetched(const quint64, const QUrl&, const QImage&)), SLOT(SingleCoverFetched(const quint64, const QUrl&, const QImage&)));
+    connect(search, SIGNAL(SearchFinished(quint64, CoverSearchResults)), SLOT(SingleSearchFinished(quint64, CoverSearchResults)));
+    connect(search, SIGNAL(AlbumCoverFetched(quint64, QUrl, QImage)), SLOT(SingleCoverFetched(quint64, QUrl, QImage)));
 
     search->Start(cover_providers_);
   }

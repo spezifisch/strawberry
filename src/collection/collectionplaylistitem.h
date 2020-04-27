@@ -33,8 +33,8 @@ class SqlRow;
 
 class CollectionPlaylistItem : public PlaylistItem {
  public:
-  CollectionPlaylistItem();
-  CollectionPlaylistItem(const Song &song);
+  explicit CollectionPlaylistItem();
+  explicit CollectionPlaylistItem(const Song &song);
 
   bool InitFromQuery(const SqlRow &query);
   void Reload();
@@ -45,6 +45,8 @@ class CollectionPlaylistItem : public PlaylistItem {
   QUrl Url() const;
 
   bool IsLocalCollectionItem() const { return true; }
+
+  void SetArtManual(const QUrl &cover_url);
 
  protected:
   QVariant DatabaseValue(DatabaseColumn column) const;

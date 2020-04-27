@@ -47,7 +47,7 @@ class AlbumCoverFetcherSearch : public QObject {
   Q_OBJECT
 
  public:
-  AlbumCoverFetcherSearch(const CoverSearchRequest &request, QNetworkAccessManager *network, QObject *parent);
+  explicit AlbumCoverFetcherSearch(const CoverSearchRequest &request, QNetworkAccessManager *network, QObject *parent);
 
   void Start(CoverProviders *cover_providers);
 
@@ -69,6 +69,7 @@ class AlbumCoverFetcherSearch : public QObject {
   void TerminateSearch();
 
  private:
+  static bool CoverSearchResultCompareScore(const CoverSearchResult &a, const CoverSearchResult &b);
   void AllProvidersFinished();
 
   void FetchMoreImages();

@@ -12,6 +12,8 @@
         <file>schema/schema-9.sql</file>
         <file>schema/schema-10.sql</file>
         <file>schema/schema-11.sql</file>
+        <file>schema/schema-12.sql</file>
+        <file>schema/schema-13.sql</file>
         <file>schema/device-schema.sql</file>
         <file>style/strawberry.css</file>
         <file>style/smartplaylistsearchterm.css</file>
@@ -42,5 +44,6 @@
         <file>pictures/rainbowdash.png</file>
         <file>fonts/HumongousofEternitySt.ttf</file>
         <file>mood/sample.mood</file>
+        <file>text/ghosts.txt</file>
     </qresource>
 </RCC>

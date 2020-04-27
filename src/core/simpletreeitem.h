@@ -32,8 +32,8 @@
 template <typename T>
 class SimpleTreeItem {
  public:
-  SimpleTreeItem(int _type, SimpleTreeModel<T>* _model);  // For the root item
-  SimpleTreeItem(int _type, const QString& _key, T* _parent = nullptr);
+  explicit SimpleTreeItem(int _type, SimpleTreeModel<T>* _model);  // For the root item
+  explicit SimpleTreeItem(int _type, const QString& _key, T* _parent = nullptr);
   explicit SimpleTreeItem(int _type, T* _parent = nullptr);
   virtual ~SimpleTreeItem();
 
@@ -151,9 +151,9 @@ void SimpleTreeItem<T>::Delete(int child_row) {
 }
 
 template <typename T>
-T* SimpleTreeItem<T>::ChildByKey(const QString& key) const {
+T* SimpleTreeItem<T>::ChildByKey(const QString &_key) const {
   for (T* child : children) {
-    if (child->key == key) return child;
+    if (child->key == _key) return child;
   }
   return nullptr;
 }

@@ -56,6 +56,7 @@
 #include <QPoint>
 #include <QRect>
 #include <QSize>
+#include <QColor>
 #include <QMetaEnum>
 #include <QXmlStreamReader>
 #include <QSettings>
@@ -332,6 +333,7 @@ QString ColorToRgba(const QColor &c) {
 }
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+void OpenInFileManager(const QString &path);
 void OpenInFileManager(const QString &path) {
 
   QProcess proc;
@@ -379,7 +381,10 @@ void OpenInFileManager(const QString &path) {
     proc.startDetached(command, QStringList() << command_params << "--select" << "--new-window" << path);
   }
   else if (command.startsWith("caja")) {
-    proc.startDetached(command, QStringList() << command_params << "--no-desktop" << path);
+    QFileInfo info(path);
+    if (!info.exists()) return;
+    QString directory = info.dir().path();
+    proc.startDetached(command, QStringList() << command_params << "--no-desktop" << directory);
   }
   else {
     proc.startDetached(command, QStringList() << command_params << path);
@@ -396,6 +401,7 @@ void RevealFileInFinder(QString const &path) {
 #endif  // Q_OS_MACOS
 
 #ifdef Q_OS_WIN
+void ShowFileInExplorer(QString const &path);
 void ShowFileInExplorer(QString const &path) {
   QProcess::execute("explorer.exe", QStringList() << "/select," << QDir::toNativeSeparators(path));
 }
@@ -977,6 +983,10 @@ QString ReplaceVariable(const QString &variable, const Song &song, const QString
 
   //if the variable is not recognized, just return it
   return variable;
+}
+
+bool IsColorDark(const QColor &color) {
+  return ((30 * color.red() + 59 * color.green() + 11 * color.blue()) / 100) <= 130;
 }
 
 }  // namespace Utilities

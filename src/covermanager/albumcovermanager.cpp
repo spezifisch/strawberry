@@ -27,9 +27,10 @@
 #include <QObject>
 #include <QMainWindow>
 #include <QWidget>
+#include <QScreen>
+#include <QWindow>
 #include <QItemSelectionModel>
 #include <QListWidgetItem>
-#include <QNetworkAccessManager>
 #include <QFile>
 #include <QSet>
 #include <QVariant>
@@ -76,23 +77,23 @@
 #include "albumcoverexporter.h"
 #include "albumcoverfetcher.h"
 #include "albumcoverloader.h"
+#include "albumcoverloaderoptions.h"
+#include "albumcoverloaderresult.h"
 #include "albumcovermanagerlist.h"
 #include "coversearchstatistics.h"
 #include "coversearchstatisticsdialog.h"
 
 #include "ui_albumcovermanager.h"
 
-using std::unique_ptr;
-using std::stable_sort;
-
 const char *AlbumCoverManager::kSettingsGroup = "CoverManager";
 
-AlbumCoverManager::AlbumCoverManager(Application *app, CollectionBackend *collection_backend, QWidget *parent, QNetworkAccessManager *network)
+AlbumCoverManager::AlbumCoverManager(Application *app, CollectionBackend *collection_backend, QMainWindow *mainwindow, QWidget *parent)
     : QMainWindow(parent),
       ui_(new Ui_CoverManager),
+      mainwindow_(mainwindow),
       app_(app),
       album_cover_choice_controller_(new AlbumCoverChoiceController(this)),
-      cover_fetcher_(new AlbumCoverFetcher(app_->cover_providers(), this, network)),
+      cover_fetcher_(new AlbumCoverFetcher(app_->cover_providers(), this)),
       cover_searcher_(nullptr),
       cover_export_(nullptr),
       cover_exporter_(new AlbumCoverExporter(this)),
@@ -142,8 +143,10 @@ AlbumCoverManager::AlbumCoverManager(Application *app, CollectionBackend *collec
 }
 
 AlbumCoverManager::~AlbumCoverManager() {
+
   CancelRequests();
   delete ui_;
+
 }
 
 void AlbumCoverManager::ReloadSettings() {
@@ -193,13 +196,13 @@ void AlbumCoverManager::Init() {
   ui_->albums->installEventFilter(this);
 
   // Connections
-  connect(ui_->artists, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), SLOT(ArtistChanged(QListWidgetItem*)));
+  connect(ui_->artists, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SLOT(ArtistChanged(QListWidgetItem*)));
   connect(ui_->filter, SIGNAL(textChanged(QString)), SLOT(UpdateFilter()));
   connect(filter_group, SIGNAL(triggered(QAction*)), SLOT(UpdateFilter()));
   connect(ui_->view, SIGNAL(clicked()), ui_->view, SLOT(showMenu()));
   connect(ui_->button_fetch, SIGNAL(clicked()), SLOT(FetchAlbumCovers()));
   connect(ui_->export_covers, SIGNAL(clicked()), SLOT(ExportCovers()));
-  connect(cover_fetcher_, SIGNAL(AlbumCoverFetched(const quint64, const QUrl&, const QImage&, const CoverSearchStatistics&)), SLOT(AlbumCoverFetched(const quint64, const QUrl&, const QImage&, const CoverSearchStatistics&)));
+  connect(cover_fetcher_, SIGNAL(AlbumCoverFetched(quint64, QUrl, QImage, CoverSearchStatistics)), SLOT(AlbumCoverFetched(quint64, QUrl, QImage, CoverSearchStatistics)));
   connect(ui_->action_fetch, SIGNAL(triggered()), SLOT(FetchSingleCover()));
   connect(ui_->albums, SIGNAL(doubleClicked(QModelIndex)), SLOT(AlbumDoubleClicked(QModelIndex)));
   connect(ui_->action_add_to_playlist, SIGNAL(triggered()), SLOT(AddSelectedToPlaylist()));
@@ -215,7 +218,7 @@ void AlbumCoverManager::Init() {
     ui_->splitter->setSizes(QList<int>() << 200 << width() - 200);
   }
 
-  connect(app_->album_cover_loader(), SIGNAL(ImageLoaded(const quint64, const QUrl&, const QImage&)), SLOT(CoverImageLoaded(const quint64, const QUrl&, const QImage&)));
+  connect(app_->album_cover_loader(), SIGNAL(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)));
 
   cover_searcher_->Init(cover_fetcher_);
 
@@ -224,7 +227,10 @@ void AlbumCoverManager::Init() {
 }
 
 void AlbumCoverManager::showEvent(QShowEvent *) {
+
+  LoadGeometry();
   Reset();
+
 }
 
 void AlbumCoverManager::closeEvent(QCloseEvent *e) {
@@ -239,15 +245,52 @@ void AlbumCoverManager::closeEvent(QCloseEvent *e) {
     }
   }
 
-  // Save geometry
-  QSettings s;
-  s.beginGroup(kSettingsGroup);
-
-  s.setValue("geometry", saveGeometry());
-  s.setValue("splitter_state", ui_->splitter->saveState());
+  SaveGeometry();
 
   // Cancel any outstanding requests
   CancelRequests();
+
+}
+
+void AlbumCoverManager::LoadGeometry() {
+
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  if (s.contains("geometry")) {
+    restoreGeometry(s.value("geometry").toByteArray());
+  }
+  if (s.contains("splitter_state")) {
+    ui_->splitter->restoreState(s.value("splitter_state").toByteArray());
+  }
+  else {
+    // Sensible default size for the artists view
+    ui_->splitter->setSizes(QList<int>() << 200 << width() - 200);
+  }
+  s.endGroup();
+
+  // Center the window on the same screen as the mainwindow.
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+  QScreen *screen = mainwindow_->screen();
+#else
+  QScreen *screen = (mainwindow_->window() && mainwindow_->window()->windowHandle() ? mainwindow_->window()->windowHandle()->screen() : nullptr);
+#endif
+  if (screen) {
+    const QRect sr = screen->availableGeometry();
+    const QRect wr({}, size().boundedTo(sr.size()));
+    resize(wr.size());
+    move(sr.center() - wr.center());
+  }
+
+}
+
+void AlbumCoverManager::SaveGeometry() {
+
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  s.setValue("geometry", saveGeometry());
+  s.setValue("splitter_state", ui_->splitter->saveState());
+  s.endGroup();
+
 }
 
 void AlbumCoverManager::CancelRequests() {
@@ -351,7 +394,7 @@ void AlbumCoverManager::ArtistChanged(QListWidgetItem *current) {
     }
 
     if (!info.art_automatic.isEmpty() || !info.art_manual.isEmpty()) {
-      quint64 id = app_->album_cover_loader()->LoadImageAsync(cover_loader_options_, info.art_automatic, info.art_manual, info.first_url.toLocalFile());
+      quint64 id = app_->album_cover_loader()->LoadImageAsync(cover_loader_options_, info.art_automatic, info.art_manual, info.first_url);
       item->setData(Role_PathAutomatic, info.art_automatic);
       item->setData(Role_PathManual, info.art_manual);
       cover_loading_tasks_[id] = item;
@@ -362,17 +405,15 @@ void AlbumCoverManager::ArtistChanged(QListWidgetItem *current) {
 
 }
 
-void AlbumCoverManager::CoverImageLoaded(const quint64 id, const QUrl &cover_url, const QImage &image) {
-
-  Q_UNUSED(cover_url);
+void AlbumCoverManager::AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderResult &result) {
 
   if (!cover_loading_tasks_.contains(id)) return;
 
   QListWidgetItem *item = cover_loading_tasks_.take(id);
 
-  if (image.isNull()) return;
+  if (result.image_scaled.isNull()) return;
 
-  item->setIcon(QPixmap::fromImage(image));
+  item->setIcon(QPixmap::fromImage(result.image_scaled));
   UpdateFilter();
 
 }
@@ -447,7 +488,7 @@ void AlbumCoverManager::FetchAlbumCovers() {
     if (item->isHidden()) continue;
     if (ItemHasCover(*item)) continue;
 
-    quint64 id = cover_fetcher_->FetchAlbumCover(EffectiveAlbumArtistName(*item), item->data(Role_AlbumName).toString(), true);
+    quint64 id = cover_fetcher_->FetchAlbumCover(EffectiveAlbumArtistName(*item), item->data(Role_AlbumName).toString(), QString(), true);
     cover_fetching_tasks_[id] = item;
     jobs_++;
   }
@@ -582,7 +623,7 @@ void AlbumCoverManager::ShowCover() {
 void AlbumCoverManager::FetchSingleCover() {
 
   for (QListWidgetItem *item : context_menu_items_) {
-    quint64 id = cover_fetcher_->FetchAlbumCover(EffectiveAlbumArtistName(*item), item->data(Role_AlbumName).toString(), false);
+    quint64 id = cover_fetcher_->FetchAlbumCover(EffectiveAlbumArtistName(*item), item->data(Role_AlbumName).toString(), QString(), false);
     cover_fetching_tasks_[id] = item;
     jobs_++;
   }
@@ -629,13 +670,13 @@ void AlbumCoverManager::SaveCoverToFile() {
     image = no_cover_image_;
   }
   else {
-    if (!song.art_manual().isEmpty() && !song.art_manual().isLocalFile() && QFile::exists(song.art_manual().toLocalFile())) {
+    if (!song.art_manual().isEmpty() && song.art_manual().isLocalFile() && QFile::exists(song.art_manual().toLocalFile())) {
       image = QImage(song.art_manual().toLocalFile());
     }
     else if (!song.art_manual().isEmpty() && !song.art_manual().path().isEmpty() && song.art_manual().scheme().isEmpty() && QFile::exists(song.art_manual().path())) {
       image = QImage(song.art_manual().path());
     }
-    else if (!song.art_automatic().isEmpty() && !song.art_automatic().isLocalFile() && QFile::exists(song.art_automatic().toLocalFile())) {
+    else if (!song.art_automatic().isEmpty() && song.art_automatic().isLocalFile() && QFile::exists(song.art_automatic().toLocalFile())) {
       image = QImage(song.art_automatic().toLocalFile());
     }
     else if (!song.art_automatic().isEmpty() && !song.art_automatic().path().isEmpty() && song.art_automatic().scheme().isEmpty() && QFile::exists(song.art_automatic().path())) {
@@ -758,19 +799,19 @@ SongMimeData *AlbumCoverManager::GetMimeDataForAlbums(const QModelIndexList &ind
   SongList songs = GetSongsInAlbums(indexes);
   if (songs.isEmpty()) return nullptr;
 
-  SongMimeData *data = new SongMimeData;
-  data->backend = collection_backend_;
-  data->songs = songs;
-  return data;
+  SongMimeData *mimedata = new SongMimeData;
+  mimedata->backend = collection_backend_;
+  mimedata->songs = songs;
+  return mimedata;
 
 }
 
 void AlbumCoverManager::AlbumDoubleClicked(const QModelIndex &index) {
 
-  SongMimeData *data = GetMimeDataForAlbums(QModelIndexList() << index);
-  if (data) {
-    data->from_doubleclick_ = true;
-    emit AddToPlaylist(data);
+  SongMimeData *mimedata = GetMimeDataForAlbums(QModelIndexList() << index);
+  if (mimedata) {
+    mimedata->from_doubleclick_ = true;
+    emit AddToPlaylist(mimedata);
   }
 
 }
@@ -781,10 +822,10 @@ void AlbumCoverManager::AddSelectedToPlaylist() {
 
 void AlbumCoverManager::LoadSelectedToPlaylist() {
 
-  SongMimeData *data = GetMimeDataForAlbums(ui_->albums->selectionModel()->selectedIndexes());
-  if (data) {
-    data->clear_first_ = true;
-    emit AddToPlaylist(data);
+  SongMimeData *mimedata = GetMimeDataForAlbums(ui_->albums->selectionModel()->selectedIndexes());
+  if (mimedata) {
+    mimedata->clear_first_ = true;
+    emit AddToPlaylist(mimedata);
   }
 
 }
@@ -902,4 +943,3 @@ QImage AlbumCoverManager::GenerateNoCoverImage(const QIcon &no_cover_icon) const
 bool AlbumCoverManager::ItemHasCover(const QListWidgetItem &item) const {
   return item.icon().cacheKey() != no_cover_item_icon_.cacheKey();
 }
-

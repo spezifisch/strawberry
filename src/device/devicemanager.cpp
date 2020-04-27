@@ -87,8 +87,6 @@
 #  include "giolister.h" // Needs to be last because of #undef signals.
 #endif
 
-using std::bind;
-
 const int DeviceManager::kDeviceIconSize = 32;
 const int DeviceManager::kDeviceIconOverlaySize = 16;
 
@@ -108,7 +106,7 @@ DeviceManager::DeviceManager(Application *app, QObject *parent)
   connect(this, SIGNAL(DeviceCreatedFromDB(DeviceInfo*)), SLOT(AddDeviceFromDB(DeviceInfo*)));
 
   // This reads from the database and contents on the database mutex, which can be very slow on startup.
-  ConcurrentRun::Run<void>(&thread_pool_, bind(&DeviceManager::LoadAllDevices, this));
+  ConcurrentRun::Run<void>(&thread_pool_, std::bind(&DeviceManager::LoadAllDevices, this));
 
   // This proxy model only shows connected devices
   connected_devices_model_ = new DeviceStateFilterModel(this);
@@ -484,7 +482,7 @@ void DeviceManager::PhysicalDeviceAdded(const QString &id) {
     }
     else {
       // It's a completely new device
-      DeviceInfo *info = new DeviceInfo(DeviceInfo::Type_Device, root_);
+      info = new DeviceInfo(DeviceInfo::Type_Device, root_);
       info->backends_ << DeviceInfo::Backend(lister, id);
       info->friendly_name_ = lister->MakeFriendlyName(id);
       info->size_ = lister->DeviceCapacity(id);
@@ -668,8 +666,8 @@ std::shared_ptr<ConnectedDevice> DeviceManager::Connect(DeviceInfo *info) {
 
   connect(info->device_.get(), SIGNAL(TaskStarted(int)), SLOT(DeviceTaskStarted(int)));
   connect(info->device_.get(), SIGNAL(SongCountUpdated(int)), SLOT(DeviceSongCountUpdated(int)));
-  connect(info->device_.get(), SIGNAL(ConnectFinished(const QString&, bool)), SLOT(DeviceConnectFinished(const QString&, bool)));
-  connect(info->device_.get(), SIGNAL(CloseFinished(const QString&)), SLOT(DeviceCloseFinished(const QString&)));
+  connect(info->device_.get(), SIGNAL(ConnectFinished(QString, bool)), SLOT(DeviceConnectFinished(QString, bool)));
+  connect(info->device_.get(), SIGNAL(CloseFinished(QString)), SLOT(DeviceCloseFinished(QString)));
   ret->ConnectAsync();
   return ret;
 

@@ -2,7 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
- * Copyright 2013, Jonas Kvinge <jonas@strawbs.net>
+ * Copyright 2013-2020, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,8 +59,7 @@
 #include "playlist/playlistitem.h"
 #include "settings/settingsdialog.h"
 #include "settings/behavioursettingspage.h"
-
-using std::unique_ptr;
+#include "covermanager/albumcoverloaderresult.h"
 
 class About;
 class AlbumCoverManager;
@@ -96,12 +95,13 @@ class SmartPlaylistsViewContainer;
 #ifdef Q_OS_WIN
 class Windows7ThumbBar;
 #endif
+class AddStreamDialog;
 
 class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
 
  public:
-  MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, const CommandlineOptions& options, QWidget *parent = nullptr);
+  explicit MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, const CommandlineOptions& options, QWidget *parent = nullptr);
   ~MainWindow();
 
   static const char *kSettingsGroup;
@@ -127,7 +127,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   bool LoadUrl(const QString& url);
 
  signals:
-  void AlbumCoverReady(const Song &song, const QUrl &cover_url, const QImage &image);
+  void AlbumCoverReady(const Song &song, const QImage &image);
   void SearchCoverInProgress();
   // Signals that stop playing after track was toggled.
   void StopAfterToggled(bool stop);
@@ -190,7 +190,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void CopyFilesToDevice(const QList<QUrl>& urls);
   void EditFileTags(const QList<QUrl>& urls);
 
-  void AddToPlaylist(QMimeData *data);
+  void AddToPlaylist(QMimeData *q_mimedata);
   void AddToPlaylist(QAction *action);
 
   void VolumeWheelEvent(const int delta);
@@ -211,6 +211,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void AddFile();
   void AddFolder();
   void AddCDTracks();
+  void AddStream();
+  void AddStreamAccepted();
 
   void CommandlineOptionsReceived(const quint32 instanceId, const QByteArray &string_options);
 
@@ -223,8 +225,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void ShowCoverManager();
 
   void ShowAboutDialog();
-  void ShowTranscodeDialog();
   void ShowErrorDialog(const QString& message);
+  void ShowTranscodeDialog();
   SettingsDialog *CreateSettingsDialog();
   EditTagDialog *CreateEditTagDialog();
   void OpenSettingsDialog();
@@ -235,6 +237,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void SavePlaybackStatus();
   void LoadPlaybackStatus();
   void ResumePlayback();
+  void ResumePlaybackSeek(const int playback_position);
 
   void Raise();
 
@@ -252,11 +255,12 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void UnsetCover();
   void ShowCover();
   void SearchCoverAutomatically();
-  void AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image);
+  void AlbumCoverLoaded(const Song &song, const AlbumCoverLoaderResult &result);
 
   void ScrobblingEnabledChanged(const bool value);
   void ScrobbleButtonVisibilityChanged(const bool value);
   void LoveButtonVisibilityChanged(const bool value);
+  void SendNowPlaying();
   void Love();
 
   void ExitFinished();
@@ -265,8 +269,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
   void SaveSettings();
 
-  void ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeData *data) const;
-  void ApplyPlayBehaviour(BehaviourSettingsPage::PlayBehaviour b, MimeData *data) const;
+  void ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeData *mimedata) const;
+  void ApplyPlayBehaviour(BehaviourSettingsPage::PlayBehaviour b, MimeData *mimedata) const;
 
   void CheckFullRescanRevisions();
 
@@ -301,14 +305,15 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   PlaylistListContainer *playlist_list_;
   QueueView *queue_view_;
 
+  Lazy<ErrorDialog> error_dialog_;
   Lazy<SettingsDialog> settings_dialog_;
   Lazy<AlbumCoverManager> cover_manager_;
   std::unique_ptr<Equalizer> equalizer_;
+  Lazy<OrganiseDialog> organise_dialog_;
 #ifdef HAVE_GSTREAMER
   Lazy<TranscodeDialog> transcode_dialog_;
 #endif
-  Lazy<ErrorDialog> error_dialog_;
-  Lazy<OrganiseDialog> organise_dialog_;
+  Lazy<AddStreamDialog> add_stream_dialog_;
 
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   std::unique_ptr<TagFetcher> tag_fetcher_;
@@ -317,6 +322,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   PlaylistItemList autocomplete_tag_items_;
 
   InternetSongsView *subsonic_view_;
+  InternetTabsView *tidal_view_;
 
   SmartPlaylistsViewContainer *smartplaylists_view_;
 

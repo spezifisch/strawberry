@@ -30,6 +30,7 @@
 #include <QObject>
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
 #include <QSharedData>
 #include <QHash>
 #include <QByteArray>
@@ -42,6 +43,7 @@
 #include <QIcon>
 #include <QTextCodec>
 #include <QSqlQuery>
+#include <QStandardPaths>
 #include <QtDebug>
 
 #ifdef HAVE_LIBGPOD
@@ -66,7 +68,6 @@
 #include "covermanager/albumcoverloader.h"
 #include "tagreadermessages.pb.h"
 
-using std::sort;
 #ifndef USE_SYSTEM_TAGLIB
 using namespace Strawberry_TagLib;
 #endif
@@ -156,7 +157,7 @@ const QStringList Song::kArticles = QStringList() << "the " << "a " << "an ";
 
 struct Song::Private : public QSharedData {
 
-  Private(Source source = Source_Unknown);
+  explicit Private(Source source = Source_Unknown);
 
   bool valid_;
   int id_;
@@ -181,9 +182,9 @@ struct Song::Private : public QSharedData {
   QString comment_;
   QString lyrics_;
 
-  qint64 artist_id_;
+  QString artist_id_;
   QString album_id_;
-  qint64 song_id_;
+  QString song_id_;
 
   qint64 beginning_;
   qint64 end_;
@@ -235,9 +236,6 @@ Song::Private::Private(Song::Source source)
       originalyear_(-1),
       compilation_(false),
 
-      artist_id_(-1),
-      song_id_(-1),
-
       beginning_(0),
       end_(-1),
 
@@ -279,9 +277,9 @@ bool Song::is_valid() const { return d->valid_; }
 bool Song::is_unavailable() const { return d->unavailable_; }
 int Song::id() const { return d->id_; }
 
-qint64 Song::artist_id() const { return d->artist_id_; }
+QString Song::artist_id() const { return d->artist_id_.isNull() ? "" : d->artist_id_; }
 QString Song::album_id() const { return d->album_id_.isNull() ? "" : d->album_id_; }
-qint64 Song::song_id() const { return d->song_id_; }
+QString Song::song_id() const { return d->song_id_.isNull() ? "" : d->song_id_; }
 
 const QString &Song::title() const { return d->title_; }
 const QString &Song::title_sortable() const { return d->title_sortable_; }
@@ -350,13 +348,14 @@ const QString &Song::cue_path() const { return d->cue_path_; }
 bool Song::has_cue() const { return !d->cue_path_.isEmpty(); }
 
 bool Song::is_collection_song() const { return d->source_ == Source_Collection; }
-bool Song::is_metadata_good() const { return !d->title_.isEmpty() && !d->artist_.isEmpty() && !d->url_.isEmpty() && d->end_ > 0; }
+bool Song::is_metadata_good() const { return !d->url_.isEmpty() && !d->artist_.isEmpty() && !d->title_.isEmpty(); }
 bool Song::is_stream() const { return d->source_ == Source_Stream || d->source_ == Source_Tidal || d->source_ == Source_Subsonic || d->source_ == Source_Qobuz; }
 bool Song::is_cdda() const { return d->source_ == Source_CDDA; }
 bool Song::is_compilation() const { return (d->compilation_ || d->compilation_detected_ || d->compilation_on_) && !d->compilation_off_; }
 
 bool Song::art_automatic_is_valid() const {
-  return (
+  return !d->art_automatic_.isEmpty() &&
+         (
          (d->art_automatic_.path() == kManuallyUnsetCover) ||
          (d->art_automatic_.path() == kEmbeddedCover) ||
          (d->art_automatic_.isValid() && !d->art_automatic_.isLocalFile()) ||
@@ -366,7 +365,8 @@ bool Song::art_automatic_is_valid() const {
 }
 
 bool Song::art_manual_is_valid() const {
-  return (
+  return !d->art_manual_.isEmpty() &&
+         (
          (d->art_manual_.path() == kManuallyUnsetCover) ||
          (d->art_manual_.path() == kEmbeddedCover) ||
          (d->art_manual_.isValid() && !d->art_manual_.isLocalFile()) ||
@@ -380,10 +380,9 @@ const QString &Song::error() const { return d->error_; }
 void Song::set_id(int id) { d->id_ = id; }
 void Song::set_valid(bool v) { d->valid_ = v; }
 
-void Song::set_artist_id(qint64 v) { d->artist_id_ = v; }
-void Song::set_album_id(qint64 v) { d->album_id_ = QString::number(v); }
+void Song::set_artist_id(const QString &v) { d->artist_id_ = v; }
 void Song::set_album_id(const QString &v) { d->album_id_ = v; }
-void Song::set_song_id(qint64 v) { d->song_id_ = v; }
+void Song::set_song_id(const QString &v) { d->song_id_ = v; }
 
 QString Song::sortable(const QString &v) const {
 
@@ -659,7 +658,30 @@ Song::FileType Song::FiletypeByExtension(const QString &ext) {
 
 }
 
-int CompareSongsName(const Song &song1, const Song &song2) {
+QString Song::ImageCacheDir(const Song::Source source) {
+
+  switch (source) {
+    case Song::Source_Collection:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/collectionalbumcovers";
+    case Song::Source_Subsonic:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/subsonicalbumcovers";
+    case Song::Source_Tidal:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/tidalalbumcovers";
+    case Song::Source_Qobuz:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/qobuzalbumcovers";
+    case Song::Source_LocalFile:
+    case Song::Source_CDDA:
+    case Song::Source_Device:
+    case Song::Source_Stream:
+    case Song::Source_Unknown:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/albumcovers";
+  }
+
+  return QString();
+
+}
+
+int Song::CompareSongsName(const Song &song1, const Song &song2) {
   return song1.PrettyTitleWithArtist().localeAwareCompare(song2.PrettyTitleWithArtist()) < 0;
 }
 
@@ -860,13 +882,13 @@ void Song::InitFromQuery(const SqlRow &q, bool reliable_metadata, int col) {
     }
 
     else if (Song::kColumns.value(i) == "artist_id") {
-      d->artist_id_ = tolonglong(x);
+      d->artist_id_ = tostr(x);
     }
     else if (Song::kColumns.value(i) == "album_id") {
       d->album_id_ = tostr(x);
     }
     else if (Song::kColumns.value(i) == "song_id") {
-      d->song_id_ = tolonglong(x);
+      d->song_id_ = tostr(x);
     }
 
     else if (Song::kColumns.value(i) == "beginning") {
@@ -1001,15 +1023,23 @@ void Song::InitFromFilePartial(const QString &filename) {
 
 void Song::InitArtManual() {
 
-  QString album = d->album_;
+  QString album = effective_album();
   album.remove(Song::kAlbumRemoveDisc);
 
   // If we don't have an art, check if we have one in the cache
-  if (d->art_manual_.isEmpty() && d->art_automatic_.isEmpty()) {
+  if (d->art_manual_.isEmpty() && d->art_automatic_.isEmpty() && !effective_albumartist().isEmpty() && !album.isEmpty()) {
     QString filename(Utilities::Sha1CoverHash(effective_albumartist(), album).toHex() + ".jpg");
-    QString path(AlbumCoverLoader::ImageCacheDir(d->source_) + "/" + filename);
+    QString path(ImageCacheDir(d->source_) + "/" + filename);
     if (QFile::exists(path)) {
       d->art_manual_ = QUrl::fromLocalFile(path);
+    }
+    else if (d->url_.isLocalFile()) { // Pick the first image file in the album directory.
+      QFileInfo file(d->url_.toLocalFile());
+      QDir dir(file.path());
+      QStringList files = dir.entryList(QStringList() << "*.jpg" << "*.png" << "*.gif" << "*.jpeg", QDir::Files|QDir::Readable, QDir::Name);
+      if (files.count() > 0) {
+        d->art_manual_ = QUrl::fromLocalFile(file.path() + QDir::separator() + files.first());
+      }
     }
   }
 
@@ -1265,9 +1295,9 @@ void Song::BindToQuery(QSqlQuery *query) const {
   query->bindValue(":comment", strval(d->comment_));
   query->bindValue(":lyrics", strval(d->lyrics_));
 
-  query->bindValue(":artist_id", intval(d->artist_id_));
+  query->bindValue(":artist_id", strval(d->artist_id_));
   query->bindValue(":album_id", strval(d->album_id_));
-  query->bindValue(":song_id", intval(d->song_id_));
+  query->bindValue(":song_id", strval(d->song_id_));
 
   query->bindValue(":beginning", d->beginning_);
   query->bindValue(":length", intval(length_nanosec()));

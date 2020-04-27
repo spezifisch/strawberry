@@ -33,17 +33,22 @@
 #include <QTimeLine>
 #include <QPainter>
 #include <QSizePolicy>
+#include <QMenu>
+#include <QContextMenuEvent>
 #include <QPaintEvent>
 
 #include "covermanager/albumcoverchoicecontroller.h"
 #include "covermanager/albumcoverloader.h"
 
+#include "contextview.h"
 #include "contextalbum.h"
 
 const int ContextAlbum::kWidgetSpacing = 40;
 
 ContextAlbum::ContextAlbum(QWidget *parent) :
     QWidget(parent),
+    menu_(new QMenu(this)),
+    context_view_(nullptr),
     album_cover_choice_controller_(nullptr),
     downloading_covers_(false),
     timeline_fade_(new QTimeLine(1000, this)),
@@ -57,17 +62,38 @@ ContextAlbum::ContextAlbum(QWidget *parent) :
   cover_loader_options_.desired_height_ = 600;
   cover_loader_options_.pad_output_image_ = true;
   cover_loader_options_.scale_output_image_ = true;
-  pixmap_current_ = QPixmap::fromImage(AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_strawberry_));
+  QPair<QImage, QImage> images = AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_strawberry_);
+  pixmap_current_ = QPixmap::fromImage(images.first);
 
   connect(timeline_fade_, SIGNAL(valueChanged(qreal)), SLOT(FadePreviousTrack(qreal)));
   timeline_fade_->setDirection(QTimeLine::Backward);  // 1.0 -> 0.0
 
 }
 
-void ContextAlbum::Init(AlbumCoverChoiceController *album_cover_choice_controller) {
+void ContextAlbum::Init(ContextView *context_view, AlbumCoverChoiceController *album_cover_choice_controller) {
+
+  context_view_ = context_view;
 
   album_cover_choice_controller_ = album_cover_choice_controller;
   connect(album_cover_choice_controller_, SIGNAL(AutomaticCoverSearchDone()), this, SLOT(AutomaticCoverSearchDone()));
+
+  QList<QAction*> cover_actions = album_cover_choice_controller_->GetAllActions();
+  cover_actions.append(album_cover_choice_controller_->search_cover_auto_action());
+  menu_->addActions(cover_actions);
+  menu_->addSeparator();
+
+}
+
+void ContextAlbum::contextMenuEvent(QContextMenuEvent *e) {
+  if (menu_ && image_original_ != image_strawberry_) menu_->popup(mapToGlobal(e->pos()));
+}
+
+void ContextAlbum::mouseDoubleClickEvent(QMouseEvent *e) {
+
+  // Same behaviour as right-click > Show Fullsize
+  if (image_original_ != image_strawberry_ && e->button() == Qt::LeftButton && context_view_->song_playing().is_valid()) {
+    album_cover_choice_controller_->ShowCover(context_view_->song_playing(), image_original_);
+  }
 
 }
 
@@ -89,7 +115,7 @@ void ContextAlbum::DrawImage(QPainter *p) {
 
   if (width() != prev_width_) {
     cover_loader_options_.desired_height_ = width() - kWidgetSpacing;
-    pixmap_current_ = QPixmap::fromImage(AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_original_));
+    pixmap_current_ = QPixmap::fromImage(AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_original_).first);
     prev_width_ = width();
   }
 
@@ -118,7 +144,7 @@ void ContextAlbum::FadePreviousTrack(const qreal value) {
 void ContextAlbum::ScaleCover() {
 
   cover_loader_options_.desired_height_ = width() - kWidgetSpacing;
-  pixmap_current_ = QPixmap::fromImage(AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_original_));
+  pixmap_current_ = QPixmap::fromImage(AlbumCoverLoader::ScaleAndPad(cover_loader_options_, image_original_).first);
   prev_width_ = width();
   update();
 
@@ -162,7 +188,7 @@ void ContextAlbum::SearchCoverInProgress() {
 
   // Show a spinner animation
   spinner_animation_.reset(new QMovie(":/pictures/spinner.gif", QByteArray(), this));
-  connect(spinner_animation_.get(), SIGNAL(updated(const QRect&)), SLOT(update()));
+  connect(spinner_animation_.get(), SIGNAL(updated(QRect)), SLOT(update()));
   spinner_animation_->start();
   update();
 

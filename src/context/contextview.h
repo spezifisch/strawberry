@@ -25,6 +25,7 @@
 #include <QtGlobal>
 #include <QObject>
 #include <QWidget>
+#include <QList>
 #include <QString>
 #include <QImage>
 
@@ -54,13 +55,14 @@ class ContextView : public QWidget {
   Q_OBJECT
 
  public:
-  ContextView(QWidget *parent = nullptr);
+  explicit ContextView(QWidget *parent = nullptr);
 
   void Init(Application *app, CollectionView *collectionview, AlbumCoverChoiceController *album_cover_choice_controller);
 
   ContextAlbum *album_widget() const { return widget_album_; }
   ContextAlbumsView *albums_widget() const { return widget_albums_; }
   bool album_enabled() const { return widget_album_->isVisible(); }
+  Song song_playing() const { return song_playing_; }
 
  protected:
   void resizeEvent(QResizeEvent*);
@@ -76,6 +78,8 @@ class ContextView : public QWidget {
   void UpdateSong(const Song &song);
   void ResetSong();
   void GetCoverAutomatically();
+  void SearchLyrics();
+  void UpdateFonts();
 
  signals:
   void AlbumEnabledChanged();
@@ -86,12 +90,13 @@ class ContextView : public QWidget {
   void ActionShowOutput();
   void ActionShowAlbums();
   void ActionShowLyrics();
+  void ActionSearchLyrics();
   void UpdateNoSong();
   void Playing();
   void Stopped();
   void Error();
   void SongChanged(const Song &song);
-  void AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image);
+  void AlbumCoverLoaded(const Song &song, const QImage &image);
   void FadeStopFinished();
   void UpdateLyrics(const quint64 id, const QString &provider, const QString &lyrics);
 
@@ -110,6 +115,7 @@ class ContextView : public QWidget {
   QAction *action_show_output_;
   QAction *action_show_albums_;
   QAction *action_show_lyrics_;
+  QAction *action_search_lyrics_;
 
   QVBoxLayout *layout_container_;
   QWidget *widget_scrollarea_;
@@ -122,12 +128,10 @@ class ContextView : public QWidget {
   QWidget *widget_play_;
   QVBoxLayout *layout_stop_;
   QVBoxLayout *layout_play_;
-
   QLabel *label_stop_summary_;
   QSpacerItem *spacer_stop_bottom_;
-
   QWidget *widget_play_data_;
-  QWidget *widget_play_engine_device_;
+  QWidget *widget_play_output_;
   QGridLayout *layout_play_data_;
   QGridLayout *layout_play_output_;
   QLabel *label_play_albums_;
@@ -166,10 +170,20 @@ class ContextView : public QWidget {
   Song song_playing_;
   Song song_prev_;
   QImage image_original_;
+  bool lyrics_tried_;
   qint64 lyrics_id_;
   QString lyrics_;
   QString title_fmt_;
   QString summary_fmt_;
+  QString font_headline_;
+  QString font_normal_;
+  qreal font_size_headline_;
+  qreal font_size_normal_;
+
+  QList<QLabel*> labels_play_;
+  QList<QLabel*> labels_play_data_;
+  QList<QLabel*> labels_play_all_;
+
   int prev_width_;
 
 };

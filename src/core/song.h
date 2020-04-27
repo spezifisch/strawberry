@@ -103,7 +103,7 @@ class Song {
     FileType_Stream = 91,
   };
 
-  Song(Song::Source source = Song::Source_Unknown);
+  explicit Song(Song::Source source = Song::Source_Unknown);
   Song(const Song &other);
   ~Song();
 
@@ -147,8 +147,10 @@ class Song {
   static FileType FiletypeByMimetype(const QString &mimetype);
   static FileType FiletypeByDescription(const QString &text);
   static FileType FiletypeByExtension(const QString &ext);
+  static QString ImageCacheDir(const Song::Source source);
 
   // Sort songs alphabetically using their pretty title
+  static int CompareSongsName(const Song &song1, const Song &song2);
   static void SortSongsListAlphabetically(QList<Song> *songs);
 
   // Constructors
@@ -208,9 +210,9 @@ class Song {
   const QString &comment() const;
   const QString &lyrics() const;
 
-  qint64 artist_id() const;
+  QString artist_id() const;
   QString album_id() const;
-  qint64 song_id() const;
+  QString song_id() const;
 
   qint64 beginning_nanosec() const;
   qint64 end_nanosec() const;
@@ -309,10 +311,9 @@ class Song {
   void set_comment(const QString &v);
   void set_lyrics(const QString &v);
 
-  void set_artist_id(qint64 v);
-  void set_album_id(qint64 v);
+  void set_artist_id(const QString &v);
   void set_album_id(const QString &v);
-  void set_song_id(qint64 v);
+  void set_song_id(const QString &v);
 
   void set_beginning_nanosec(qint64 v);
   void set_end_nanosec(qint64 v);

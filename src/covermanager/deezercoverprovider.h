@@ -40,20 +40,21 @@ class DeezerCoverProvider : public CoverProvider {
 
  public:
   explicit DeezerCoverProvider(Application *app, QObject *parent = nullptr);
-  bool StartSearch(const QString &artist, const QString &album, const int id);
+  bool StartSearch(const QString &artist, const QString &album, const QString &title, const int id);
   void CancelSearch(const int id);
 
  private slots:
   void HandleSearchReply(QNetworkReply *reply, const int id);
 
  private:
-  static const char *kApiUrl;
-  static const int kLimit;
-
   QByteArray GetReplyData(QNetworkReply *reply);
   QJsonObject ExtractJsonObj(const QByteArray &data);
   QJsonValue ExtractData(const QByteArray &data);
   void Error(const QString &error, const QVariant &debug = QVariant());
+
+ private:
+  static const char *kApiUrl;
+  static const int kLimit;
 
   QNetworkAccessManager *network_;
 

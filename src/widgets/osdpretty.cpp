@@ -166,13 +166,15 @@ void OSDPretty::showEvent(QShowEvent *e) {
   }
 
   // Get current screen resolution
-  QRect screenResolution = current_screen()->availableGeometry();
-
-  // Leave 200 px for icon
-  ui_->summary->setMaximumWidth(screenResolution.width() - 200);
-  ui_->message->setMaximumWidth(screenResolution.width() - 200);
-  // Set maximum size for the OSD, a little margin here too
-  setMaximumSize(screenResolution.width() - 100, screenResolution.height() - 100);
+  QScreen *screen = current_screen();
+  if (screen) {
+    QRect resolution = screen->availableGeometry();
+    // Leave 200 px for icon
+    ui_->summary->setMaximumWidth(resolution.width() - 200);
+    ui_->message->setMaximumWidth(resolution.width() - 200);
+    // Set maximum size for the OSD, a little margin here too
+    setMaximumSize(resolution.width() - 100, resolution.height() - 100);
+  }
 
   setWindowOpacity(fading_enabled_ ? 0.0 : 1.0);
 
@@ -461,11 +463,7 @@ void OSDPretty::mouseMoveEvent(QMouseEvent *e) {
     QPoint new_pos = original_window_pos_ + delta;
 
     // Keep it to the bounds of the desktop
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-    QScreen *screen = QGuiApplication::screenAt(e->globalPos());
-#else
-    QScreen *screen = (window() && window()->windowHandle() ? window()->windowHandle()->screen() : nullptr);
-#endif
+    QScreen *screen = current_screen(e->globalPos());
     if (!screen) return;
 
     QRect geometry = screen->availableGeometry();
@@ -489,7 +487,7 @@ void OSDPretty::mouseMoveEvent(QMouseEvent *e) {
 
 void OSDPretty::mouseReleaseEvent(QMouseEvent *) {
 
-  if (mode_ == Mode_Draggable) {
+  if (current_screen() && mode_ == Mode_Draggable) {
     popup_screen_ = current_screen();
     popup_screen_name_ = current_screen()->name();
     popup_pos_ = current_pos();
@@ -497,13 +495,21 @@ void OSDPretty::mouseReleaseEvent(QMouseEvent *) {
 
 }
 
-QScreen *OSDPretty::current_screen() const {
+QScreen *OSDPretty::current_screen(const QPoint &pos) const {
+
+  QScreen *screen(nullptr);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-  return QGuiApplication::screenAt(pos());
+  screen = QGuiApplication::screenAt(pos);
 #else
-  return (window() && window()->windowHandle() ? window()->windowHandle()->screen() : nullptr);
+  if (window() && window()->windowHandle()) screen = window()->windowHandle()->screen();
 #endif
+  if (!screen) screen = QGuiApplication::primaryScreen();
+
+  return screen;
+
 }
+
+QScreen *OSDPretty::current_screen() const { return current_screen(pos()); }
 
 QPoint OSDPretty::current_pos() const {
 

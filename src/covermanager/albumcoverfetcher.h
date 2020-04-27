@@ -42,7 +42,7 @@ struct CoverSearchStatistics;
 
 // This class represents a single search-for-cover request. It identifies and describes the request.
 struct CoverSearchRequest {
-  CoverSearchRequest() : id(-1), search(false), fetchall(false) {}
+  explicit CoverSearchRequest() : id(-1), search(false), fetchall(false) {}
 
   // An unique (for one AlbumCoverFetcher) request identifier
   quint64 id;
@@ -50,6 +50,7 @@ struct CoverSearchRequest {
   // A search query
   QString artist;
   QString album;
+  QString title;
 
   // Is this only a search request or should we also fetch the first cover that's found?
   bool search;
@@ -60,7 +61,7 @@ struct CoverSearchRequest {
 
 // This structure represents a single result of some album's cover search request.
 struct CoverSearchResult {
-  CoverSearchResult() : score(0.0) {}
+  explicit CoverSearchResult() : score(0.0) {}
 
   // Used for grouping in the user interface.
   QString provider;
@@ -87,17 +88,17 @@ class AlbumCoverFetcher : public QObject {
   Q_OBJECT
 
  public:
-  AlbumCoverFetcher(CoverProviders *cover_providers, QObject *parent = nullptr, QNetworkAccessManager *network = 0);
+  explicit AlbumCoverFetcher(CoverProviders *cover_providers, QObject *parent = nullptr, QNetworkAccessManager *network = 0);
   virtual ~AlbumCoverFetcher() {}
 
   static const int kMaxConcurrentRequests;
 
-  quint64 SearchForCovers(const QString &artist, const QString &album);
-  quint64 FetchAlbumCover(const QString &artist, const QString &album, const bool fetchall);
+  quint64 SearchForCovers(const QString &artist, const QString &album, const QString &title = QString());
+  quint64 FetchAlbumCover(const QString &artist, const QString &album, const QString &title, const bool fetchall);
 
   void Clear();
 
-signals:
+ signals:
   void AlbumCoverFetched(const quint64 request_id, const QUrl &cover_url, const QImage &cover, const CoverSearchStatistics &statistics);
   void SearchFinished(const quint64 request_id, const CoverSearchResults &results, const CoverSearchStatistics &statistics);
 

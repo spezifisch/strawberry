@@ -240,7 +240,7 @@ void Udisks2Lister::DBusInterfaceAdded(const QDBusObjectPath &path, const Interf
       mounting_jobs_[path].dbus_interface = job;
       mounting_jobs_[path].is_mount = is_mount_job;
       mounting_jobs_[path].mounted_partitions = mounted_partitions;
-      connect(job.get(), SIGNAL(Completed(bool, const QString&)), SLOT(JobCompleted(bool, const QString&)));
+      connect(job.get(), SIGNAL(Completed(bool, QString)), SLOT(JobCompleted(bool, QString)));
     }
   }
 }
@@ -372,8 +372,8 @@ Udisks2Lister::PartitionData Udisks2Lister::ReadPartitionData(const QDBusObjectP
       else
         result.friendly_name = result.model + " " + result.uuid;
 
-      for (const auto &path : filesystem.mountPoints())
-        result.mount_paths.push_back(path);
+      for (const auto &p : filesystem.mountPoints())
+        result.mount_paths.push_back(p);
 
       result.free_space = Utilities::FileSystemFreeSpace(result.mount_paths.at(0));
     }

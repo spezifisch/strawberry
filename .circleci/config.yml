@@ -35,7 +35,7 @@ commands:
           working_directory: build
       - run:
           name: Build RPM
-          command: rpmbuild -ba ../dist/rpm/strawberry.spec
+          command: rpmbuild -ba ../dist/unix/strawberry.spec
           working_directory: build
 
 
@@ -51,19 +51,20 @@ commands:
     description: Install openSUSE dependencies
     steps:
       - run:
+          name: Update packages
+          command: zypper --non-interactive --gpg-auto-import-keys ref
+      - run:
           name: Install openSUSE dependencies
           command: >
             zypper --non-interactive --gpg-auto-import-keys install
             lsb-release
             rpm-build
-            rpmdevtools
             git
             tar
             make
             cmake
             gcc
             gcc-c++
-            pkg-config
             gettext-tools
             glibc-devel
             libboost_headers-devel
@@ -81,7 +82,6 @@ commands:
             gstreamer-plugins-base-devel
             libxine-devel
             vlc-devel
-            taglib-devel
             libQt5Core-devel
             libQt5Gui-devel
             libQt5Widgets-devel
@@ -109,6 +109,12 @@ commands:
   install_fedora_dependencies:
     description: Install Fedora dependencies
     steps:
+      - run:
+          name: Update packages
+          command: yum update --assumeyes
+      - run:
+          name: Upgrade packages
+          command: yum upgrade --assumeyes
       - run:
           name: Install Fedora dependencies
           command: >
@@ -338,6 +344,12 @@ jobs:
     environment:
       RPM_BUILD_NCPUS: "2"
     steps:
+      - run:
+          name: Update packages
+          command: zypper --non-interactive --gpg-auto-import-keys ref
+      - run:
+          name: Upgrade packages
+          command: zypper --non-interactive --gpg-auto-import-keys dup
       - install_opensuse_dependencies
       - checkout
       - cmake
@@ -454,6 +466,14 @@ jobs:
       - cmake
       - build_deb
 
+  build_ubuntu_focal:
+    docker:
+      - image: ubuntu:focal
+    steps:
+      - install_ubuntu_dependencies
+      - checkout
+      - cmake
+      - build_deb
 
 workflows:
   version: 2
@@ -515,6 +535,10 @@ workflows:
             tags:
               only: /.*/
       - build_ubuntu_bionic:
+          filters:
+            tags:
+              only: /.*/
+      - build_ubuntu_focal:
           filters:
             tags:
               only: /.*/

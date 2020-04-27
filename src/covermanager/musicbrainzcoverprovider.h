@@ -39,8 +39,7 @@ class MusicbrainzCoverProvider : public CoverProvider {
  public:
   explicit MusicbrainzCoverProvider(Application *app, QObject *parent = nullptr);
 
-  bool StartSearch(const QString &artist, const QString &album, const int id);
-  void CancelSearch(const int id);
+  bool StartSearch(const QString &artist, const QString &album, const QString &title, const int id);
 
  private slots:
   void HandleSearchReply(QNetworkReply *reply, const int search_id);
@@ -48,12 +47,13 @@ class MusicbrainzCoverProvider : public CoverProvider {
  private:
   QByteArray GetReplyData(QNetworkReply *reply);
   QJsonObject ExtractJsonObj(const QByteArray &data);
-  void Error(QString error, QVariant debug = QVariant());
+  void Error(const QString &error, const QVariant &debug = QVariant());
 
  private:
   static const char *kReleaseSearchUrl;
   static const char *kAlbumCoverUrl;
   static const int kLimit;
+
   QNetworkAccessManager *network_;
 
 };

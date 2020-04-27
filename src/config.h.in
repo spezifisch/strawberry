@@ -45,10 +45,10 @@
 #cmakedefine HAVE_GSTREAMER
 #cmakedefine HAVE_VLC
 #cmakedefine HAVE_XINE
-#cmakedefine HAVE_PHONON
 #cmakedefine XINE_ANALYZER
 
 #cmakedefine HAVE_SUBSONIC
+#cmakedefine HAVE_TIDAL
 
 #cmakedefine HAVE_MOODBAR
 

@@ -40,8 +40,6 @@
 #include "core/song.h"
 #include "covermanager/albumcoverloaderoptions.h"
 
-using std::unique_ptr;
-
 class QTimeLine;
 class QTextDocument;
 class QPainter;
@@ -61,7 +59,7 @@ class PlayingWidget : public QWidget {
   Q_OBJECT
 
  public:
-  PlayingWidget(QWidget *parent = nullptr);
+  explicit PlayingWidget(QWidget *parent = nullptr);
   ~PlayingWidget();
 
   void Init(Application *app, AlbumCoverChoiceController *album_cover_choice_controller);
@@ -98,7 +96,7 @@ class PlayingWidget : public QWidget {
 
   void AutomaticCoverSearchDone();
 
-  void AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image);
+  void AlbumCoverLoaded(const Song &song, const QImage &image);
   void SetHeight(int height);
   void FadePreviousTrack(qreal value);
 

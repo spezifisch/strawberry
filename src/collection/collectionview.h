@@ -47,13 +47,11 @@ class CollectionFilterWidget;
 class EditTagDialog;
 class OrganiseDialog;
 
-using std::unique_ptr;
-
 class CollectionView : public AutoExpandingTreeView {
   Q_OBJECT
 
  public:
-  CollectionView(QWidget *parent = nullptr);
+  explicit CollectionView(QWidget *parent = nullptr);
   ~CollectionView();
 
   // Returns Songs currently selected in the collection view.

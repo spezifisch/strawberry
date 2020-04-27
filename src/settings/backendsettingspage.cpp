@@ -100,9 +100,6 @@ void BackendSettingsPage::Load() {
 #ifdef HAVE_VLC
   ui_->combobox_engine->addItem(IconLoader::Load("vlc"), EngineDescription(Engine::VLC), QVariant::fromValue(Engine::VLC));
 #endif
-#ifdef HAVE_PHONON
-  ui_->combobox_engine->addItem(IconLoader::Load("speaker"), EngineDescription(Engine::Phonon), QVariant::fromValue(Engine::Phonon));
-#endif
 
   enginetype_current_ = enginetype;
   output_current_ = s_.value("output", QString()).toString();
@@ -170,7 +167,7 @@ void BackendSettingsPage::Load() {
   connect(ui_->combobox_engine, SIGNAL(currentIndexChanged(int)), SLOT(EngineChanged(int)));
   connect(ui_->combobox_output, SIGNAL(currentIndexChanged(int)), SLOT(OutputChanged(int)));
   connect(ui_->combobox_device, SIGNAL(currentIndexChanged(int)), SLOT(DeviceSelectionChanged(int)));
-  connect(ui_->lineedit_device, SIGNAL(textChanged(const QString &)), SLOT(DeviceStringChanged()));
+  connect(ui_->lineedit_device, SIGNAL(textChanged(QString)), SLOT(DeviceStringChanged()));
 #if defined(HAVE_ALSA)
   connect(ui_->radiobutton_alsa_hw, SIGNAL(clicked(bool)), SLOT(radiobutton_alsa_hw_clicked(bool)));
   connect(ui_->radiobutton_alsa_plughw, SIGNAL(clicked(bool)), SLOT(radiobutton_alsa_plughw_clicked(bool)));
@@ -237,12 +234,10 @@ void BackendSettingsPage::Load_Output(QString output, QVariant device) {
   if (output.isEmpty()) output = engine()->DefaultOutput();
 
   ui_->combobox_output->clear();
-  int i = 0;
   for (const EngineBase::OutputDetails &o : engine()->GetOutputsList()) {
-    i++;
     ui_->combobox_output->addItem(IconLoader::Load(o.iconname), o.description, QVariant::fromValue(o));
   }
-  if (i > 1) ui_->combobox_output->setEnabled(true);
+  if (ui_->combobox_output->count() > 1) ui_->combobox_output->setEnabled(true);
 
   bool found(false);
   for (int i = 0; i < ui_->combobox_output->count(); ++i) {

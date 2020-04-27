@@ -81,6 +81,8 @@
 #endif
 #include "covermanager/albumcoverchoicecontroller.h"
 #include "covermanager/albumcoverloader.h"
+#include "covermanager/albumcoverloaderoptions.h"
+#include "covermanager/albumcoverloaderresult.h"
 #include "covermanager/coverproviders.h"
 #include "edittagdialog.h"
 #include "trackselectiondialog.h"
@@ -106,9 +108,9 @@ EditTagDialog::EditTagDialog(Application *app, QWidget *parent)
       pending_(0)
   {
 
-  cover_options_.default_output_image_ = AlbumCoverLoader::ScaleAndPad(cover_options_, QImage(":/pictures/cdcase.png"));
+  cover_options_.default_output_image_ = AlbumCoverLoader::ScaleAndPad(cover_options_, QImage(":/pictures/cdcase.png")).first;
 
-  connect(app_->album_cover_loader(), SIGNAL(ImageLoaded(quint64, QUrl, QImage, QImage)), SLOT(AlbumCoverLoaded(quint64, QUrl, QImage, QImage)));
+  connect(app_->album_cover_loader(), SIGNAL(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)));
 
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   connect(tag_fetcher_, SIGNAL(ResultAvailable(Song, SongList)), results_dialog_, SLOT(FetchTagFinished(Song, SongList)), Qt::QueuedConnection);
@@ -308,8 +310,8 @@ void EditTagDialog::SetSongsFinished(QFuture<QList<Data>> future) {
   }
 
   // Add the filenames to the list
-  for (const Data &data : data_) {
-    ui_->song_list->addItem(data.current_.basefilename());
+  for (const Data &tag_data : data_) {
+    ui_->song_list->addItem(tag_data.current_.basefilename());
   }
 
   // Select all
@@ -441,8 +443,8 @@ void EditTagDialog::ResetFieldValue(const FieldData &field, const QModelIndexLis
 
   // Reset each selected song
   for (const QModelIndex &i : sel) {
-    Data &data = data_[i.row()];
-    data.set_value(field.id_, data.original_value(field.id_));
+    Data &tag_data = data_[i.row()];
+    tag_data.set_value(field.id_, tag_data.original_value(field.id_));
   }
 
   // Reset the field
@@ -562,13 +564,11 @@ void EditTagDialog::UpdateStatisticsTab(const Song &song) {
 
 }
 
-void EditTagDialog::AlbumCoverLoaded(const quint64 id, const QUrl &cover_url, const QImage &scaled, const QImage &original) {
-
-  Q_UNUSED(cover_url);
+void EditTagDialog::AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderResult &result) {
 
   if (id == cover_art_id_) {
-    ui_->art->setPixmap(QPixmap::fromImage(scaled));
-    original_ = original;
+    ui_->art->setPixmap(QPixmap::fromImage(result.image_scaled));
+    original_ = result.image_original;
   }
 
 }
@@ -733,10 +733,10 @@ void EditTagDialog::ButtonClicked(QAbstractButton *button) {
   }
 }
 
-void EditTagDialog::SaveData(const QList<Data> &data) {
+void EditTagDialog::SaveData(const QList<Data> &tag_data) {
 
-  for (int i = 0; i < data.count(); ++i) {
-    const Data &ref = data[i];
+  for (int i = 0; i < tag_data.count(); ++i) {
+    const Data &ref = tag_data[i];
     if (ref.current_.IsMetadataEqual(ref.original_)) continue;
 
     pending_++;

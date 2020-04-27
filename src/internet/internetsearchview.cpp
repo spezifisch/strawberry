@@ -2,7 +2,7 @@
  * Strawberry Music Player
  * This code was part of Clementine (GlobalSearch)
  * Copyright 2012, David Sansome <me@davidsansome.com>
- * Copyright 2018, Jonas Kvinge <jonas@jkvinge.net>
+ * Copyright 2018-2020, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,29 +21,65 @@
 
 #include "config.h"
 
+#include <memory>
+#include <utility>
+
 #include <QtGlobal>
+#include <QObject>
+#include <QAbstractItemModel>
+#include <QStandardItemModel>
+#include <QItemSelectionModel>
+#include <QSortFilterProxyModel>
+#include <QApplication>
 #include <QWidget>
 #include <QTimer>
+#include <QPair>
 #include <QList>
+#include <QMap>
+#include <QVariant>
 #include <QString>
+#include <QStringList>
+#include <QRegExp>
+#include <QUrl>
+#include <QImage>
 #include <QPixmap>
+#include <QPainter>
 #include <QPalette>
 #include <QColor>
 #include <QFont>
+#include <QSize>
 #include <QStandardItem>
 #include <QMenu>
 #include <QAction>
+#include <QActionGroup>
 #include <QSettings>
-#include <QtEvents>
+#include <QStackedWidget>
+#include <QLabel>
+#include <QProgressBar>
+#include <QRadioButton>
+#include <QScrollArea>
+#include <QToolButton>
+#include <QEvent>
+#include <QTimerEvent>
+#include <QKeyEvent>
+#include <QContextMenuEvent>
+#include <QShowEvent>
+#include <QHideEvent>
+#include <QtGlobal>
 
 #include "core/application.h"
 #include "core/mimedata.h"
 #include "core/iconloader.h"
-#include "internet/internetsongmimedata.h"
+#include "core/song.h"
+#include "core/logging.h"
 #include "collection/collectionfilterwidget.h"
 #include "collection/collectionmodel.h"
 #include "collection/groupbydialog.h"
-#include "internetsearch.h"
+#include "covermanager/albumcoverloader.h"
+#include "covermanager/albumcoverloaderoptions.h"
+#include "covermanager/albumcoverloaderresult.h"
+#include "internetsongmimedata.h"
+#include "internetservice.h"
 #include "internetsearchitemdelegate.h"
 #include "internetsearchmodel.h"
 #include "internetsearchsortmodel.h"
@@ -52,17 +88,18 @@
 
 using std::placeholders::_1;
 using std::placeholders::_2;
-using std::swap;
 
 const int InternetSearchView::kSwapModelsTimeoutMsec = 250;
+const int InternetSearchView::kDelayedSearchTimeoutMs = 200;
+const int InternetSearchView::kArtHeight = 32;
 
 InternetSearchView::InternetSearchView(QWidget *parent)
     : QWidget(parent),
       app_(nullptr),
-      engine_(nullptr),
+      service_(nullptr),
       ui_(new Ui_InternetSearchView),
       context_menu_(nullptr),
-      last_search_id_(0),
+      group_by_actions_(nullptr),
       front_model_(nullptr),
       back_model_(nullptr),
       current_model_(nullptr),
@@ -70,13 +107,13 @@ InternetSearchView::InternetSearchView(QWidget *parent)
       back_proxy_(new InternetSearchSortModel(this)),
       current_proxy_(front_proxy_),
       swap_models_timer_(new QTimer(this)),
-      error_(false)
-      {
+      use_pretty_covers_(true),
+      search_type_(InternetSearchView::SearchType_Artists),
+      search_error_(false),
+      last_search_id_(0),
+      searches_next_id_(1) {
 
   ui_->setupUi(this);
-
-  ui_->progressbar->hide();
-  ui_->progressbar->reset();
 
   ui_->search->installEventFilter(this);
   ui_->results_stack->installEventFilter(this);
@@ -104,22 +141,25 @@ InternetSearchView::InternetSearchView(QWidget *parent)
   help_font.setBold(true);
   ui_->label_helptext->setFont(help_font);
 
+  // Hide progressbar
+  ui_->progressbar->hide();
+  ui_->progressbar->reset();
+
+  cover_loader_options_.desired_height_ = kArtHeight;
+  cover_loader_options_.pad_output_image_ = true;
+  cover_loader_options_.scale_output_image_ = true;
+
 }
 
 InternetSearchView::~InternetSearchView() { delete ui_; }
 
-void InternetSearchView::Init(Application *app, InternetSearch *engine, const QString &settings_group, const SettingsDialog::Page settings_page, const bool artists, const bool albums, const bool songs) {
+void InternetSearchView::Init(Application *app, InternetService *service) {
 
   app_ = app;
-  engine_ = engine;
-  settings_group_ = settings_group;
-  settings_page_ = settings_page;
-  artists_ = artists;
-  albums_ = albums;
-  songs_ = songs;
+  service_ = service;
 
-  front_model_ = new InternetSearchModel(engine_, this);
-  back_model_ = new InternetSearchModel(engine_, this);
+  front_model_ = new InternetSearchModel(service, this);
+  back_model_ = new InternetSearchModel(service, this);
 
   front_proxy_ = new InternetSearchSortModel(this);
   back_proxy_ = new InternetSearchSortModel(this);
@@ -130,9 +170,6 @@ void InternetSearchView::Init(Application *app, InternetSearch *engine, const QS
   current_model_ = front_model_;
   current_proxy_ = front_proxy_;
 
-  // Must be a queued connection to ensure the InternetSearch handles it first.
-  connect(app_, SIGNAL(SettingsChanged()), SLOT(ReloadSettings()), Qt::QueuedConnection);
-  
   // Set up the sorting proxy model
   front_proxy_->setSourceModel(front_model_);
   front_proxy_->setDynamicSortFilter(true);
@@ -147,7 +184,7 @@ void InternetSearchView::Init(Application *app, InternetSearch *engine, const QS
   QMenu *settings_menu = new QMenu(this);
   settings_menu->addActions(group_by_actions_->actions());
   settings_menu->addSeparator();
-  settings_menu->addAction(IconLoader::Load("configure"), tr("Configure %1...").arg(Song::TextForSource(engine->source())), this, SLOT(OpenSettingsDialog()));
+  settings_menu->addAction(IconLoader::Load("configure"), tr("Configure %1...").arg(Song::TextForSource(service_->source())), this, SLOT(OpenSettingsDialog()));
   ui_->settings->setMenu(settings_menu);
 
   swap_models_timer_->setSingleShot(true);
@@ -158,20 +195,19 @@ void InternetSearchView::Init(Application *app, InternetSearch *engine, const QS
   connect(ui_->radiobutton_search_albums, SIGNAL(clicked(bool)), SLOT(SearchAlbumsClicked(bool)));
   connect(ui_->radiobutton_search_songs, SIGNAL(clicked(bool)), SLOT(SearchSongsClicked(bool)));
   connect(group_by_actions_, SIGNAL(triggered(QAction*)), SLOT(GroupByClicked(QAction*)));
+  connect(group_by_actions_, SIGNAL(triggered(QAction*)), SLOT(GroupByClicked(QAction*)));
 
   connect(ui_->search, SIGNAL(textChanged(QString)), SLOT(TextEdited(QString)));
   connect(ui_->results, SIGNAL(AddToPlaylistSignal(QMimeData*)), SIGNAL(AddToPlaylist(QMimeData*)));
   connect(ui_->results, SIGNAL(FocusOnFilterSignal(QKeyEvent*)), SLOT(FocusOnFilter(QKeyEvent*)));
 
-  // These have to be queued connections because they may get emitted before our call to Search() (or whatever) returns and we add the ID to the map.
+  connect(service_, SIGNAL(SearchUpdateStatus(int, QString)), SLOT(UpdateStatus(int, QString)));
+  connect(service_, SIGNAL(SearchProgressSetMaximum(int, int)), SLOT(ProgressSetMaximum(int, int)));
+  connect(service_, SIGNAL(SearchUpdateProgress(int, int)), SLOT(UpdateProgress(int, int)));
+  connect(service_, SIGNAL(SearchResults(int, SongList, QString)), SLOT(SearchDone(int, SongList, QString)));
 
-  connect(engine_, SIGNAL(UpdateStatus(const int, const QString&)), SLOT(UpdateStatus(const int, const QString&)));
-  connect(engine_, SIGNAL(ProgressSetMaximum(const int, const int)), SLOT(ProgressSetMaximum(const int, const int)), Qt::QueuedConnection);
-  connect(engine_, SIGNAL(UpdateProgress(const int, const int)), SLOT(UpdateProgress(const int, const int)), Qt::QueuedConnection);
-
-  connect(engine_, SIGNAL(AddResults(const int, InternetSearch::ResultList)), SLOT(AddResults(const int, const InternetSearch::ResultList)), Qt::QueuedConnection);
-  connect(engine_, SIGNAL(SearchError(const int, const QString&)), SLOT(SearchError(const int, const QString&)), Qt::QueuedConnection);
-  connect(engine_, SIGNAL(AlbumCoverLoaded(const int, const QPixmap&)), SLOT(AlbumCoverLoaded(const int, const QPixmap&)), Qt::QueuedConnection);
+  connect(app_, SIGNAL(SettingsChanged()), SLOT(ReloadSettings()));
+  connect(app_->album_cover_loader(), SIGNAL(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)));
 
   ReloadSettings();
 
@@ -183,22 +219,22 @@ void InternetSearchView::ReloadSettings() {
 
   // Collection settings
 
-  s.beginGroup(settings_group_);
-  const bool pretty = s.value("pretty_covers", true).toBool();
-  front_model_->set_use_pretty_covers(pretty);
-  back_model_->set_use_pretty_covers(pretty);
+  s.beginGroup(service_->settings_group());
+  use_pretty_covers_ = s.value("pretty_covers", true).toBool();
+  front_model_->set_use_pretty_covers(use_pretty_covers_);
+  back_model_->set_use_pretty_covers(use_pretty_covers_);
 
   // Internet search settings
 
-  search_type_ = InternetSearch::SearchType(s.value("type", int(InternetSearch::SearchType_Artists)).toInt());
+  search_type_ = InternetSearchView::SearchType(s.value("type", int(InternetSearchView::SearchType_Artists)).toInt());
   switch (search_type_) {
-    case InternetSearch::SearchType_Artists:
+    case InternetSearchView::SearchType_Artists:
       ui_->radiobutton_search_artists->setChecked(true);
       break;
-    case InternetSearch::SearchType_Albums:
+    case InternetSearchView::SearchType_Albums:
       ui_->radiobutton_search_albums->setChecked(true);
       break;
-    case InternetSearch::SearchType_Songs:
+    case InternetSearchView::SearchType_Songs:
       ui_->radiobutton_search_songs->setChecked(true);
       break;
   }
@@ -208,6 +244,117 @@ void InternetSearchView::ReloadSettings() {
       CollectionModel::GroupBy(s.value("search_group_by2", int(CollectionModel::GroupBy_Album)).toInt()),
       CollectionModel::GroupBy(s.value("search_group_by3", int(CollectionModel::GroupBy_None)).toInt())));
   s.endGroup();
+
+}
+
+void InternetSearchView::showEvent(QShowEvent *e) {
+
+  QWidget::showEvent(e);
+  FocusSearchField();
+
+}
+
+bool InternetSearchView::eventFilter(QObject *object, QEvent *e) {
+
+  if (object == ui_->search && e->type() == QEvent::KeyRelease) {
+    if (SearchKeyEvent(static_cast<QKeyEvent*>(e))) {
+      return true;
+    }
+  }
+  else if (object == ui_->results_stack && e->type() == QEvent::ContextMenu) {
+    if (ResultsContextMenuEvent(static_cast<QContextMenuEvent*>(e))) {
+      return true;
+    }
+  }
+
+  return QWidget::eventFilter(object, e);
+
+}
+
+bool InternetSearchView::SearchKeyEvent(QKeyEvent *e) {
+
+  switch (e->key()) {
+    case Qt::Key_Up:
+      ui_->results->UpAndFocus();
+      break;
+
+    case Qt::Key_Down:
+      ui_->results->DownAndFocus();
+      break;
+
+    case Qt::Key_Escape:
+      ui_->search->clear();
+      break;
+
+    case Qt::Key_Return:
+      TextEdited(ui_->search->text());
+      break;
+
+    default:
+      return false;
+  }
+
+  e->accept();
+  return true;
+
+}
+
+bool InternetSearchView::ResultsContextMenuEvent(QContextMenuEvent *e) {
+
+  context_menu_ = new QMenu(this);
+  context_actions_ << context_menu_->addAction( IconLoader::Load("media-playback-start"), tr("Append to current playlist"), this, SLOT(AddSelectedToPlaylist()));
+  context_actions_ << context_menu_->addAction( IconLoader::Load("media-playback-start"), tr("Replace current playlist"), this, SLOT(LoadSelected()));
+  context_actions_ << context_menu_->addAction( IconLoader::Load("document-new"), tr("Open in new playlist"), this, SLOT(OpenSelectedInNewPlaylist()));
+
+  context_menu_->addSeparator();
+  context_actions_ << context_menu_->addAction(IconLoader::Load("go-next"), tr("Queue track"), this, SLOT(AddSelectedToPlaylistEnqueue()));
+
+  context_menu_->addSeparator();
+
+  if (service_->artists_collection_model() || service_->albums_collection_model() || service_->songs_collection_model()) {
+    if (service_->artists_collection_model()) {
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to artists"), this, SLOT(AddArtists()));
+    }
+    if (service_->albums_collection_model()) {
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to albums"), this, SLOT(AddAlbums()));
+    }
+    if (service_->songs_collection_model()) {
+      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to songs"), this, SLOT(AddSongs()));
+    }
+    context_menu_->addSeparator();
+  }
+
+  if (ui_->results->selectionModel() && ui_->results->selectionModel()->selectedRows().length() == 1) {
+    context_actions_ << context_menu_->addAction(IconLoader::Load("search"), tr("Search for this"), this, SLOT(SearchForThis()));
+  }
+
+  context_menu_->addSeparator();
+  context_menu_->addMenu(tr("Group by"))->addActions(group_by_actions_->actions());
+
+  context_menu_->addAction(IconLoader::Load("configure"), tr("Configure %1...").arg(Song::TextForSource(service_->source())), this, SLOT(OpenSettingsDialog()));
+
+  const bool enable_context_actions = ui_->results->selectionModel() && ui_->results->selectionModel()->hasSelection();
+
+  for (QAction *action : context_actions_) {
+    action->setEnabled(enable_context_actions);
+  }
+
+  context_menu_->popup(e->globalPos());
+
+  return true;
+
+}
+
+void InternetSearchView::timerEvent(QTimerEvent *e) {
+
+  QMap<int, DelayedSearch>::iterator it = delayed_searches_.find(e->timerId());
+  if (it != delayed_searches_.end()) {
+    SearchAsync(it.value().id_, it.value().query_, it.value().type_);
+    delayed_searches_.erase(it);
+    return;
+  }
+
+  QObject::timerEvent(e);
 
 }
 
@@ -226,7 +373,8 @@ void InternetSearchView::TextEdited(const QString &text) {
 
   const QString trimmed(text.trimmed());
 
-  error_ = false;
+  search_error_ = false;
+  cover_loader_tasks_.clear();
 
   // Add results to the back model, switch models after some delay.
   back_model_->Clear();
@@ -235,26 +383,139 @@ void InternetSearchView::TextEdited(const QString &text) {
   swap_models_timer_->start();
 
   // Cancel the last search (if any) and start the new one.
-  engine_->CancelSearch(last_search_id_);
+  CancelSearch(last_search_id_);
+
   // If text query is empty, don't start a new search
   if (trimmed.isEmpty()) {
     last_search_id_ = -1;
-    ui_->label_helptext->setText("Enter search terms above to find music");
+    ui_->label_helptext->setText(tr("Enter search terms above to find music"));
     ui_->label_status->clear();
     ui_->progressbar->hide();
     ui_->progressbar->reset();
   }
   else {
     ui_->progressbar->reset();
-    last_search_id_ = engine_->SearchAsync(trimmed, search_type_);
+    last_search_id_ = SearchAsync(trimmed, search_type_);
   }
 
 }
 
-void InternetSearchView::AddResults(const int id, const InternetSearch::ResultList &results) {
+void InternetSearchView::SwapModels() {
 
-  if (id != last_search_id_) return;
-  if (results.isEmpty()) return;
+  cover_loader_tasks_.clear();
+
+  std::swap(front_model_, back_model_);
+  std::swap(front_proxy_, back_proxy_);
+
+  ui_->results->setModel(front_proxy_);
+
+  if (ui_->search->text().trimmed().isEmpty() || search_error_) {
+    ui_->results_stack->setCurrentWidget(ui_->help_page);
+  }
+  else {
+    ui_->results_stack->setCurrentWidget(ui_->results_page);
+  }
+
+}
+
+QStringList InternetSearchView::TokenizeQuery(const QString &query) {
+
+  QStringList tokens(query.split(QRegExp("\\s+")));
+
+  for (QStringList::iterator it = tokens.begin(); it != tokens.end(); ++it) {
+    (*it).remove('(');
+    (*it).remove(')');
+    (*it).remove('"');
+
+    const int colon = (*it).indexOf(":");
+    if (colon != -1) {
+      (*it).remove(0, colon + 1);
+    }
+  }
+
+  return tokens;
+
+}
+
+bool InternetSearchView::Matches(const QStringList &tokens, const QString &string) {
+
+  for (const QString &token : tokens) {
+    if (!string.contains(token, Qt::CaseInsensitive)) {
+      return false;
+    }
+  }
+
+  return true;
+
+}
+
+int InternetSearchView::SearchAsync(const QString &query, const SearchType type) {
+
+  const int id = searches_next_id_++;
+
+  int timer_id = startTimer(kDelayedSearchTimeoutMs);
+  delayed_searches_[timer_id].id_ = id;
+  delayed_searches_[timer_id].query_ = query;
+  delayed_searches_[timer_id].type_ = type;
+
+  return id;
+
+}
+
+void InternetSearchView::SearchAsync(const int id, const QString &query, const SearchType type) {
+
+  const int service_id = service_->Search(query, type);
+  pending_searches_[service_id] = PendingState(id, TokenizeQuery(query));
+
+}
+
+void InternetSearchView::SearchDone(const int service_id, const SongList &songs, const QString &error) {
+
+  if (!pending_searches_.contains(service_id)) return;
+
+  // Map back to the original id.
+  const PendingState state = pending_searches_.take(service_id);
+  const int search_id = state.orig_id_;
+
+  if (songs.isEmpty()) {
+    SearchError(search_id, error);
+    return;
+  }
+
+  ResultList results;
+  for (const Song &song : songs) {
+    Result result;
+    result.metadata_ = song;
+    results << result;
+  }
+
+  // Load cached pixmaps into the results
+  for (InternetSearchView::ResultList::iterator it = results.begin() ; it != results.end() ; ++it) {
+    it->pixmap_cache_key_ = PixmapCacheKey(*it);
+  }
+
+  AddResults(search_id, results);
+
+}
+
+void InternetSearchView::CancelSearch(const int id) {
+
+  QMap<int, DelayedSearch>::iterator it;
+  for (it = delayed_searches_.begin(); it != delayed_searches_.end(); ++it) {
+    if (it.value().id_ == id) {
+      killTimer(it.key());
+      delayed_searches_.erase(it);
+      return;
+    }
+  }
+  service_->CancelSearch();
+
+}
+
+void InternetSearchView::AddResults(const int id, const InternetSearchView::ResultList &results) {
+
+  if (id != last_search_id_ || results.isEmpty()) return;
+
   ui_->label_status->clear();
   ui_->progressbar->reset();
   ui_->progressbar->hide();
@@ -265,7 +526,8 @@ void InternetSearchView::AddResults(const int id, const InternetSearch::ResultLi
 void InternetSearchView::SearchError(const int id, const QString &error) {
 
   if (id != last_search_id_) return;
-  error_ = true;
+
+  search_error_ = true;
   ui_->label_helptext->setText(error);
   ui_->label_status->clear();
   ui_->progressbar->reset();
@@ -274,75 +536,34 @@ void InternetSearchView::SearchError(const int id, const QString &error) {
 
 }
 
-void InternetSearchView::SwapModels() {
+void InternetSearchView::UpdateStatus(const int service_id, const QString &text) {
 
-  art_requests_.clear();
-
-  std::swap(front_model_, back_model_);
-  std::swap(front_proxy_, back_proxy_);
-
-  ui_->results->setModel(front_proxy_);
-
-  if (ui_->search->text().trimmed().isEmpty() || error_) {
-    ui_->results_stack->setCurrentWidget(ui_->help_page);
-  }
-  else {
-    ui_->results_stack->setCurrentWidget(ui_->results_page);
-  }
+  if (!pending_searches_.contains(service_id)) return;
+  const PendingState state = pending_searches_[service_id];
+  const int search_id = state.orig_id_;
+  if (search_id != last_search_id_) return;
+  ui_->progressbar->show();
+  ui_->label_status->setText(text);
 
 }
 
-void InternetSearchView::LazyLoadAlbumCover(const QModelIndex &proxy_index) {
+void InternetSearchView::ProgressSetMaximum(const int service_id, const int max) {
 
-  if (!proxy_index.isValid() || proxy_index.model() != front_proxy_) {
-    return;
-  }
-
-  // Already loading art for this item?
-  if (proxy_index.data(InternetSearchModel::Role_LazyLoadingArt).isValid()) {
-    return;
-  }
-
-  // Should we even load art at all?
-  if (!app_->collection_model()->use_pretty_covers()) {
-    return;
-  }
-
-  // Is this an album?
-  const CollectionModel::GroupBy container_type = CollectionModel::GroupBy(proxy_index.data(CollectionModel::Role_ContainerType).toInt());
-  if (container_type != CollectionModel::GroupBy_Album &&
-      container_type != CollectionModel::GroupBy_YearAlbum &&
-      container_type != CollectionModel::GroupBy_OriginalYearAlbum) {
-    return;
-  }
-
-  // Mark the item as loading art
-  const QModelIndex source_index = front_proxy_->mapToSource(proxy_index);
-  QStandardItem *item = front_model_->itemFromIndex(source_index);
-  item->setData(true, InternetSearchModel::Role_LazyLoadingArt);
-
-  // Walk down the item's children until we find a track
-  while (item->rowCount()) {
-    item = item->child(0);
-  }
-
-  // Get the track's Result
-  const InternetSearch::Result result = item->data(InternetSearchModel::Role_Result).value<InternetSearch::Result>();
-
-  // Load the art.
-  int id = engine_->LoadAlbumCoverAsync(result);
-  art_requests_[id] = source_index;
+  if (!pending_searches_.contains(service_id)) return;
+  const PendingState state = pending_searches_[service_id];
+  const int search_id = state.orig_id_;
+  if (search_id != last_search_id_) return;
+  ui_->progressbar->setMaximum(max);
 
 }
 
-void InternetSearchView::AlbumCoverLoaded(const int id, const QPixmap &pixmap) {
+void InternetSearchView::UpdateProgress(const int service_id, const int progress) {
 
-  if (!art_requests_.contains(id)) return;
-  QModelIndex index = art_requests_.take(id);
-
-  if (!pixmap.isNull()) {
-    front_model_->itemFromIndex(index)->setData(pixmap, Qt::DecorationRole);
-  }
+  if (!pending_searches_.contains(service_id)) return;
+  const PendingState state = pending_searches_[service_id];
+  const int search_id = state.orig_id_;
+  if (search_id != last_search_id_) return;
+  ui_->progressbar->setValue(progress);
 
 }
 
@@ -354,7 +575,7 @@ MimeData *InternetSearchView::SelectedMimeData() {
   QModelIndexList indexes = ui_->results->selectionModel()->selectedRows();
   if (indexes.isEmpty()) {
     // There's nothing selected - take the first thing in the model that isn't a divider.
-    for (int i = 0; i < front_proxy_->rowCount(); ++i) {
+    for (int i = 0 ; i < front_proxy_->rowCount() ; ++i) {
       QModelIndex index = front_proxy_->index(i, 0);
       if (!index.data(CollectionModel::Role_IsDivider).toBool()) {
         indexes << index;
@@ -376,95 +597,7 @@ MimeData *InternetSearchView::SelectedMimeData() {
   }
 
   // Get a MimeData for these items
-  return engine_->LoadTracks(front_model_->GetChildResults(items));
-
-}
-
-bool InternetSearchView::eventFilter(QObject *object, QEvent *event) {
-
-  if (object == ui_->search && event->type() == QEvent::KeyRelease) {
-    if (SearchKeyEvent(static_cast<QKeyEvent*>(event))) {
-      return true;
-    }
-  }
-  else if (object == ui_->results_stack && event->type() == QEvent::ContextMenu) {
-    if (ResultsContextMenuEvent(static_cast<QContextMenuEvent*>(event))) {
-      return true;
-    }
-  }
-
-  return QWidget::eventFilter(object, event);
-
-}
-
-bool InternetSearchView::SearchKeyEvent(QKeyEvent *event) {
-
-  switch (event->key()) {
-    case Qt::Key_Up:
-      ui_->results->UpAndFocus();
-      break;
-
-    case Qt::Key_Down:
-      ui_->results->DownAndFocus();
-      break;
-
-    case Qt::Key_Escape:
-      ui_->search->clear();
-      break;
-
-    case Qt::Key_Return:
-      TextEdited(ui_->search->text());
-      break;
-
-    default:
-      return false;
-  }
-
-  event->accept();
-  return true;
-
-}
-
-bool InternetSearchView::ResultsContextMenuEvent(QContextMenuEvent *event) {
-
-  context_menu_ = new QMenu(this);
-  context_actions_ << context_menu_->addAction( IconLoader::Load("media-playback-start"), tr("Append to current playlist"), this, SLOT(AddSelectedToPlaylist()));
-  context_actions_ << context_menu_->addAction( IconLoader::Load("media-playback-start"), tr("Replace current playlist"), this, SLOT(LoadSelected()));
-  context_actions_ << context_menu_->addAction( IconLoader::Load("document-new"), tr("Open in new playlist"), this, SLOT(OpenSelectedInNewPlaylist()));
-
-  context_menu_->addSeparator();
-  context_actions_ << context_menu_->addAction(IconLoader::Load("go-next"), tr("Queue track"), this, SLOT(AddSelectedToPlaylistEnqueue()));
-
-  context_menu_->addSeparator();
-
-  if (artists_ || albums_ || songs_) {
-    if (artists_)
-      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to artists"), this, SLOT(AddArtists()));
-    if (albums_)
-      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to albums"), this, SLOT(AddAlbums()));
-    if (songs_)
-      context_actions_ << context_menu_->addAction(IconLoader::Load("folder-new"), tr("Add to songs"), this, SLOT(AddSongs()));
-    context_menu_->addSeparator();
-  }
-
-  if (ui_->results->selectionModel() && ui_->results->selectionModel()->selectedRows().length() == 1) {
-    context_actions_ << context_menu_->addAction(IconLoader::Load("search"), tr("Search for this"), this, SLOT(SearchForThis()));
-  }
-
-  context_menu_->addSeparator();
-  context_menu_->addMenu(tr("Group by"))->addActions(group_by_actions_->actions());
-
-  context_menu_->addAction(IconLoader::Load("configure"), tr("Configure %1...").arg(Song::TextForSource(engine_->source())), this, SLOT(OpenSettingsDialog()));
-
-  const bool enable_context_actions = ui_->results->selectionModel() && ui_->results->selectionModel()->hasSelection();
-
-  for (QAction *action : context_actions_) {
-    action->setEnabled(enable_context_actions);
-  }
-
-  context_menu_->popup(event->globalPos());
-
-  return true;
+  return front_model_->LoadTracks(front_model_->GetChildResults(items));
 
 }
 
@@ -473,54 +606,55 @@ void InternetSearchView::AddSelectedToPlaylist() {
 }
 
 void InternetSearchView::LoadSelected() {
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
 
-  data->clear_first_ = true;
-  emit AddToPlaylist(data);
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+
+  mimedata->clear_first_ = true;
+  emit AddToPlaylist(mimedata);
+
 }
 
 void InternetSearchView::AddSelectedToPlaylistEnqueue() {
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
 
-  data->enqueue_now_ = true;
-  emit AddToPlaylist(data);
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+
+  mimedata->enqueue_now_ = true;
+  emit AddToPlaylist(mimedata);
+
 }
 
 void InternetSearchView::OpenSelectedInNewPlaylist() {
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
 
-  data->open_in_new_playlist_ = true;
-  emit AddToPlaylist(data);
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+
+  mimedata->open_in_new_playlist_ = true;
+  emit AddToPlaylist(mimedata);
+
 }
 
 void InternetSearchView::SearchForThis() {
   StartSearch(ui_->results->selectionModel()->selectedRows().first().data().toString());
 }
 
-void InternetSearchView::showEvent(QShowEvent *e) {
-  QWidget::showEvent(e);
-  FocusSearchField();
-}
-
 void InternetSearchView::FocusSearchField() {
+
   ui_->search->setFocus();
   ui_->search->selectAll();
+
 }
 
-void InternetSearchView::hideEvent(QHideEvent *e) {
-  QWidget::hideEvent(e);
-}
+void InternetSearchView::FocusOnFilter(QKeyEvent *e) {
 
-void InternetSearchView::FocusOnFilter(QKeyEvent *event) {
   ui_->search->setFocus();
-  QApplication::sendEvent(ui_->search, event);
+  QApplication::sendEvent(ui_->search, e);
+
 }
 
 void InternetSearchView::OpenSettingsDialog() {
-  app_->OpenSettingsDialogAtPage(settings_page_);
+  app_->OpenSettingsDialogAtPage(service_->settings_page());
 }
 
 void InternetSearchView::GroupByClicked(QAction *action) {
@@ -528,7 +662,7 @@ void InternetSearchView::GroupByClicked(QAction *action) {
   if (action->property("group_by").isNull()) {
     if (!group_by_dialog_) {
       group_by_dialog_.reset(new GroupByDialog);
-      connect(group_by_dialog_.data(), SIGNAL(Accepted(CollectionModel::Grouping)), SLOT(SetGroupBy(CollectionModel::Grouping)));
+      connect(group_by_dialog_.get(), SIGNAL(Accepted(CollectionModel::Grouping)), SLOT(SetGroupBy(CollectionModel::Grouping)));
     }
 
     group_by_dialog_->show();
@@ -544,14 +678,15 @@ void InternetSearchView::SetGroupBy(const CollectionModel::Grouping &g) {
   // Clear requests: changing "group by" on the models will cause all the items to be removed/added again,
   // so all the QModelIndex here will become invalid. New requests will be created for those
   // songs when they will be displayed again anyway (when InternetSearchItemDelegate::paint will call LazyLoadAlbumCover)
-  art_requests_.clear();
+  cover_loader_tasks_.clear();
+
   // Update the models
   front_model_->SetGroupBy(g, true);
   back_model_->SetGroupBy(g, false);
 
   // Save the setting
   QSettings s;
-  s.beginGroup(settings_group_);
+  s.beginGroup(service_->settings_group());
   s.setValue("search_group_by1", int(g.first));
   s.setValue("search_group_by2", int(g.second));
   s.setValue("search_group_by3", int(g.third));
@@ -572,57 +707,36 @@ void InternetSearchView::SetGroupBy(const CollectionModel::Grouping &g) {
 
 }
 
-void InternetSearchView::SearchArtistsClicked(bool checked) {
-  Q_UNUSED(checked);
-  SetSearchType(InternetSearch::SearchType_Artists);
+void InternetSearchView::SearchArtistsClicked(const bool) {
+  SetSearchType(InternetSearchView::SearchType_Artists);
 }
 
-void InternetSearchView::SearchAlbumsClicked(bool checked) {
-  Q_UNUSED(checked);
-  SetSearchType(InternetSearch::SearchType_Albums);
+void InternetSearchView::SearchAlbumsClicked(const bool) {
+  SetSearchType(InternetSearchView::SearchType_Albums);
 }
 
-void InternetSearchView::SearchSongsClicked(bool checked) {
-  Q_UNUSED(checked);
-  SetSearchType(InternetSearch::SearchType_Songs);
+void InternetSearchView::SearchSongsClicked(const bool) {
+  SetSearchType(InternetSearchView::SearchType_Songs);
 }
 
-void InternetSearchView::SetSearchType(const InternetSearch::SearchType type) {
+void InternetSearchView::SetSearchType(const InternetSearchView::SearchType type) {
+
   search_type_ = type;
+
   QSettings s;
-  s.beginGroup(settings_group_);
+  s.beginGroup(service_->settings_group());
   s.setValue("type", int(search_type_));
   s.endGroup();
+
   TextEdited(ui_->search->text());
-}
-
-void InternetSearchView::UpdateStatus(const int id, const QString &text) {
-
-  if (id != last_search_id_) return;
-  ui_->progressbar->show();
-  ui_->label_status->setText(text);
-
-}
-
-void InternetSearchView::ProgressSetMaximum(const int id, const int max) {
-
-  if (id != last_search_id_) return;
-  ui_->progressbar->setMaximum(max);
-
-}
-
-void InternetSearchView::UpdateProgress(const int id, const int progress) {
-
-  if (id != last_search_id_) return;
-  ui_->progressbar->setValue(progress);
 
 }
 
 void InternetSearchView::AddArtists() {
 
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
-  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(mimedata)) {
     emit AddArtistsSignal(internet_song_data->songs);
   }
 
@@ -630,9 +744,9 @@ void InternetSearchView::AddArtists() {
 
 void InternetSearchView::AddAlbums() {
 
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
-  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(mimedata)) {
     emit AddAlbumsSignal(internet_song_data->songs);
   }
 
@@ -640,10 +754,111 @@ void InternetSearchView::AddAlbums() {
 
 void InternetSearchView::AddSongs() {
 
-  MimeData *data = SelectedMimeData();
-  if (!data) return;
-  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(data)) {
+  MimeData *mimedata = SelectedMimeData();
+  if (!mimedata) return;
+  if (const InternetSongMimeData *internet_song_data = qobject_cast<const InternetSongMimeData*>(mimedata)) {
     emit AddSongsSignal(internet_song_data->songs);
+  }
+
+}
+
+QString InternetSearchView::PixmapCacheKey(const InternetSearchView::Result &result) const {
+
+  if (result.metadata_.art_automatic_is_valid()) {
+    return Song::TextForSource(service_->source()) + "/" + result.metadata_.art_automatic().toString();
+  }
+  else if (!result.metadata_.effective_albumartist().isEmpty() && !result.metadata_.album().isEmpty()) {
+    return Song::TextForSource(service_->source()) + "/" + result.metadata_.effective_albumartist() + "/" + result.metadata_.album();
+  }
+  else {
+    return Song::TextForSource(service_->source()) + "/" + result.metadata_.url().toString();
+  }
+
+}
+
+bool InternetSearchView::FindCachedPixmap(const InternetSearchView::Result &result, QPixmap *pixmap) const {
+  return pixmap_cache_.find(result.pixmap_cache_key_, pixmap);
+}
+
+void InternetSearchView::LazyLoadAlbumCover(const QModelIndex &proxy_index) {
+
+  if (!proxy_index.isValid() || proxy_index.model() != front_proxy_) {
+    return;
+  }
+
+  const QModelIndex source_index = front_proxy_->mapToSource(proxy_index);
+  if (!source_index.isValid()) {
+    return;
+  }
+
+  // Already loading art for this item?
+  if (source_index.data(InternetSearchModel::Role_LazyLoadingArt).isValid()) {
+    return;
+  }
+
+  // Should we even load art at all?
+  if (!use_pretty_covers_) {
+    return;
+  }
+
+  // Is this an album?
+  const CollectionModel::GroupBy container_type = CollectionModel::GroupBy(proxy_index.data(CollectionModel::Role_ContainerType).toInt());
+  if (container_type != CollectionModel::GroupBy_Album &&
+      container_type != CollectionModel::GroupBy_AlbumDisc &&
+      container_type != CollectionModel::GroupBy_YearAlbum &&
+      container_type != CollectionModel::GroupBy_YearAlbumDisc &&
+      container_type != CollectionModel::GroupBy_OriginalYearAlbum) {
+    return;
+  }
+
+  // Mark the item as loading art
+
+  QStandardItem *item_album = front_model_->itemFromIndex(source_index);
+  if (!item_album) {
+    return;
+  }
+  item_album->setData(true, InternetSearchModel::Role_LazyLoadingArt);
+
+  // Walk down the item's children until we find a track
+  QStandardItem *item_song = item_album;
+  while (item_song->rowCount()) {
+    item_song = item_song->child(0);
+  }
+
+  // Get the track's Result
+  const InternetSearchView::Result result = item_song->data(InternetSearchModel::Role_Result).value<InternetSearchView::Result>();
+
+  QPixmap cached_pixmap;
+  if (pixmap_cache_.find(result.pixmap_cache_key_, &cached_pixmap)) {
+    item_album->setData(cached_pixmap, Qt::DecorationRole);
+  }
+  else {
+    quint64 loader_id = app_->album_cover_loader()->LoadImageAsync(cover_loader_options_, result.metadata_);
+    cover_loader_tasks_[loader_id] = qMakePair(source_index, result.pixmap_cache_key_);
+  }
+
+}
+
+void InternetSearchView::AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderResult &albumcover_result) {
+
+  if (!cover_loader_tasks_.contains(id)) {
+    return;
+  }
+
+  QPair<QModelIndex, QString> cover_loader_task = cover_loader_tasks_.take(id);
+  QModelIndex idx = cover_loader_task.first;
+  QString key = cover_loader_task.second;
+
+  QPixmap pixmap = QPixmap::fromImage(albumcover_result.image_scaled);
+  if (!pixmap.isNull()) {
+    pixmap_cache_.insert(key, pixmap);
+  }
+
+  if (idx.isValid()) {
+    QStandardItem *item = front_model_->itemFromIndex(idx);
+    if (item) {
+      item->setData(albumcover_result.image_scaled, Qt::DecorationRole);
+    }
   }
 
 }

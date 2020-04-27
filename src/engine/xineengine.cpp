@@ -62,8 +62,6 @@
 #  include "xinescope.h"
 #endif
 
-using std::shared_ptr;
-
 #ifndef LLONG_MAX
 #define LLONG_MAX 9223372036854775807LL
 #endif
@@ -675,10 +673,10 @@ void XineEngine::XineEventListener(void *p, const xine_event_t *event) {
           {
             // Series of \0 separated strings, terminated with a \0\0
             char str[2000];
-            char *p = str;
-            for (char *msg = data->messages; !(*msg == '\0' && *(msg+1) == '\0'); ++msg, ++p)
-              *p = *msg == '\0' ? '\n' : *msg;
-            *p = '\0';
+            char *str_p = str;
+            for (char *msg = data->messages; !(*msg == '\0' && *(msg+1) == '\0'); ++msg, ++str_p)
+              *str_p = *msg == '\0' ? '\n' : *msg;
+            *str_p = '\0';
             qLog(Debug) << "Xine:" << str;
             break;
           }

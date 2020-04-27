@@ -56,6 +56,7 @@
 #include "covermanager/discogscoverprovider.h"
 #include "covermanager/musicbrainzcoverprovider.h"
 #include "covermanager/deezercoverprovider.h"
+#include "covermanager/qobuzcoverprovider.h"
 
 #include "lyrics/lyricsproviders.h"
 #include "lyrics/auddlyricsprovider.h"
@@ -65,10 +66,14 @@
 #include "scrobbler/audioscrobbler.h"
 
 #include "internet/internetservices.h"
-#include "internet/internetsearch.h"
 
 #ifdef HAVE_SUBSONIC
 #  include "subsonic/subsonicservice.h"
+#endif
+
+#ifdef HAVE_TIDAL
+#  include "tidal/tidalservice.h"
+#  include "covermanager/tidalcoverprovider.h"
 #endif
 
 #ifdef HAVE_MOODBAR
@@ -109,9 +114,13 @@ class ApplicationImpl {
           CoverProviders *cover_providers = new CoverProviders(app);
           // Initialize the repository of cover providers.
           cover_providers->AddProvider(new LastFmCoverProvider(app, app));
-          cover_providers->AddProvider(new DiscogsCoverProvider(app, app));
           cover_providers->AddProvider(new MusicbrainzCoverProvider(app, app));
+          cover_providers->AddProvider(new DiscogsCoverProvider(app, app));
           cover_providers->AddProvider(new DeezerCoverProvider(app, app));
+          cover_providers->AddProvider(new QobuzCoverProvider(app, app));
+#ifdef HAVE_TIDAL
+          cover_providers->AddProvider(new TidalCoverProvider(app, app));
+#endif
           return cover_providers;
         }),
         album_cover_loader_([=]() {
@@ -131,6 +140,9 @@ class ApplicationImpl {
           InternetServices *internet_services = new InternetServices(app);
 #ifdef HAVE_SUBSONIC
           internet_services->AddService(new SubsonicService(app, internet_services));
+#endif
+#ifdef HAVE_TIDAL
+          internet_services->AddService(new TidalService(app, internet_services));
 #endif
           return internet_services;
         }),

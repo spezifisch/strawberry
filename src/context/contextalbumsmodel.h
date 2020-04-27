@@ -45,6 +45,7 @@
 #include "collection/collectionitem.h"
 #include "collection/sqlrow.h"
 #include "covermanager/albumcoverloaderoptions.h"
+#include "covermanager/albumcoverloaderresult.h"
 
 class QMimeData;
 
@@ -56,7 +57,7 @@ class ContextAlbumsModel : public SimpleTreeModel<CollectionItem> {
   Q_OBJECT
 
  public:
-  ContextAlbumsModel(CollectionBackend *backend, Application *app, QObject *parent = nullptr);
+  explicit ContextAlbumsModel(CollectionBackend *backend, Application *app, QObject *parent = nullptr);
   ~ContextAlbumsModel();
 
   static const int kPrettyCoverSize;
@@ -99,7 +100,7 @@ class ContextAlbumsModel : public SimpleTreeModel<CollectionItem> {
   void LazyPopulate(CollectionItem *item, bool signal);
 
  private slots:
-  void AlbumCoverLoaded(const quint64 id, const QUrl &cover_url, const QImage &image);
+  void AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderResult &result);
 
  private:
   QueryResult RunQuery(CollectionItem *parent);

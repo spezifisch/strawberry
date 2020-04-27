@@ -46,16 +46,11 @@ class SystemTrayIcon;
 
 class QDBusPendingCallWatcher;
 
-#ifdef HAVE_DBUS
-  QDBusArgument& operator<< (QDBusArgument &arg, const QImage &image);
-  const QDBusArgument &operator>> (const QDBusArgument &arg, QImage &image);
-#endif
-
 class OSD : public QObject {
   Q_OBJECT
 
  public:
-  OSD(SystemTrayIcon *tray_icon, Application *app, QObject *parent = nullptr);
+  explicit OSD(SystemTrayIcon *tray_icon, Application *app, QObject *parent = nullptr);
   ~OSD();
 
   static const char *kSettingsGroup;

@@ -44,8 +44,6 @@
 #include <QString>
 #include <QUrl>
 
-using std::unique_ptr;
-
 class QTimerEvent;
 class GstEngine;
 class GstBufferConsumer;
@@ -60,7 +58,7 @@ class GstEnginePipeline : public QObject {
   Q_OBJECT
 
  public:
-  GstEnginePipeline(GstEngine *engine);
+  explicit GstEnginePipeline(GstEngine *engine);
   ~GstEnginePipeline();
 
   // Globally unique across all pipelines.

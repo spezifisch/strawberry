@@ -56,7 +56,7 @@ class OSDPretty : public QWidget {
     Mode_Draggable,
   };
 
-  OSDPretty(Mode mode, QWidget *parent = nullptr);
+  explicit OSDPretty(Mode mode, QWidget *parent = nullptr);
   ~OSDPretty();
 
   static const char *kSettingsGroup;
@@ -98,6 +98,7 @@ class OSDPretty : public QWidget {
   // When the user has been moving the popup, use these to get its current position and screen.
   // Note that these return invalid values if the popup is hidden.
   QScreen *current_screen() const;
+  QScreen *current_screen(const QPoint &pos) const;
   QPoint current_pos() const;
 
   // QWidget

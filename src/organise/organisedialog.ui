@@ -17,7 +17,7 @@
    <iconset resource="../../data/icons.qrc">
     <normaloff>:/icons/64x64/strawberry.png</normaloff>:/icons/64x64/strawberry.png</iconset>
   </property>
-  <layout class="QVBoxLayout" name="layout_dialog">
+  <layout class="QVBoxLayout" name="layout_organisedialog">
    <item>
     <layout class="QFormLayout" name="layout_copying">
      <item row="0" column="0">
@@ -90,6 +90,13 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="remove_problematic">
+        <property name="text">
+         <string>Remove problematic characters from filenames</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="remove_non_fat">
@@ -242,11 +249,8 @@
    </item>
    <item>
     <widget class="QDialogButtonBox" name="button_box">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::Reset</set>
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::RestoreDefaults</set>
      </property>
     </widget>
    </item>

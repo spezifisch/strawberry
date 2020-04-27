@@ -2,7 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
- * Copyright 2013, Jonas Kvinge <jonas@strawbs.net>
+ * Copyright 2013-2020, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,6 +95,7 @@
 #include "dialogs/console.h"
 #include "dialogs/trackselectiondialog.h"
 #include "dialogs/edittagdialog.h"
+#include "dialogs/addstreamdialog.h"
 #include "organise/organisedialog.h"
 #include "widgets/fancytabwidget.h"
 #include "widgets/playingwidget.h"
@@ -130,7 +131,7 @@
 #endif
 #include "covermanager/albumcovermanager.h"
 #include "covermanager/albumcoverchoicecontroller.h"
-#include "covermanager/albumcoverloader.h"
+#include "covermanager/albumcoverloaderresult.h"
 #include "covermanager/currentalbumcoverloader.h"
 #ifndef Q_OS_WIN
 #  include "device/devicemanager.h"
@@ -145,6 +146,10 @@
 #include "settings/playlistsettingspage.h"
 #ifdef HAVE_SUBSONIC
 #  include "settings/subsonicsettingspage.h"
+#endif
+#ifdef HAVE_TIDAL
+#  include "tidal/tidalservice.h"
+#  include "settings/tidalsettingspage.h"
 #endif
 
 #include "internet/internetservices.h"
@@ -174,10 +179,6 @@
 #ifdef Q_OS_WIN
 #  include "windows7thumbbar.h"
 #endif
-
-using std::bind;
-using std::floor;
-using std::stable_sort;
 
 const char *MainWindow::kSettingsGroup = "MainWindow";
 const char *MainWindow::kAllFilesFilterSpec = QT_TR_NOOP("All Files (*)");
@@ -211,7 +212,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
       queue_view_(new QueueView(this)),
       settings_dialog_(std::bind(&MainWindow::CreateSettingsDialog, this)),
       cover_manager_([=]() {
-        AlbumCoverManager *cover_manager = new AlbumCoverManager(app, app->collection_backend());
+        AlbumCoverManager *cover_manager = new AlbumCoverManager(app, app->collection_backend(), this);
         cover_manager->Init();
 
         // Cover manager connections
@@ -220,12 +221,24 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
       }),
       equalizer_(new Equalizer),
       organise_dialog_([=]() {
-        OrganiseDialog *dialog = new OrganiseDialog(app->task_manager(), app->collection_backend());
+        OrganiseDialog *dialog = new OrganiseDialog(app->task_manager(), app->collection_backend(), this);
         dialog->SetDestinationModel(app->collection()->model()->directory_model());
         return dialog;
       }),
+      transcode_dialog_([=]() {
+        TranscodeDialog *dialog = new TranscodeDialog(this);
+        return dialog;
+      }),
+      add_stream_dialog_([=]() {
+        AddStreamDialog *add_stream_dialog = new AddStreamDialog;
+        connect(add_stream_dialog, SIGNAL(accepted()), this, SLOT(AddStreamAccepted()));
+        return add_stream_dialog;
+      }),
 #ifdef HAVE_SUBSONIC
       subsonic_view_(new InternetSongsView(app_, app->internet_services()->ServiceBySource(Song::Source_Subsonic), SubsonicSettingsPage::kSettingsGroup, SettingsDialog::Page_Subsonic, this)),
+#endif
+#ifdef HAVE_TIDAL
+      tidal_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Tidal), TidalSettingsPage::kSettingsGroup, SettingsDialog::Page_Tidal, this)),
 #endif
       playlist_menu_(new QMenu(this)),
       playlist_add_to_another_(nullptr),
@@ -250,7 +263,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   // Initialise the UI
   ui_->setupUi(this);
 
-  connect(app_->current_albumcover_loader(), SIGNAL(AlbumCoverLoaded(Song, QUrl, QImage)), SLOT(AlbumCoverLoaded(Song, QUrl, QImage)));
+  connect(app_->current_albumcover_loader(), SIGNAL(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)));
   album_cover_choice_controller_->Init(app);
   connect(album_cover_choice_controller_->cover_from_file_action(), SIGNAL(triggered()), this, SLOT(LoadCoverFromFile()));
   connect(album_cover_choice_controller_->cover_to_file_action(), SIGNAL(triggered()), this, SLOT(SaveCoverToFile()));
@@ -278,6 +291,9 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
 #ifdef HAVE_SUBSONIC
   ui_->tabs->AddTab(subsonic_view_, "subsonic", IconLoader::Load("subsonic"), tr("Subsonic"));
+#endif
+#ifdef HAVE_TIDAL
+  ui_->tabs->AddTab(tidal_view_, "tidal", IconLoader::Load("tidal"), tr("Tidal"));
 #endif
 
   // Add the playing widget to the fancy tab widget
@@ -348,6 +364,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
   ui_->action_add_file->setIcon(IconLoader::Load("document-open"));
   ui_->action_add_folder->setIcon(IconLoader::Load("document-open-folder"));
+  ui_->action_add_stream->setIcon(IconLoader::Load("document-open-remote"));
   ui_->action_shuffle_mode->setIcon(IconLoader::Load("media-playlist-shuffle"));
   ui_->action_repeat_mode->setIcon(IconLoader::Load("media-playlist-repeat"));
   ui_->action_new_playlist->setIcon(IconLoader::Load("document-new"));
@@ -418,6 +435,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(ui_->action_open_cd, SIGNAL(triggered()), SLOT(AddCDTracks()));
   connect(ui_->action_add_file, SIGNAL(triggered()), SLOT(AddFile()));
   connect(ui_->action_add_folder, SIGNAL(triggered()), SLOT(AddFolder()));
+  connect(ui_->action_add_stream, SIGNAL(triggered()), SLOT(AddStream()));
   connect(ui_->action_cover_manager, SIGNAL(triggered()), SLOT(ShowCoverManager()));
   connect(ui_->action_equalizer, SIGNAL(triggered()), equalizer_.get(), SLOT(show()));
 #if defined(HAVE_GSTREAMER)
@@ -493,6 +511,8 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(app_->player(), SIGNAL(VolumeChanged(int)), osd_, SLOT(VolumeChanged(int)));
   connect(app_->player(), SIGNAL(VolumeChanged(int)), ui_->volume, SLOT(setValue(int)));
   connect(app_->player(), SIGNAL(ForceShowOSD(Song, bool)), SLOT(ForceShowOSD(Song, bool)));
+  connect(app_->player(), SIGNAL(SendNowPlaying()), SLOT(SendNowPlaying()));
+
   connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(Song)), SLOT(SongChanged(Song)));
   connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(Song)), app_->player(), SLOT(CurrentMetadataChanged(Song)));
   connect(app_->playlist_manager(), SIGNAL(EditingFinished(QModelIndex)), SLOT(PlaylistEditFinished(QModelIndex)));
@@ -562,6 +582,15 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 
 #ifdef HAVE_SUBSONIC
   connect(subsonic_view_->view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+#endif
+
+#ifdef HAVE_TIDAL
+  connect(tidal_view_->artists_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(tidal_view_->albums_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(tidal_view_->songs_collection_view(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  connect(tidal_view_->search_view(), SIGNAL(AddToPlaylist(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
+  if (TidalService *tidalservice = qobject_cast<TidalService*> (app_->internet_services()->ServiceBySource(Song::Source_Tidal)))
+    connect(this, SIGNAL(AuthorisationUrlReceived(QUrl)), tidalservice, SLOT(AuthorisationUrlReceived(QUrl)));
 #endif
 
   // Playlist menu
@@ -681,7 +710,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(app_->player(), SIGNAL(Playing()), context_view_, SLOT(Playing()));
   connect(app_->player(), SIGNAL(Stopped()), context_view_, SLOT(Stopped()));
   connect(app_->player(), SIGNAL(Error()), context_view_, SLOT(Error()));
-  connect(this, SIGNAL(AlbumCoverReady(Song, QUrl, QImage)), context_view_, SLOT(AlbumCoverLoaded(Song, QUrl, QImage)));
+  connect(this, SIGNAL(AlbumCoverReady(Song, QImage)), context_view_, SLOT(AlbumCoverLoaded(Song, QImage)));
   connect(this, SIGNAL(SearchCoverInProgress()), context_view_->album_widget(), SLOT(SearchCoverInProgress()));
   connect(context_view_, SIGNAL(AlbumEnabledChanged()), SLOT(TabSwitched()));
   connect(context_view_->albums_widget(), SIGNAL(AddToPlaylistSignal(QMimeData*)), SLOT(AddToPlaylist(QMimeData*)));
@@ -714,7 +743,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(app_->player(), SIGNAL(Stopped()), ui_->widget_playing, SLOT(Stopped()));
   connect(app_->player(), SIGNAL(Error()), ui_->widget_playing, SLOT(Error()));
   connect(ui_->widget_playing, SIGNAL(ShowAboveStatusBarChanged(bool)), SLOT(PlayingWidgetPositionChanged(bool)));
-  connect(this, SIGNAL(AlbumCoverReady(Song, QUrl, QImage)), ui_->widget_playing, SLOT(AlbumCoverLoaded(Song, QUrl, QImage)));
+  connect(this, SIGNAL(AlbumCoverReady(Song, QImage)), ui_->widget_playing, SLOT(AlbumCoverLoaded(Song, QImage)));
   connect(this, SIGNAL(SearchCoverInProgress()), ui_->widget_playing, SLOT(SearchCoverInProgress()));
 
   connect(ui_->action_console, SIGNAL(triggered()), SLOT(ShowConsole()));
@@ -826,14 +855,12 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   if (!options.contains_play_options()) {
     LoadPlaybackStatus();
   }
+  if (app_->scrobbler()->IsEnabled() && !app_->scrobbler()->IsOffline()) app_->scrobbler()->Submit();
 
   RefreshStyleSheet();
 
   qLog(Debug) << "Started" << QThread::currentThread();
   initialised_ = true;
-
-  app_->scrobbler()->ConnectError();
-  if (app_->scrobbler()->IsEnabled() && !app_->scrobbler()->IsOffline()) app_->scrobbler()->Submit();
 
 }
 
@@ -891,6 +918,16 @@ void MainWindow::ReloadSettings() {
     ui_->tabs->DisableTab(subsonic_view_);
 #endif
 
+#ifdef HAVE_TIDAL
+  settings.beginGroup(TidalSettingsPage::kSettingsGroup);
+  bool enable_tidal = settings.value("enabled", false).toBool();
+  settings.endGroup();
+  if (enable_tidal)
+    ui_->tabs->EnableTab(tidal_view_);
+  else
+    ui_->tabs->DisableTab(tidal_view_);
+#endif
+
   ui_->tabs->ReloadSettings();
 
 }
@@ -913,6 +950,9 @@ void MainWindow::ReloadAllSettings() {
   context_view_->ReloadSettings();
 #ifdef HAVE_SUBSONIC
   subsonic_view_->ReloadSettings();
+#endif
+#ifdef HAVE_TIDAL
+  tidal_view_->ReloadSettings();
 #endif
 
 }
@@ -980,7 +1020,12 @@ void MainWindow::ExitFinished() {
 void MainWindow::EngineChanged(Engine::EngineType enginetype) {
 
   ui_->action_equalizer->setEnabled(enginetype == Engine::EngineType::GStreamer || enginetype == Engine::EngineType::Xine);
+#ifdef Q_OS_WIN
+  ui_->action_open_cd->setEnabled(false);
+  ui_->action_open_cd->setVisible(false);
+#else
   ui_->action_open_cd->setEnabled(enginetype == Engine::EngineType::GStreamer);
+#endif
 
 }
 
@@ -1053,10 +1098,18 @@ void MainWindow::MediaPlaying() {
   track_position_timer_->start();
   track_slider_timer_->start();
   UpdateTrackPosition();
+  SendNowPlaying();
+
+}
+
+void MainWindow::SendNowPlaying() {
+
+  PlaylistItemPtr item(app_->player()->GetCurrentItem());
+  if (!item) return;
 
   // Send now playing to scrobble services
   Playlist *playlist = app_->playlist_manager()->active();
-  if (app_->scrobbler()->IsEnabled() && playlist && !playlist->nowplaying() && item->Metadata().is_metadata_good() && item->Metadata().length_nanosec() > 0) {
+  if (app_->scrobbler()->IsEnabled() && playlist && !playlist->nowplaying() && item->Metadata().is_metadata_good()) {
     app_->scrobbler()->UpdateNowPlaying(item->Metadata());
     playlist->set_nowplaying(true);
     ui_->action_love->setEnabled(true);
@@ -1178,8 +1231,9 @@ void MainWindow::ResumePlayback() {
     if (playback_state == Engine::Paused) {
       NewClosure(app_->player(), SIGNAL(Playing()), app_->player(), SLOT(PlayPause()));
     }
+    // Seek after we got song length.
+    NewClosure(track_position_timer_, SIGNAL(timeout()), this, SLOT(ResumePlaybackSeek(int)), playback_position);
     app_->player()->Play();
-    app_->player()->SeekTo(playback_position);
   }
 
   // Reset saved playback status so we don't resume again from the same position.
@@ -1188,6 +1242,14 @@ void MainWindow::ResumePlayback() {
   s.setValue("playback_playlist", -1);
   s.setValue("playback_position", 0);
   s.endGroup();
+
+}
+
+void MainWindow::ResumePlaybackSeek(const int playback_position) {
+
+  if (app_->player()->engine()->length_nanosec() > 0) {
+    app_->player()->SeekTo(playback_position);
+  }
 
 }
 
@@ -1352,71 +1414,71 @@ void MainWindow::UpdateTrackSliderPosition() {
 
 }
 
-void MainWindow::ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeData *data) const {
+void MainWindow::ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeData *mimedata) const {
 
   switch (b) {
       case BehaviourSettingsPage::AddBehaviour_Append:
-      data->clear_first_ = false;
-      data->enqueue_now_ = false;
+      mimedata->clear_first_ = false;
+      mimedata->enqueue_now_ = false;
       break;
 
     case BehaviourSettingsPage::AddBehaviour_Enqueue:
-      data->clear_first_ = false;
-      data->enqueue_now_ = true;
+      mimedata->clear_first_ = false;
+      mimedata->enqueue_now_ = true;
       break;
 
     case BehaviourSettingsPage::AddBehaviour_Load:
-      data->clear_first_ = true;
-      data->enqueue_now_ = false;
+      mimedata->clear_first_ = true;
+      mimedata->enqueue_now_ = false;
       break;
 
     case BehaviourSettingsPage::AddBehaviour_OpenInNew:
-      data->open_in_new_playlist_ = true;
+      mimedata->open_in_new_playlist_ = true;
       break;
   }
 }
 
-void MainWindow::ApplyPlayBehaviour(BehaviourSettingsPage::PlayBehaviour b, MimeData *data) const {
+void MainWindow::ApplyPlayBehaviour(BehaviourSettingsPage::PlayBehaviour b, MimeData *mimedata) const {
 
   switch (b) {
     case BehaviourSettingsPage::PlayBehaviour_Always:
-      data->play_now_ = true;
+      mimedata->play_now_ = true;
       break;
 
     case BehaviourSettingsPage::PlayBehaviour_Never:
-      data->play_now_ = false;
+      mimedata->play_now_ = false;
       break;
 
     case BehaviourSettingsPage::PlayBehaviour_IfStopped:
-      data->play_now_ = !(app_->player()->GetState() == Engine::Playing);
+      mimedata->play_now_ = !(app_->player()->GetState() == Engine::Playing);
       break;
   }
 }
 
-void MainWindow::AddToPlaylist(QMimeData *data) {
+void MainWindow::AddToPlaylist(QMimeData *q_mimedata) {
 
-  if (!data) return;
+  if (!q_mimedata) return;
 
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
     // Should we replace the flags with the user's preference?
-    if (mime_data->override_user_settings_) {
+    if (mimedata->override_user_settings_) {
       // Do nothing
     }
-    else if (mime_data->from_doubleclick_) {
-      ApplyAddBehaviour(doubleclick_addmode_, mime_data);
-      ApplyPlayBehaviour(doubleclick_playmode_, mime_data);
+    else if (mimedata->from_doubleclick_) {
+      ApplyAddBehaviour(doubleclick_addmode_, mimedata);
+      ApplyPlayBehaviour(doubleclick_playmode_, mimedata);
     }
     else {
-      ApplyPlayBehaviour(menu_playmode_, mime_data);
+      ApplyPlayBehaviour(menu_playmode_, mimedata);
     }
 
     // Should we create a new playlist for the songs?
-    if (mime_data->open_in_new_playlist_) {
-      app_->playlist_manager()->New(mime_data->get_name_for_new_playlist());
+    if (mimedata->open_in_new_playlist_) {
+      app_->playlist_manager()->New(mimedata->get_name_for_new_playlist());
     }
   }
-  app_->playlist_manager()->current()->dropMimeData(data, Qt::CopyAction, -1, 0, QModelIndex());
-  delete data;
+  app_->playlist_manager()->current()->dropMimeData(q_mimedata, Qt::CopyAction, -1, 0, QModelIndex());
+  delete q_mimedata;
 
 }
 
@@ -1733,7 +1795,7 @@ void MainWindow::EditTracks() {
 
 void MainWindow::EditTagDialogAccepted() {
 
-  for (const PlaylistItemPtr item : edit_tag_dialog_->playlist_items()) {
+  for (PlaylistItemPtr item : edit_tag_dialog_->playlist_items()) {
     item->Reload();
   }
 
@@ -1844,9 +1906,9 @@ void MainWindow::AddFile() {
     urls << QUrl::fromLocalFile(QFileInfo(path).canonicalFilePath());
   }
 
-  MimeData *data = new MimeData;
-  data->setUrls(urls);
-  AddToPlaylist(data);
+  MimeData *mimedata = new MimeData;
+  mimedata->setUrls(urls);
+  AddToPlaylist(mimedata);
 
 }
 
@@ -1863,19 +1925,29 @@ void MainWindow::AddFolder() {
   settings_.setValue("add_folder_path", directory);
 
   // Add media
-  MimeData *data = new MimeData;
-  data->setUrls(QList<QUrl>() << QUrl::fromLocalFile(QFileInfo(directory).canonicalFilePath()));
-  AddToPlaylist(data);
+  MimeData *mimedata = new MimeData;
+  mimedata->setUrls(QList<QUrl>() << QUrl::fromLocalFile(QFileInfo(directory).canonicalFilePath()));
+  AddToPlaylist(mimedata);
 
 }
 
 void MainWindow::AddCDTracks() {
 
-  MimeData *data = new MimeData;
+  MimeData *mimedata = new MimeData;
   // We are putting empty data, but we specify cdda mimetype to indicate that we want to load audio cd tracks
-  data->open_in_new_playlist_ = true;
-  data->setData(Playlist::kCddaMimeType, QByteArray());
-  AddToPlaylist(data);
+  mimedata->open_in_new_playlist_ = true;
+  mimedata->setData(Playlist::kCddaMimeType, QByteArray());
+  AddToPlaylist(mimedata);
+
+}
+
+void MainWindow::AddStream() { add_stream_dialog_->show(); }
+
+void MainWindow::AddStreamAccepted() {
+
+  MimeData *mimedata = new MimeData;
+  mimedata->setUrls(QList<QUrl>() << add_stream_dialog_->url());
+  AddToPlaylist(mimedata);
 
 }
 
@@ -1980,31 +2052,39 @@ void MainWindow::CommandlineOptionsReceived(const CommandlineOptions &options) {
 
   if (!options.urls().empty()) {
 
-    MimeData *data = new MimeData;
-    data->setUrls(options.urls());
+#ifdef HAVE_TIDAL
+    for (const QUrl &url : options.urls()) {
+      if (url.scheme() == "tidal" && url.host() == "login") {
+        emit AuthorisationUrlReceived(url);
+        return;
+      }
+    }
+#endif
+    MimeData *mimedata = new MimeData;
+    mimedata->setUrls(options.urls());
     // Behaviour depends on command line options, so set it here
-    data->override_user_settings_ = true;
+    mimedata->override_user_settings_ = true;
 
-    if (options.player_action() == CommandlineOptions::Player_Play) data->play_now_ = true;
-    else ApplyPlayBehaviour(doubleclick_playmode_, data);
+    if (options.player_action() == CommandlineOptions::Player_Play) mimedata->play_now_ = true;
+    else ApplyPlayBehaviour(doubleclick_playmode_, mimedata);
 
     switch (options.url_list_action()) {
       case CommandlineOptions::UrlList_Load:
-        data->clear_first_ = true;
+        mimedata->clear_first_ = true;
         break;
       case CommandlineOptions::UrlList_Append:
         // Nothing to do
         break;
       case CommandlineOptions::UrlList_None:
-        ApplyAddBehaviour(doubleclick_addmode_, data);
+        ApplyAddBehaviour(doubleclick_addmode_, mimedata);
         break;
       case CommandlineOptions::UrlList_CreateNew:
-        data->name_for_new_playlist_ = options.playlist_name();
-        ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour_OpenInNew, data);
+        mimedata->name_for_new_playlist_ = options.playlist_name();
+        ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour_OpenInNew, mimedata);
         break;
     }
 
-    AddToPlaylist(data);
+    AddToPlaylist(mimedata);
   }
 
   if (options.set_volume() != -1) app_->player()->SetVolume(options.set_volume());
@@ -2047,9 +2127,9 @@ bool MainWindow::LoadUrl(const QString &url) {
 
   if (!QFile::exists(url)) return false;
 
-  MimeData *data = new MimeData;
-  data->setUrls(QList<QUrl>() << QUrl::fromLocalFile(url));
-  AddToPlaylist(data);
+  MimeData *mimedata = new MimeData;
+  mimedata->setUrls(QList<QUrl>() << QUrl::fromLocalFile(url));
+  AddToPlaylist(mimedata);
 
   return true;
 
@@ -2295,7 +2375,7 @@ void MainWindow::ShowCoverManager() {
 
 SettingsDialog *MainWindow::CreateSettingsDialog() {
 
-  SettingsDialog *settings_dialog = new SettingsDialog(app_);
+  SettingsDialog *settings_dialog = new SettingsDialog(app_, this);
 #ifdef HAVE_GLOBALSHORTCUTS
   settings_dialog->SetGlobalShortcutManager(global_shortcuts_);
 #endif
@@ -2460,7 +2540,7 @@ void MainWindow::AutoCompleteTags() {
 
 void MainWindow::AutoCompleteTagsAccepted() {
 
-  for (const PlaylistItemPtr item : autocomplete_tag_items_) {
+  for (PlaylistItemPtr item : autocomplete_tag_items_) {
     item->Reload();
   }
   autocomplete_tag_items_.clear();
@@ -2548,14 +2628,14 @@ void MainWindow::SearchCoverAutomatically() {
 
 }
 
-void MainWindow::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image) {
+void MainWindow::AlbumCoverLoaded(const Song &song, const AlbumCoverLoaderResult &result) {
 
-  if (song.effective_albumartist() != song_playing_.effective_albumartist() || song.effective_album() != song_playing_.effective_album() || song.title() != song_playing_.title()) return;
+  if (song != song_playing_) return;
 
   song_ = song;
-  image_original_ = image;
+  image_original_ = result.image_original;
 
-  emit AlbumCoverReady(song, cover_url, image);
+  emit AlbumCoverReady(song, result.image_original);
 
   GetCoverAutomatically();
 
@@ -2565,13 +2645,12 @@ void MainWindow::GetCoverAutomatically() {
 
   // Search for cover automatically?
   bool search =
-               song_.source() == Song::Source_Collection &&
-               album_cover_choice_controller_->search_cover_auto_action()->isChecked() &&
-               !song_.has_manually_unset_cover() &&
-               !song_.art_automatic_is_valid() &&
-               !song_.art_manual_is_valid() &&
-               !song_.effective_albumartist().isEmpty() &&
-               !song_.effective_album().isEmpty();
+                album_cover_choice_controller_->search_cover_auto_action()->isChecked() &&
+                !song_.has_manually_unset_cover() &&
+                !song_.art_automatic_is_valid() &&
+                !song_.art_manual_is_valid() &&
+                !song_.effective_albumartist().isEmpty() &&
+                !song_.effective_album().isEmpty();
 
   if (search) {
     album_cover_choice_controller_->SearchCoverAutomatically(song_);
@@ -2606,7 +2685,7 @@ void MainWindow::LoveButtonVisibilityChanged(const bool value) {
 void MainWindow::SetToggleScrobblingIcon(const bool value) {
 
   if (value) {
-    if (app_->playlist_manager()->active()->scrobbled())
+    if (app_->playlist_manager()->active() && app_->playlist_manager()->active()->scrobbled())
       ui_->action_toggle_scrobbling->setIcon(IconLoader::Load("scrobble", 22));
     else 
       ui_->action_toggle_scrobbling->setIcon(IconLoader::Load("scrobble", 22)); // TODO: Create a faint version of the icon

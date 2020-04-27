@@ -28,6 +28,7 @@
 #include <QUrl>
 #include <QImage>
 #include <QIcon>
+#include <QFont>
 #include <QSize>
 #include <QSizePolicy>
 #include <QMenu>
@@ -80,6 +81,7 @@ ContextView::ContextView(QWidget *parent) :
     action_show_output_(nullptr),
     action_show_albums_(nullptr),
     action_show_lyrics_(nullptr),
+    action_search_lyrics_(nullptr),
     layout_container_(new QVBoxLayout()),
     widget_scrollarea_(new QWidget(this)),
     layout_scrollarea_(new QVBoxLayout()),
@@ -94,7 +96,7 @@ ContextView::ContextView(QWidget *parent) :
     label_stop_summary_(new QLabel(this)),
     spacer_stop_bottom_(new QSpacerItem(0, 20, QSizePolicy::Expanding, QSizePolicy::Expanding)),
     widget_play_data_(new QWidget(this)),
-    widget_play_engine_device_(new QWidget(this)),
+    widget_play_output_(new QWidget(this)),
     layout_play_data_(new QGridLayout()),
     layout_play_output_(new QGridLayout()),
     label_play_albums_(new QLabel(this)),
@@ -124,6 +126,7 @@ ContextView::ContextView(QWidget *parent) :
     label_device_icon_(new QLabel(this)),
     label_engine_icon_(new QLabel(this)),
     spacer_bottom_(new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Expanding)),
+    lyrics_tried_(false),
     lyrics_id_(-1),
     prev_width_(0)
   {
@@ -144,9 +147,10 @@ ContextView::ContextView(QWidget *parent) :
   widget_scrollarea_->setLayout(layout_scrollarea_);
   widget_scrollarea_->setContentsMargins(0, 0, 0, 0);
 
-  label_top_->setWordWrap(true);
   label_top_->setAlignment(Qt::AlignTop|Qt::AlignLeft);
+  label_top_->setWordWrap(true);
   label_top_->setMinimumHeight(50);
+  label_top_->setContentsMargins(0, 0, 40, 0);
 
   layout_scrollarea_->setObjectName("context-layout-scrollarea");
   layout_scrollarea_->setContentsMargins(15, 15, 15, 15);
@@ -204,7 +208,7 @@ ContextView::ContextView(QWidget *parent) :
   layout_play_output_->addWidget(label_device_icon_, 1, 2);
   layout_play_output_->addWidget(label_device_, 1, 3);
 
-  widget_play_engine_device_->setLayout(layout_play_output_);
+  widget_play_output_->setLayout(layout_play_output_);
 
   label_filetype_title_->setText(tr("Filetype"));
   label_length_title_->setText(tr("Length"));
@@ -241,8 +245,10 @@ ContextView::ContextView(QWidget *parent) :
   label_play_lyrics_->setWordWrap(true);
   label_play_lyrics_->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
+  label_play_albums_->setWordWrap(true);
+
   layout_play_->setContentsMargins(5, 0, 40, 0);
-  layout_play_->addWidget(widget_play_engine_device_);
+  layout_play_->addWidget(widget_play_output_);
   layout_play_->addSpacerItem(spacer_play_output_);
   layout_play_->addWidget(widget_play_data_);
   layout_play_->addSpacerItem(spacer_play_data_);
@@ -251,6 +257,30 @@ ContextView::ContextView(QWidget *parent) :
   layout_play_->addSpacerItem(spacer_play_albums_);
   layout_play_->addWidget(label_play_lyrics_);
   layout_play_->addSpacerItem(spacer_play_bottom_);
+
+  labels_play_      << label_engine_title_
+                    << label_device_title_
+                    << label_filetype_title_
+                    << label_length_title_
+                    << label_samplerate_title_
+                    << label_bitdepth_title_
+                    << label_bitrate_title_
+                    << label_play_albums_
+                    << label_play_lyrics_;
+
+  labels_play_data_ << label_engine_icon_
+                    << label_engine_
+                    << label_device_
+                    << label_device_icon_
+                    << label_filetype_
+                    << label_length_
+                    << label_samplerate_
+                    << label_bitdepth_
+                    << label_bitrate_
+                    << label_play_albums_
+                    << label_play_lyrics_;
+
+  labels_play_all_ = labels_play_ << labels_play_data_;
 
   QFontDatabase::addApplicationFont(":/fonts/HumongousofEternitySt.ttf");
 
@@ -270,14 +300,14 @@ void ContextView::Init(Application *app, CollectionView *collectionview, AlbumCo
   collectionview_ = collectionview;
   album_cover_choice_controller_ = album_cover_choice_controller;
 
-  widget_album_->Init(album_cover_choice_controller_);
+  widget_album_->Init(this, album_cover_choice_controller_);
   widget_albums_->Init(app_);
   lyrics_fetcher_ = new LyricsFetcher(app_->lyrics_providers(), this);
 
   connect(collectionview_, SIGNAL(TotalSongCountUpdated_()), this, SLOT(UpdateNoSong()));
   connect(collectionview_, SIGNAL(TotalArtistCountUpdated_()), this, SLOT(UpdateNoSong()));
   connect(collectionview_, SIGNAL(TotalAlbumCountUpdated_()), this, SLOT(UpdateNoSong()));
-  connect(lyrics_fetcher_, SIGNAL(LyricsFetched(const quint64, const QString&, const QString&)), this, SLOT(UpdateLyrics(const quint64, const QString&, const QString&)));
+  connect(lyrics_fetcher_, SIGNAL(LyricsFetched(quint64, QString, QString)), this, SLOT(UpdateLyrics(quint64, QString, QString)));
 
   AddActions();
 
@@ -299,22 +329,22 @@ void ContextView::AddActions() {
 
   action_show_albums_ = new QAction(tr("Show albums by artist"), this);
   action_show_albums_->setCheckable(true);
-  action_show_albums_->setChecked(true);
+  action_show_albums_->setChecked(false);
 
   action_show_lyrics_ = new QAction(tr("Show song lyrics"), this);
   action_show_lyrics_->setCheckable(true);
-  action_show_lyrics_->setChecked(false);
+  action_show_lyrics_->setChecked(true);
+
+  action_search_lyrics_ = new QAction(tr("Automatically search for song lyrics"), this);
+  action_search_lyrics_->setCheckable(true);
+  action_search_lyrics_->setChecked(true);
 
   menu_->addAction(action_show_album_);
   menu_->addAction(action_show_data_);
   menu_->addAction(action_show_output_);
   menu_->addAction(action_show_albums_);
   menu_->addAction(action_show_lyrics_);
-  menu_->addSeparator();
-
-  QList<QAction*> cover_actions = album_cover_choice_controller_->GetAllActions();
-  cover_actions.append(album_cover_choice_controller_->search_cover_auto_action());
-  menu_->addActions(cover_actions);
+  menu_->addAction(action_search_lyrics_);
   menu_->addSeparator();
 
   ReloadSettings();
@@ -324,6 +354,7 @@ void ContextView::AddActions() {
   connect(action_show_output_, SIGNAL(triggered()), this, SLOT(ActionShowOutput()));
   connect(action_show_albums_, SIGNAL(triggered()), this, SLOT(ActionShowAlbums()));
   connect(action_show_lyrics_, SIGNAL(triggered()), this, SLOT(ActionShowLyrics()));
+  connect(action_search_lyrics_, SIGNAL(triggered()), this, SLOT(ActionSearchLyrics()));
 
 }
 
@@ -338,7 +369,14 @@ void ContextView::ReloadSettings() {
   action_show_output_->setChecked(s.value(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::ENGINE_AND_DEVICE], true).toBool());
   action_show_albums_->setChecked(s.value(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::ALBUMS_BY_ARTIST], false).toBool());
   action_show_lyrics_->setChecked(s.value(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::SONG_LYRICS], true).toBool());
+  action_search_lyrics_->setChecked(s.value(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::SEARCH_LYRICS], true).toBool());
+  font_headline_ = s.value("font_headline", font().family()).toString();
+  font_normal_ = s.value("font_normal", font().family()).toString();
+  font_size_headline_  = s.value("font_size_headline", ContextSettingsPage::kDefaultFontSizeHeadline).toReal();
+  font_size_normal_ = s.value("font_size_normal", font().pointSizeF()).toReal();
   s.endGroup();
+
+  UpdateFonts();
 
   if (widget_stacked_->currentWidget() == widget_stop_) {
     NoSong();
@@ -355,7 +393,7 @@ void ContextView::Stopped() {
 
   song_playing_ = Song();
   song_prev_ = Song();
-  lyrics_ = QString();
+  lyrics_.clear();
   image_original_ = QImage();
   widget_album_->SetImage();
 
@@ -365,19 +403,28 @@ void ContextView::Error() {}
 
 void ContextView::SongChanged(const Song &song) {
 
-  if (widget_stacked_->currentWidget() == widget_play_ && song_playing_.is_valid() && song == song_playing_) {
+  if (widget_stacked_->currentWidget() == widget_play_ && song_playing_.is_valid() && song == song_playing_ && song.title() == song_playing_.title() && song.album() == song_playing_.album() && song.artist() == song_playing_.artist()) {
     UpdateSong(song);
   }
   else {
     song_prev_ = song_playing_;
+    song_playing_ = song;
     lyrics_ = song.lyrics();
     lyrics_id_ = -1;
-    song_playing_ = song;
+    lyrics_tried_ = false;
     SetSong();
-    if (lyrics_.isEmpty() && action_show_lyrics_->isChecked() && !song.artist().isEmpty() && !song.title().isEmpty()) {
-      lyrics_fetcher_->Clear();
-      lyrics_id_ = lyrics_fetcher_->Search(song.effective_albumartist(), song.album(), song.title());
-    }
+  }
+
+  SearchLyrics();
+
+}
+
+void ContextView::SearchLyrics() {
+
+  if (lyrics_.isEmpty() && action_show_lyrics_->isChecked() && action_search_lyrics_->isChecked() && !song_playing_.artist().isEmpty() && !song_playing_.title().isEmpty() && !lyrics_tried_ && lyrics_id_ == -1) {
+    lyrics_fetcher_->Clear();
+    lyrics_tried_ = true;
+    lyrics_id_ = lyrics_fetcher_->Search(song_playing_.effective_albumartist(), song_playing_.album(), song_playing_.title());
   }
 
 }
@@ -421,14 +468,23 @@ void ContextView::NoSong() {
   else html += tr("%1 albums").arg(collectionview_->TotalAlbums());
   html += "<br />";
 
-  label_stop_summary_->setStyleSheet("font: 12pt; font-weight: regular;");
+  label_stop_summary_->setStyleSheet(QString("font: %1pt \"%2\"; font-weight: regular;").arg(font_size_normal_).arg(font_normal_));
   label_stop_summary_->setText(html);
+
+}
+
+void ContextView::UpdateFonts() {
+
+  for (QLabel *l: labels_play_all_) {
+    l->setStyleSheet(QString("font: %2pt \"%1\"; font-weight: regular;").arg(font_normal_).arg(font_size_normal_));
+  }
+  label_play_albums_->setStyleSheet(QString("background-color: #3DADE8; color: rgb(255, 255, 255); font: %1pt \"%2\"; font-weight: regular;").arg(font_size_normal_).arg(font_normal_));
 
 }
 
 void ContextView::SetSong() {
 
-  label_top_->setStyleSheet("font: 11pt; font-weight: regular;");
+  label_top_->setStyleSheet(QString("font: %2pt \"%1\"; font-weight: regular;").arg(font_headline_).arg(font_size_headline_));
   label_top_->setText(QString("<b>%1</b><br/>%2").arg(Utilities::ReplaceMessage(title_fmt_, song_playing_, "<br/>"), Utilities::ReplaceMessage(summary_fmt_, song_playing_, "<br/>")));
 
   label_stop_summary_->clear();
@@ -447,7 +503,16 @@ void ContextView::SetSong() {
   if (action_show_data_->isChecked()) {
     widget_play_data_->show();
     label_filetype_->setText(song_playing_.TextForFiletype());
-    label_length_->setText(Utilities::PrettyTimeNanosec(song_playing_.length_nanosec()));
+    if (song_playing_.length_nanosec() <= 0) {
+      label_length_title_->hide();
+      label_length_->hide();
+      label_length_->clear();
+    }
+    else {
+      label_length_title_->show();
+      label_length_->show();
+      label_length_->setText(Utilities::PrettyTimeNanosec(song_playing_.length_nanosec()));
+    }
     if (song_playing_.samplerate() <= 0) {
       label_samplerate_title_->hide();
       label_samplerate_->hide();
@@ -491,12 +556,12 @@ void ContextView::SetSong() {
   }
 
   if (action_show_output_->isChecked()) {
-    widget_play_engine_device_->show();
+    widget_play_output_->show();
     Engine::EngineType enginetype(Engine::None);
     if (app_->player()->engine()) enginetype = app_->player()->engine()->type();
     QIcon icon_engine = IconLoader::Load(EngineName(enginetype), 32);
 
-    label_engine_icon_->setPixmap(icon_engine.pixmap(icon_engine.availableSizes().last()));
+    label_engine_icon_->setPixmap(icon_engine.pixmap(QSize(32, 32)));
     label_engine_->setText(EngineDescription(enginetype));
     spacer_play_output_->changeSize(20, 20, QSizePolicy::Fixed);
 
@@ -513,7 +578,7 @@ void ContextView::SetSong() {
       label_device_icon_->show();
       label_device_->show();
       QIcon icon_device = IconLoader::Load(device.iconname, 32);
-      label_device_icon_->setPixmap(icon_device.pixmap(icon_device.availableSizes().last()));
+      label_device_icon_->setPixmap(icon_device.pixmap(QSize(32, 32)));
       label_device_->setText(device.description);
     }
     else {
@@ -525,7 +590,7 @@ void ContextView::SetSong() {
     }
   }
   else {
-    widget_play_engine_device_->hide();
+    widget_play_output_->hide();
     label_engine_icon_->clear();
     label_engine_->clear();
     label_device_icon_->clear();
@@ -542,7 +607,6 @@ void ContextView::SetSong() {
       label_play_albums_->show();
       widget_albums_->show();
       label_play_albums_->setText("<b>" + tr("Albums by %1").arg( song_playing_.artist().toHtmlEscaped()) + "</b>");
-      label_play_albums_->setStyleSheet("background-color: #3DADE8; color: rgb(255, 255, 255); font: 11pt;");
       for (CollectionBackend::Album album : albumlist) {
         SongList songs = app_->collection_backend()->GetSongs(song_playing_.artist(), album.album_name, opt);
         widget_albums_->albums_model()->AddSongs(songs);
@@ -583,7 +647,18 @@ void ContextView::UpdateSong(const Song &song) {
 
   if (action_show_data_->isChecked()) {
     if (song.filetype() != song_playing_.filetype()) label_filetype_->setText(song.TextForFiletype());
-    if (song.length_nanosec() != song_playing_.length_nanosec()) label_length_->setText(Utilities::PrettyTimeNanosec(song.length_nanosec()));
+    if (song.length_nanosec() != song_playing_.length_nanosec()){
+      if (song.length_nanosec() <= 0) {
+        label_length_title_->hide();
+        label_length_->hide();
+        label_length_->clear();
+      }
+      else {
+        label_length_title_->show();
+        label_length_->show();
+        label_length_->setText(Utilities::PrettyTimeNanosec(song.length_nanosec()));
+      }
+    }
     if (song.samplerate() != song_playing_.samplerate()) {
       if (song.samplerate() <= 0) {
         label_samplerate_title_->hide();
@@ -628,21 +703,7 @@ void ContextView::UpdateSong(const Song &song) {
 
 void ContextView::ResetSong() {
 
-  QList <QLabel *> labels_play_data;
-
-  labels_play_data << label_engine_icon_
-                   << label_engine_
-                   << label_device_
-                   << label_device_icon_
-                   << label_filetype_
-                   << label_length_
-                   << label_samplerate_
-                   << label_bitdepth_
-                   << label_bitrate_
-                   << label_play_albums_
-                   << label_play_lyrics_;
-
-  for (QLabel *l: labels_play_data) {
+  for (QLabel *l: labels_play_data_) {
     l->clear();
   }
 
@@ -661,7 +722,7 @@ void ContextView::UpdateLyrics(const quint64 id, const QString &provider, const 
 }
 
 void ContextView::contextMenuEvent(QContextMenuEvent *e) {
-  if (menu_ && widget_stacked_->currentWidget() == widget_play_) menu_->popup(mapToGlobal(e->pos()));
+  if (menu_) menu_->popup(mapToGlobal(e->pos()));
 }
 
 void ContextView::dragEnterEvent(QDragEnterEvent *e) {
@@ -684,9 +745,7 @@ void ContextView::dropEvent(QDropEvent *e) {
 
 }
 
-void ContextView::AlbumCoverLoaded(const Song &song, const QUrl &cover_url, const QImage &image) {
-
-  Q_UNUSED(cover_url);
+void ContextView::AlbumCoverLoaded(const Song &song, const QImage &image) {
 
   if (song != song_playing_ || image == image_original_) return;
 
@@ -742,11 +801,22 @@ void ContextView::ActionShowLyrics() {
   s.beginGroup(ContextSettingsPage::kSettingsGroup);
   s.setValue(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::SONG_LYRICS], action_show_lyrics_->isChecked());
   s.endGroup();
+
   if (song_playing_.is_valid()) SetSong();
 
-  if (lyrics_.isEmpty() && action_show_lyrics_->isChecked() && !song_playing_.artist().isEmpty() && !song_playing_.title().isEmpty()) {
-    lyrics_fetcher_->Clear();
-    lyrics_id_ = lyrics_fetcher_->Search(song_playing_.artist(), song_playing_.album(), song_playing_.title());
-  }
+  SearchLyrics();
+
+}
+
+void ContextView::ActionSearchLyrics() {
+
+  QSettings s;
+  s.beginGroup(ContextSettingsPage::kSettingsGroup);
+  s.setValue(ContextSettingsPage::kSettingsGroupEnable[ContextSettingsPage::ContextSettingsOrder::SEARCH_LYRICS], action_search_lyrics_->isChecked());
+  s.endGroup();
+
+  if (song_playing_.is_valid()) SetSong();
+
+  SearchLyrics();
 
 }

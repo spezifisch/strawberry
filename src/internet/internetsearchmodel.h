@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This code was part of Clementine (GlobalSearch)
  * Copyright 2012, David Sansome <me@davidsansome.com>
+ * Copyright 2018, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,49 +38,54 @@
 
 #include "core/song.h"
 #include "collection/collectionmodel.h"
-#include "internetsearch.h"
+#include "internetsearchview.h"
 
 class QMimeData;
 class QSortFilterProxyModel;
+
+class MimeData;
+class InternetService;
 
 class InternetSearchModel : public QStandardItemModel {
   Q_OBJECT
 
  public:
-  InternetSearchModel(InternetSearch *engine, QObject *parent = nullptr);
+  explicit InternetSearchModel(InternetService *service, QObject *parent = nullptr);
 
   enum Role {
     Role_Result = CollectionModel::LastRole,
     Role_LazyLoadingArt,
-    Role_ProviderIndex,
     LastRole
   };
 
   struct ContainerKey {
-    int provider_index_;
     QString group_[3];
   };
 
   void set_proxy(QSortFilterProxyModel *proxy) { proxy_ = proxy; }
-  void set_use_pretty_covers(bool pretty) { use_pretty_covers_ = pretty; }
-  void SetGroupBy(const CollectionModel::Grouping &grouping, bool regroup_now);
+  void set_use_pretty_covers(const bool pretty) { use_pretty_covers_ = pretty; }
+  void SetGroupBy(const CollectionModel::Grouping &grouping, const bool regroup_now);
 
   void Clear();
 
-  InternetSearch::ResultList GetChildResults(const QModelIndexList &indexes) const;
-  InternetSearch::ResultList GetChildResults(const QList<QStandardItem*> &items) const;
+  InternetSearchView::ResultList GetChildResults(const QModelIndexList &indexes) const;
+  InternetSearchView::ResultList GetChildResults(const QList<QStandardItem*> &items) const;
 
   QMimeData *mimeData(const QModelIndexList &indexes) const;
 
+  // Loads tracks for results that were previously emitted by ResultsAvailable.
+  // The implementation creates a SongMimeData with one Song for each Result.
+  MimeData *LoadTracks(const InternetSearchView::ResultList &results) const;
+
  public slots:
-  void AddResults(const InternetSearch::ResultList &results);
+  void AddResults(const InternetSearchView::ResultList &results);
 
  private:
-  QStandardItem *BuildContainers(const Song &metadata, QStandardItem *parent, ContainerKey *key, int level = 0);
-  void GetChildResults(const QStandardItem *item, InternetSearch::ResultList *results, QSet<const QStandardItem*> *visited) const;
+  QStandardItem *BuildContainers(const Song &s, QStandardItem *parent, ContainerKey *key, const int level = 0);
+  void GetChildResults(const QStandardItem *item, InternetSearchView::ResultList *results, QSet<const QStandardItem*> *visited) const;
 
  private:
-  InternetSearch *engine_;
+  InternetService *service_;
   QSortFilterProxyModel *proxy_;
   bool use_pretty_covers_;
   QIcon artist_icon_;
@@ -91,7 +97,7 @@ class InternetSearchModel : public QStandardItemModel {
 };
 
 inline uint qHash(const InternetSearchModel::ContainerKey &key) {
-  return qHash(key.provider_index_) ^ qHash(key.group_[0]) ^ qHash(key.group_[1]) ^ qHash(key.group_[2]);
+  return qHash(key.group_[0]) ^ qHash(key.group_[1]) ^ qHash(key.group_[2]);
 }
 
 inline bool operator<(const InternetSearchModel::ContainerKey &left, const InternetSearchModel::ContainerKey &right) {
@@ -99,7 +105,6 @@ inline bool operator<(const InternetSearchModel::ContainerKey &left, const Inter
   if (left.field < right.field) return true; \
   if (left.field > right.field) return false
 
-  CMP(provider_index_);
   CMP(group_[0]);
   CMP(group_[1]);
   CMP(group_[2]);

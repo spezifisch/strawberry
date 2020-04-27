@@ -47,6 +47,7 @@
 #include <QCommonStyle>
 
 #include "core/song.h"
+#include "covermanager/albumcoverloaderresult.h"
 #include "settings/appearancesettingspage.h"
 #include "playlist.h"
 
@@ -79,7 +80,7 @@ class PlaylistHeader;
 // This class is used by internet search view as well.
 class PlaylistProxyStyle : public QProxyStyle {
  public:
-  PlaylistProxyStyle();
+  explicit PlaylistProxyStyle();
 
   void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
   void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
@@ -92,7 +93,7 @@ class PlaylistView : public QTreeView {
   Q_OBJECT
  public:
 
-  PlaylistView(QWidget *parent = nullptr);
+  explicit PlaylistView(QWidget *parent = nullptr);
   ~PlaylistView();
 
   static ColumnAlignmentMap DefaultColumnAlignment();
@@ -173,7 +174,7 @@ class PlaylistView : public QTreeView {
   void Playing();
   void Stopped();
   void SongChanged(const Song &song);
-  void AlbumCoverLoaded(const Song &new_song, const QUrl &cover_url, const QImage &song_art);
+  void AlbumCoverLoaded(const Song &song, AlbumCoverLoaderResult result = AlbumCoverLoaderResult());
 
  private:
   void LoadGeometry();

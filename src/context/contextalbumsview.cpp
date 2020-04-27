@@ -321,11 +321,11 @@ void ContextAlbumsView::contextMenuEvent(QContextMenuEvent *e) {
 
 void ContextAlbumsView::Load() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->clear_first_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->clear_first_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -337,21 +337,21 @@ void ContextAlbumsView::AddToPlaylist() {
 
 void ContextAlbumsView::AddToPlaylistEnqueue() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void ContextAlbumsView::OpenInNewPlaylist() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->open_in_new_playlist_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->open_in_new_playlist_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -372,7 +372,7 @@ SongList ContextAlbumsView::GetSelectedSongs() const {
 void ContextAlbumsView::Organise() {
 
   if (!organise_dialog_)
-    organise_dialog_.reset(new OrganiseDialog(app_->task_manager()));
+    organise_dialog_.reset(new OrganiseDialog(app_->task_manager(), app_->collection_backend(), this));
 
   organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
   organise_dialog_->SetCopy(false);
@@ -381,6 +381,7 @@ void ContextAlbumsView::Organise() {
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
+
 }
 
 void ContextAlbumsView::EditTracks() {

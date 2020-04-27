@@ -112,7 +112,7 @@ void AlbumCoverChoiceController::Init(Application *app) {
   cover_searcher_ = new AlbumCoverSearcher(QIcon(":/pictures/cdcase.png"), app, this);
   cover_searcher_->Init(cover_fetcher_);
 
-  connect(cover_fetcher_, SIGNAL(AlbumCoverFetched(const quint64, const QUrl&, const QImage&, CoverSearchStatistics)), this, SLOT(AlbumCoverFetched(const quint64, const QUrl&, const QImage&, CoverSearchStatistics)));
+  connect(cover_fetcher_, SIGNAL(AlbumCoverFetched(quint64, QUrl, QImage, CoverSearchStatistics)), this, SLOT(AlbumCoverFetched(quint64, QUrl, QImage, CoverSearchStatistics)));
 
 }
 
@@ -164,7 +164,7 @@ void AlbumCoverChoiceController::SaveCoverToFileManual(const Song &song, const Q
   initial_file_name = initial_file_name + "-" + (song.effective_album().isEmpty() ? tr("unknown") : song.effective_album()) + ".jpg";
   initial_file_name = initial_file_name.toLower();
   initial_file_name.replace(QRegExp("\\s"), "-");
-  initial_file_name.remove(OrganiseFormat::kValidFatCharacters);
+  initial_file_name.remove(OrganiseFormat::kInvalidFatCharacters);
 
   QString save_filename = QFileDialog::getSaveFileName(this, tr("Save album cover"), GetInitialPathForFileDialog(song, initial_file_name), tr(kSaveImageFileFilter) + ";;" + tr(kAllFilesFilter));
 
@@ -312,11 +312,13 @@ void AlbumCoverChoiceController::ShowCover(const Song &song, const QPixmap &pixm
 
 }
 
-void AlbumCoverChoiceController::SearchCoverAutomatically(const Song &song) {
+qint64 AlbumCoverChoiceController::SearchCoverAutomatically(const Song &song) {
 
-  qint64 id = cover_fetcher_->FetchAlbumCover(song.effective_albumartist(), song.effective_album(), true);
+  qint64 id = cover_fetcher_->FetchAlbumCover(song.effective_albumartist(), song.album(), song.title(), true);
 
   cover_fetching_tasks_[id] = song;
+
+  return id;
 
 }
 
@@ -371,7 +373,7 @@ void AlbumCoverChoiceController::SaveCoverToSong(Song *song, const QUrl &cover_u
 
   }
 
-  if (song->url() == app_->current_albumcover_loader()->last_song().url()) {
+  if (*song == app_->current_albumcover_loader()->last_song()) {
     app_->current_albumcover_loader()->LoadAlbumCover(*song);
   }
 

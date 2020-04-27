@@ -45,6 +45,7 @@ class QAbstractItemModel;
 class QWidget;
 class QResizeEvent;
 class QShowEvent;
+class QCloseEvent;
 
 class TaskManager;
 class CollectionBackend;
@@ -55,7 +56,7 @@ class OrganiseDialog : public QDialog {
   Q_OBJECT
 
  public:
-  OrganiseDialog(TaskManager *task_manager, CollectionBackend *backend = nullptr, QWidget *parent = nullptr);
+  explicit OrganiseDialog(TaskManager *task_manager, CollectionBackend *backend = nullptr, QWidget *parentwindow = nullptr, QWidget *parent = nullptr);
   ~OrganiseDialog();
 
   static const char *kDefaultFormat;
@@ -76,6 +77,18 @@ class OrganiseDialog : public QDialog {
   
   void SetPlaylist(const QString &playlist);
 
+ protected:
+  void showEvent(QShowEvent*);
+  void closeEvent(QCloseEvent*);
+
+ private:
+  void LoadGeometry();
+  void SaveGeometry();
+  void LoadSettings();
+
+  SongList LoadSongsBlocking(const QStringList &filenames);
+  void SetLoadingSongs(bool loading);
+
  signals:
   void FileCopied(int);
 
@@ -83,11 +96,9 @@ class OrganiseDialog : public QDialog {
   void accept();
   void reject();
 
- protected:
-  void showEvent(QShowEvent *);
-
  private slots:
-  void Reset();
+  void SaveSettings();
+  void RestoreDefaults();
 
   void InsertTag(const QString &tag);
   void UpdatePreviews();
@@ -96,15 +107,10 @@ class OrganiseDialog : public QDialog {
 
   void AllowExtASCII(bool checked);
 
-  void SaveGeometry();
-
- private:
-  SongList LoadSongsBlocking(const QStringList &filenames);
-  void SetLoadingSongs(bool loading);
-
  private:
   static const char *kSettingsGroup;
 
+  QWidget *parentwindow_;
   Ui_OrganiseDialog *ui_;
   TaskManager *task_manager_;
   CollectionBackend *backend_;

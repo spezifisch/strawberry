@@ -82,8 +82,6 @@ InternetCollectionView::InternetCollectionView(QWidget *parent)
 
 }
 
-InternetCollectionView::~InternetCollectionView() {}
-
 void InternetCollectionView::Init(Application *app, CollectionBackend *backend, CollectionModel *model, const bool favorite) {
 
   app_ = app;
@@ -98,7 +96,11 @@ void InternetCollectionView::Init(Application *app, CollectionBackend *backend, 
 
 }
 
-void InternetCollectionView::SetFilter(CollectionFilterWidget *filter) { filter_ = filter; }
+void InternetCollectionView::SetFilter(CollectionFilterWidget *filter) {
+
+  filter_ = filter;
+
+}
 
 void InternetCollectionView::ReloadSettings() {}
 
@@ -319,6 +321,10 @@ void InternetCollectionView::contextMenuEvent(QContextMenuEvent *e) {
 
     if (filter_) context_menu_->addMenu(filter_->menu());
 
+    context_menu_->addSeparator();
+
+    context_menu_->addAction(IconLoader::Load("configure"), tr("Configure %1...").arg(Song::TextForSource(collection_backend_->Source())), this, SLOT(OpenSettingsDialog()));
+
   }
 
   context_menu_index_ = indexAt(e->pos());
@@ -341,11 +347,11 @@ void InternetCollectionView::contextMenuEvent(QContextMenuEvent *e) {
 
 void InternetCollectionView::Load() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->clear_first_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->clear_first_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -357,31 +363,31 @@ void InternetCollectionView::AddToPlaylist() {
 
 void InternetCollectionView::AddToPlaylistEnqueue() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void InternetCollectionView::AddToPlaylistEnqueueNext() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_next_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_next_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void InternetCollectionView::OpenInNewPlaylist() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData* mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->open_in_new_playlist_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData* mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->open_in_new_playlist_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 

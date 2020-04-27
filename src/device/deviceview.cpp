@@ -56,6 +56,7 @@
 #include "core/mergedproxymodel.h"
 #include "core/mimedata.h"
 #include "core/musicstorage.h"
+#include "core/utilities.h"
 #include "organise/organisedialog.h"
 #include "organise/organiseerrordialog.h"
 #include "collection/collectiondirectorymodel.h"
@@ -151,10 +152,17 @@ void DeviceItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     }
   }
 
-  if (option.state & QStyle::State_Selected)
+  if (option.state & QStyle::State_Selected) {
     painter->setPen(option.palette.color(QPalette::HighlightedText));
-  else
-    painter->setPen(option.palette.color(QPalette::Dark));
+  }
+  else {
+    if (Utilities::IsColorDark(option.palette.color(QPalette::Window))) {
+      painter->setPen(option.palette.color(QPalette::Midlight).lighter().lighter());
+    }
+    else {
+      painter->setPen(option.palette.color(QPalette::Dark));
+    }
+  }
 
   painter->setFont(status_font);
   painter->drawText(line2, Qt::AlignLeft | Qt::AlignTop, status_text);
@@ -205,7 +213,7 @@ void DeviceView::SetApplication(Application *app) {
 
   properties_dialog_->SetDeviceManager(app_->device_manager());
 
-  organise_dialog_.reset(new OrganiseDialog(app_->task_manager()));
+  organise_dialog_.reset(new OrganiseDialog(app_->task_manager(), nullptr, this));
   organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
 
 }
@@ -376,11 +384,12 @@ SongList DeviceView::GetSelectedSongs() const {
 
 void DeviceView::Load() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->clear_first_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->clear_first_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
+
 }
 
 void DeviceView::AddToPlaylist() {
@@ -388,11 +397,13 @@ void DeviceView::AddToPlaylist() {
 }
 
 void DeviceView::OpenInNewPlaylist() {
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->open_in_new_playlist_ = true;
+
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->open_in_new_playlist_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
+
 }
 
 void DeviceView::Delete() {

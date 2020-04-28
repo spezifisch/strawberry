@@ -49,6 +49,7 @@ class PlaylistItem : public std::enable_shared_from_this<PlaylistItem> {
   virtual ~PlaylistItem();
 
   static PlaylistItem *NewFromSource(const Song::Source &source);
+  static PlaylistItem *NewFromSong(const Song &song);
 
   enum Option {
     Default = 0x00,

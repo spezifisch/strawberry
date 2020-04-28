@@ -88,12 +88,13 @@ PlaylistItemList PlaylistQueryGenerator::GenerateMore(int count) {
   SongList songs = backend_->FindSongs(search_copy);
   PlaylistItemList items;
   for (const Song &song : songs) {
-    items << PlaylistItemPtr(PlaylistItem::NewFromSource(song.source()));
+    items << PlaylistItemPtr(PlaylistItem::NewFromSong(song));
     previous_ids_ << song.id();
 
     if (previous_ids_.count() > GetDynamicFuture() + GetDynamicHistory())
       previous_ids_.removeFirst();
   }
+
   return items;
 
 }

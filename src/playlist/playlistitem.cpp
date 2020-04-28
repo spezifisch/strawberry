@@ -61,6 +61,16 @@ PlaylistItem *PlaylistItem::NewFromSource(const Song::Source &source) {
 
 }
 
+PlaylistItem *PlaylistItem::NewFromSong(const Song &song) {
+
+  if (song.source() == Song::Source_Collection) return new CollectionPlaylistItem(song);
+
+  qLog(Warning) << "Invalid PlaylistItem song source:" << song.source();
+
+  return nullptr;
+
+}
+
 void PlaylistItem::BindToQuery(QSqlQuery *query) const {
 
   query->bindValue(":type", source_);

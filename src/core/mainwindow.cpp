@@ -236,10 +236,10 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
         connect(add_stream_dialog, SIGNAL(accepted()), this, SLOT(AddStreamAccepted()));
         return add_stream_dialog;
       }),
+      smartplaylists_view_(new SmartPlaylistsViewContainer(app, this)),
 #ifdef HAVE_SUBSONIC
       subsonic_view_(new InternetSongsView(app_, app->internet_services()->ServiceBySource(Song::Source_Subsonic), SubsonicSettingsPage::kSettingsGroup, SettingsDialog::Page_Subsonic, this)),
 #endif
-      smartplaylists_view_(new SmartPlaylistsViewContainer(app, this)),
 #ifdef HAVE_TIDAL
       tidal_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Tidal), TidalSettingsPage::kSettingsGroup, SettingsDialog::Page_Tidal, this)),
 #endif

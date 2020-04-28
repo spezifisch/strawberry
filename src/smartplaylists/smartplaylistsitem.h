@@ -33,8 +33,8 @@ class SmartPlaylistsItem : public SimpleTreeItem<SmartPlaylistsItem> {
     Type_Root,
     Type_SmartPlaylist,
   };
-  SmartPlaylistsItem(SimpleTreeModel<SmartPlaylistsItem> *model) : SimpleTreeItem<SmartPlaylistsItem>(Type_Root, model) {}
-  SmartPlaylistsItem(Type type, SmartPlaylistsItem *parent = nullptr) : SimpleTreeItem<SmartPlaylistsItem>(type, parent) {}
+  SmartPlaylistsItem(SimpleTreeModel<SmartPlaylistsItem> *_model) : SimpleTreeItem<SmartPlaylistsItem>(Type_Root, _model) {}
+  SmartPlaylistsItem(const Type _type, SmartPlaylistsItem *_parent = nullptr) : SimpleTreeItem<SmartPlaylistsItem>(_type, _parent) {}
   QByteArray smart_playlist_data;
 };
 

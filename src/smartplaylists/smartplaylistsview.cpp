@@ -31,8 +31,8 @@
 #include "smartplaylistsview.h"
 #include "smartplaylistwizard.h"
 
-SmartPlaylistsView::SmartPlaylistsView(QWidget *parent)
-      : QListView(parent),
+SmartPlaylistsView::SmartPlaylistsView(QWidget *_parent)
+      : QListView(_parent),
       app_(nullptr),
       context_menu_(nullptr),
       context_menu_selected_(nullptr) {
@@ -98,11 +98,11 @@ void SmartPlaylistsView::contextMenuEvent(QContextMenuEvent *e) {
 
 void SmartPlaylistsView::Load() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->clear_first_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->clear_first_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -114,31 +114,31 @@ void SmartPlaylistsView::AddToPlaylist() {
 
 void SmartPlaylistsView::AddToPlaylistEnqueue() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void SmartPlaylistsView::AddToPlaylistEnqueueNext() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->enqueue_next_now_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->enqueue_next_now_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
 void SmartPlaylistsView::OpenInNewPlaylist() {
 
-  QMimeData *data = model()->mimeData(selectedIndexes());
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->open_in_new_playlist_ = true;
+  QMimeData *q_mimedata = model()->mimeData(selectedIndexes());
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->open_in_new_playlist_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }
 
@@ -193,12 +193,12 @@ void SmartPlaylistsView::EditSmartPlaylistFinished() {
 
 }
 
-void SmartPlaylistsView::ItemDoubleClicked(const QModelIndex &index) {
+void SmartPlaylistsView::ItemDoubleClicked(const QModelIndex &idx) {
 
-  QMimeData *data = model()->mimeData(QModelIndexList() << index);
-  if (MimeData *mime_data = qobject_cast<MimeData*>(data)) {
-    mime_data->from_doubleclick_ = true;
+  QMimeData *q_mimedata = model()->mimeData(QModelIndexList() << idx);
+  if (MimeData *mimedata = qobject_cast<MimeData*>(q_mimedata)) {
+    mimedata->from_doubleclick_ = true;
   }
-  emit AddToPlaylistSignal(data);
+  emit AddToPlaylistSignal(q_mimedata);
 
 }

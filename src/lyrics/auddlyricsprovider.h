@@ -51,9 +51,9 @@ class AuddLyricsProvider : public JsonLyricsProvider {
   static const char *kAPITokenB64;
   static const int kMaxLength;
   QNetworkAccessManager *network_;
-  void Error(const quint64 id, const QString &error, const QVariant &debug = QVariant());
+  void Error(const QString &error, const QVariant &debug = QVariant());
 
-  QJsonArray ExtractResult(QNetworkReply *reply, const quint64 id, const QString &artist, const QString &title);
+  QJsonArray ExtractResult(QNetworkReply *reply, const QString &artist, const QString &title);
 
 };
 

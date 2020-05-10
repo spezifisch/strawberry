@@ -46,11 +46,11 @@
 #include <QtDebug>
 
 #include "core/application.h"
-#include "core/closure.h"
 #include "core/network.h"
 #include "core/song.h"
 #include "core/timeconstants.h"
 #include "core/logging.h"
+#include "core/closure.h"
 #include "internet/localredirectserver.h"
 #include "settings/scrobblersettingspage.h"
 
@@ -126,7 +126,8 @@ void ScrobblingAPI20::Logout() {
 void ScrobblingAPI20::Authenticate(const bool https) {
 
   if (!server_) {
-    server_ = new LocalRedirectServer(https, this);
+    server_ = new LocalRedirectServer(this);
+    server_->set_https(https);
     if (!server_->Listen()) {
       AuthError(server_->error());
       delete server_;
@@ -231,7 +232,7 @@ void ScrobblingAPI20::RequestSession(const QString &token) {
   QNetworkRequest req(session_url);
   req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
   QNetworkReply *reply = network()->get(req);
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(AuthenticateReplyFinished(QNetworkReply*)), reply);
+  connect(reply, &QNetworkReply::finished, [=] { AuthenticateReplyFinished(reply); });
 
 }
 
@@ -447,7 +448,7 @@ void ScrobblingAPI20::UpdateNowPlaying(const Song &song) {
     params << Param("albumArtist", song.albumartist());
 
   QNetworkReply *reply = CreateRequest(params);
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(UpdateNowPlayingRequestFinished(QNetworkReply*)), reply);
+  connect(reply, &QNetworkReply::finished, [=] { UpdateNowPlayingRequestFinished(reply); });
 
 }
 
@@ -541,7 +542,7 @@ void ScrobblingAPI20::Submit() {
 
   int i(0);
   QList<quint64> list;
-  for (ScrobblerCacheItem *item : cache()->List()) {
+  for (ScrobblerCacheItemPtr item : cache()->List()) {
     if (item->sent_) continue;
     item->sent_ = true;
     if (!batch_) {
@@ -566,7 +567,7 @@ void ScrobblingAPI20::Submit() {
   if (!batch_ || i <= 0) return;
 
   QNetworkReply *reply = CreateRequest(params);
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(ScrobbleRequestFinished(QNetworkReply*, QList<quint64>)), reply, list);
+  connect(reply, &QNetworkReply::finished, [=] { ScrobbleRequestFinished(reply, list); });
 
 }
 
@@ -726,7 +727,7 @@ void ScrobblingAPI20::ScrobbleRequestFinished(QNetworkReply *reply, QList<quint6
 
 }
 
-void ScrobblingAPI20::SendSingleScrobble(ScrobblerCacheItem *item) {
+void ScrobblingAPI20::SendSingleScrobble(ScrobblerCacheItemPtr item) {
 
   ParamList params = ParamList()
     << Param("method", "track.scrobble")
@@ -743,7 +744,7 @@ void ScrobblingAPI20::SendSingleScrobble(ScrobblerCacheItem *item) {
     params << Param("trackNumber", QString::number(item->track_));
 
   QNetworkReply *reply = CreateRequest(params);
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(SingleScrobbleRequestFinished(QNetworkReply*, quint64)), reply, item->timestamp_);
+  connect(reply, &QNetworkReply::finished, [=] { SingleScrobbleRequestFinished(reply, item->timestamp_); });
 
 }
 
@@ -751,7 +752,7 @@ void ScrobblingAPI20::SingleScrobbleRequestFinished(QNetworkReply *reply, quint6
 
   reply->deleteLater();
 
-  ScrobblerCacheItem *item = cache()->Get(timestamp);
+  ScrobblerCacheItemPtr item = cache()->Get(timestamp);
   if (!item) {
     Error(QString("Received reply for non-existing cache entry %1.").arg(timestamp));
     return;
@@ -891,7 +892,7 @@ void ScrobblingAPI20::Love() {
     params << Param("albumArtist", song_playing_.albumartist());
 
   QNetworkReply *reply = CreateRequest(params);
-  NewClosure(reply, SIGNAL(finished()), this, SLOT(LoveRequestFinished(QNetworkReply*)), reply);
+  connect(reply, &QNetworkReply::finished, [=] { LoveRequestFinished(reply); });
 
 }
 

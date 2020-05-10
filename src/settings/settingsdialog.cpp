@@ -56,17 +56,19 @@
 
 #include "settingsdialog.h"
 #include "settingspage.h"
-#include "appearancesettingspage.h"
-#include "backendsettingspage.h"
 #include "behavioursettingspage.h"
-#include "contextsettingspage.h"
 #include "collectionsettingspage.h"
-#include "notificationssettingspage.h"
+#include "backendsettingspage.h"
 #include "playlistsettingspage.h"
-#include "shortcutssettingspage.h"
+#include "scrobblersettingspage.h"
+#include "coverssettingspage.h"
+#include "lyricssettingspage.h"
 #include "transcodersettingspage.h"
 #include "networkproxysettingspage.h"
-#include "scrobblersettingspage.h"
+#include "appearancesettingspage.h"
+#include "contextsettingspage.h"
+#include "notificationssettingspage.h"
+#include "shortcutssettingspage.h"
 #ifdef HAVE_MOODBAR
 #  include "moodbarsettingspage.h"
 #endif
@@ -130,6 +132,8 @@ SettingsDialog::SettingsDialog(Application *app, QMainWindow *mainwindow, QWidge
   AddPage(Page_Backend, new BackendSettingsPage(this), general);
   AddPage(Page_Playlist, new PlaylistSettingsPage(this), general);
   AddPage(Page_Scrobbler, new ScrobblerSettingsPage(this), general);
+  AddPage(Page_Covers, new CoversSettingsPage(this), general);
+  AddPage(Page_Lyrics, new LyricsSettingsPage(this), general);
 #ifdef HAVE_GSTREAMER
   AddPage(Page_Transcoding, new TranscoderSettingsPage(this), general);
 #endif

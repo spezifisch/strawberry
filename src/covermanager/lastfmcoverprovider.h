@@ -28,13 +28,13 @@
 #include <QString>
 #include <QJsonObject>
 
-#include "coverprovider.h"
+#include "jsoncoverprovider.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
 class Application;
 
-class LastFmCoverProvider : public CoverProvider {
+class LastFmCoverProvider : public JsonCoverProvider {
   Q_OBJECT
 
  public:
@@ -54,7 +54,6 @@ class LastFmCoverProvider : public CoverProvider {
   };
 
   QByteArray GetReplyData(QNetworkReply *reply);
-  QJsonObject ExtractJsonObj(const QByteArray &data);
   LastFmImageSize ImageSizeFromString(const QString &size);
   void Error(const QString &error, const QVariant &debug = QVariant());
 

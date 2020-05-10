@@ -21,12 +21,22 @@
 
 #include <QObject>
 #include <QMutex>
+#include <QList>
+#include <QMap>
+#include <QVariant>
+#include <QVariantList>
 #include <QString>
+#include <QStringList>
+#include <QSettings>
 #include <QtDebug>
 
 #include "core/logging.h"
 #include "lyricsprovider.h"
 #include "lyricsproviders.h"
+
+#include "settings/lyricssettingspage.h"
+
+int LyricsProviders::NextOrderId = 0;
 
 LyricsProviders::LyricsProviders(QObject *parent) : QObject(parent) {}
 
@@ -38,6 +48,48 @@ LyricsProviders::~LyricsProviders() {
 
 }
 
+void LyricsProviders::ReloadSettings() {
+
+  QMap<int, QString> all_providers;
+  for (LyricsProvider *provider : lyrics_providers_.keys()) {
+    if (!provider->is_enabled()) continue;
+    all_providers.insert(provider->order(), provider->name());
+  }
+
+  QSettings s;
+  s.beginGroup(LyricsSettingsPage::kSettingsGroup);
+  QStringList providers_enabled = s.value("providers", QStringList() << all_providers.values()).toStringList();
+  s.endGroup();
+
+  int i = 0;
+  QList<LyricsProvider*> providers;
+  for (const QString &name : providers_enabled) {
+    LyricsProvider *provider = ProviderByName(name);
+    if (provider) {
+      provider->set_enabled(true);
+      provider->set_order(++i);
+      providers << provider;
+    }
+  }
+
+  for (LyricsProvider *provider : lyrics_providers_.keys()) {
+    if (!providers.contains(provider)) {
+      provider->set_enabled(false);
+      provider->set_order(++i);
+    }
+  }
+
+}
+
+LyricsProvider *LyricsProviders::ProviderByName(const QString &name) const {
+
+  for (LyricsProvider *provider : lyrics_providers_.keys()) {
+    if (provider->name() == name) return provider;
+  }
+  return nullptr;
+
+}
+
 void LyricsProviders::AddProvider(LyricsProvider *provider) {
 
   {
@@ -45,6 +97,8 @@ void LyricsProviders::AddProvider(LyricsProvider *provider) {
     lyrics_providers_.insert(provider, provider->name());
     connect(provider, SIGNAL(destroyed()), SLOT(ProviderDestroyed()));
   }
+
+  provider->set_order(++NextOrderId);
 
   qLog(Debug) << "Registered lyrics provider" << provider->name();
 

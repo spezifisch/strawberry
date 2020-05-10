@@ -41,7 +41,6 @@
 #include <QNetworkRequest>
 #include <QSettings>
 
-#include "core/closure.h"
 #include "core/network.h"
 #include "core/song.h"
 #include "core/tagreaderclient.h"
@@ -316,7 +315,7 @@ AlbumCoverLoader::TryLoadResult AlbumCoverLoader::TryLoadImage(Task *task) {
       !task->options.scale_output_image_ &&
       !task->options.pad_output_image_) {
     task->song.InitArtManual();
-    if (task->art_manual != task->song.art_manual()) {
+    if (task->song.art_manual_is_valid() && task->art_manual != task->song.art_manual()) {
       task->art_manual = task->song.art_manual();
       task->art_updated = true;
     }
@@ -339,12 +338,12 @@ AlbumCoverLoader::TryLoadResult AlbumCoverLoader::TryLoadImage(Task *task) {
 
   if (!cover_url.isEmpty() && !cover_url.path().isEmpty()) {
     if (cover_url.path() == Song::kManuallyUnsetCover) {
-      return TryLoadResult(false, true, AlbumCoverLoaderResult::Type_ManuallyUnset, QUrl(), task->options.default_output_image_);
+      return TryLoadResult(false, true, AlbumCoverLoaderResult::Type_ManuallyUnset, cover_url, task->options.default_output_image_);
     }
     else if (cover_url.path() == Song::kEmbeddedCover && task->song_url.isLocalFile()) {
       const QImage taglib_image = TagReaderClient::Instance()->LoadEmbeddedArtBlocking(task->song_url.toLocalFile());
       if (!taglib_image.isNull()) {
-        return TryLoadResult(false, true, AlbumCoverLoaderResult::Type_Embedded, QUrl(), ScaleAndPad(task->options, taglib_image).first);
+        return TryLoadResult(false, true, AlbumCoverLoaderResult::Type_Embedded, cover_url, ScaleAndPad(task->options, taglib_image).first);
       }
     }
     else if (cover_url.isLocalFile()) {
@@ -359,7 +358,7 @@ AlbumCoverLoader::TryLoadResult AlbumCoverLoader::TryLoadImage(Task *task) {
       QNetworkRequest request(cover_url);
       request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
       QNetworkReply *reply = network_->get(request);
-      NewClosure(reply, SIGNAL(finished()), this, SLOT(RemoteFetchFinished(QNetworkReply*, QUrl)), reply, cover_url);
+      connect(reply, &QNetworkReply::finished, [=] { RemoteFetchFinished(reply, cover_url); });
 
       remote_tasks_.insert(reply, *task);
       return TryLoadResult(true, false, type, cover_url, QImage());
@@ -387,7 +386,7 @@ void AlbumCoverLoader::RemoteFetchFinished(QNetworkReply *reply, const QUrl &cov
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     request.setUrl(redirect.toUrl());
     QNetworkReply *redirected_reply = network_->get(request);
-    NewClosure(redirected_reply, SIGNAL(finished()), this, SLOT(RemoteFetchFinished(QNetworkReply*, QUrl)), redirected_reply, redirect.toUrl());
+    connect(redirected_reply, &QNetworkReply::finished, [=] { RemoteFetchFinished(redirected_reply, redirect.toUrl()); });
 
     remote_tasks_.insert(redirected_reply, task);
     return;

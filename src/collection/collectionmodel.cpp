@@ -74,7 +74,7 @@ using std::placeholders::_2;
 
 const char *CollectionModel::kSavedGroupingsSettingsGroup = "SavedGroupings";
 const int CollectionModel::kPrettyCoverSize = 32;
-const char *CollectionModel::kPixmapDiskCacheDir = "/pixmapcache";
+const char *CollectionModel::kPixmapDiskCacheDir = "pixmapcache";
 
 QNetworkDiskCache *CollectionModel::sIconCache = nullptr;
 
@@ -114,17 +114,18 @@ CollectionModel::CollectionModel(CollectionBackend *backend, Application *app, Q
   cover_loader_options_.pad_output_image_ = true;
   cover_loader_options_.scale_output_image_ = true;
 
-  if (app_)
+  if (app_) {
     connect(app_->album_cover_loader(), SIGNAL(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(quint64, AlbumCoverLoaderResult)));
+  }
 
   QIcon nocover = IconLoader::Load("cdcase");
   no_cover_icon_ = nocover.pixmap(nocover.availableSizes().last()).scaled(kPrettyCoverSize, kPrettyCoverSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   //no_cover_icon_ = QPixmap(":/pictures/noalbumart.png").scaled(kPrettyCoverSize, kPrettyCoverSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-  // When running under gdb, all calls to this constructor came from the same thread.
-  // If this ever changes, these two lines might need to be protected by a mutex.
-  if (sIconCache == nullptr)
+  if (sIconCache == nullptr) {
     sIconCache = new QNetworkDiskCache(this);
+    sIconCache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + kPixmapDiskCacheDir);
+  }
 
   connect(backend_, SIGNAL(SongsDiscovered(SongList)), SLOT(SongsDiscovered(SongList)));
   connect(backend_, SIGNAL(SongsDeleted(SongList)), SLOT(SongsDeleted(SongList)));
@@ -148,7 +149,7 @@ CollectionModel::~CollectionModel() {
   delete root_;
 }
 
-void CollectionModel::set_pretty_covers(bool use_pretty_covers) {
+void CollectionModel::set_pretty_covers(const bool use_pretty_covers) {
 
   if (use_pretty_covers != use_pretty_covers_) {
     use_pretty_covers_ = use_pretty_covers;
@@ -156,7 +157,7 @@ void CollectionModel::set_pretty_covers(bool use_pretty_covers) {
   }
 }
 
-void CollectionModel::set_show_dividers(bool show_dividers) {
+void CollectionModel::set_show_dividers(const bool show_dividers) {
 
   if (show_dividers != show_dividers_) {
     show_dividers_ = show_dividers;
@@ -186,19 +187,19 @@ void CollectionModel::ReloadSettings() {
 
   use_disk_cache_ = s.value(CollectionSettingsPage::kSettingsDiskCacheEnable, false).toBool();
 
-  if (!use_disk_cache_) {
-    sIconCache->clear();
-  }
+  QPixmapCache::setCacheLimit(MaximumCacheSize(&s, CollectionSettingsPage::kSettingsCacheSize, CollectionSettingsPage::kSettingsCacheSizeUnit, CollectionSettingsPage::kSettingsCacheSizeDefault) / 1024);
 
-  sIconCache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + kPixmapDiskCacheDir);
-  sIconCache->setMaximumCacheSize(MaximumCacheSize(&s, CollectionSettingsPage::kSettingsDiskCacheSize, CollectionSettingsPage::kSettingsDiskCacheSizeUnit));
-
-  QPixmapCache::setCacheLimit(MaximumCacheSize(&s, CollectionSettingsPage::kSettingsCacheSize, CollectionSettingsPage::kSettingsCacheSizeUnit) / 1024);
+  sIconCache->setMaximumCacheSize(MaximumCacheSize(&s, CollectionSettingsPage::kSettingsDiskCacheSize, CollectionSettingsPage::kSettingsDiskCacheSizeUnit, CollectionSettingsPage::kSettingsDiskCacheSizeDefault));
 
   s.endGroup();
+
+  if (!use_disk_cache_) {
+    ClearDiskCache();
+  }
+
 }
 
-void CollectionModel::Init(bool async) {
+void CollectionModel::Init(const bool async) {
 
   if (async) {
     // Show a loading indicator in the model.
@@ -337,7 +338,7 @@ void CollectionModel::SongsSlightlyChanged(const SongList &songs) {
 
 }
 
-CollectionItem *CollectionModel::CreateCompilationArtistNode(bool signal, CollectionItem *parent) {
+CollectionItem *CollectionModel::CreateCompilationArtistNode(const bool signal, CollectionItem *parent) {
 
   if (signal) beginInsertRows(ItemToIndex(parent), parent->children.count(), parent->children.count());
 
@@ -353,7 +354,7 @@ CollectionItem *CollectionModel::CreateCompilationArtistNode(bool signal, Collec
 
 }
 
-QString CollectionModel::DividerKey(GroupBy type, CollectionItem *item) const {
+QString CollectionModel::DividerKey(const GroupBy type, CollectionItem *item) const {
 
   // Items which are to be grouped under the same divider must produce the same divider key.  This will only get called for top-level items.
 
@@ -407,7 +408,7 @@ QString CollectionModel::DividerKey(GroupBy type, CollectionItem *item) const {
 
 }
 
-QString CollectionModel::DividerDisplayText(GroupBy type, const QString &key) const {
+QString CollectionModel::DividerDisplayText(const GroupBy type, const QString &key) const {
 
   // Pretty display text for the dividers.
 
@@ -642,7 +643,7 @@ void CollectionModel::AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderR
       QNetworkCacheMetaData item_metadata;
       item_metadata.setSaveToDisk(true);
       item_metadata.setUrl(QUrl(cache_key));
-      QIODevice* cache = sIconCache->prepare(item_metadata);
+      QIODevice *cache = sIconCache->prepare(item_metadata);
       if (cache) {
         result.image_scaled.save(cache, "XPM");
         sIconCache->insert(cache);
@@ -657,7 +658,7 @@ void CollectionModel::AlbumCoverLoaded(const quint64 id, const AlbumCoverLoaderR
 
 }
 
-QVariant CollectionModel::data(const QModelIndex &idx, int role) const {
+QVariant CollectionModel::data(const QModelIndex &idx, const int role) const {
 
   const CollectionItem *item = IndexToItem(idx);
 
@@ -669,11 +670,7 @@ QVariant CollectionModel::data(const QModelIndex &idx, int role) const {
     bool is_album_node = false;
     if (role == Qt::DecorationRole && item->type == CollectionItem::Type_Container) {
       GroupBy container_type = group_by_[item->container_level];
-      is_album_node = container_type == GroupBy_Album ||
-                      container_type == GroupBy_AlbumDisc ||
-                      container_type == GroupBy_YearAlbum ||
-                      container_type == GroupBy_YearAlbumDisc ||
-                      container_type == GroupBy_OriginalYearAlbum;
+      is_album_node = IsAlbumGrouping(container_type);
     }
     if (is_album_node) {
       // It has const behaviour some of the time - that's ok right?
@@ -685,7 +682,7 @@ QVariant CollectionModel::data(const QModelIndex &idx, int role) const {
 
 }
 
-QVariant CollectionModel::data(const CollectionItem *item, int role) const {
+QVariant CollectionModel::data(const CollectionItem *item, const int role) const {
 
   GroupBy container_type = item->type == CollectionItem::Type_Container ? group_by_[item->container_level] : GroupBy_None;
 
@@ -825,7 +822,7 @@ CollectionModel::QueryResult CollectionModel::RunQuery(CollectionItem *parent) {
 
 }
 
-void CollectionModel::PostQuery(CollectionItem *parent, const CollectionModel::QueryResult &result, bool signal) {
+void CollectionModel::PostQuery(CollectionItem *parent, const CollectionModel::QueryResult &result, const bool signal) {
 
   // Information about what we want the children to be
   int child_level = parent == root_ ? 0 : parent->container_level + 1;
@@ -849,7 +846,7 @@ void CollectionModel::PostQuery(CollectionItem *parent, const CollectionModel::Q
 
 }
 
-void CollectionModel::LazyPopulate(CollectionItem *parent, bool signal) {
+void CollectionModel::LazyPopulate(CollectionItem *parent, const bool signal) {
 
   if (parent->lazy_loaded) return;
   parent->lazy_loaded = true;
@@ -917,7 +914,7 @@ void CollectionModel::Reset() {
 
 }
 
-void CollectionModel::InitQuery(GroupBy type, CollectionQuery *q) {
+void CollectionModel::InitQuery(const GroupBy type, CollectionQuery *q) {
 
   // Say what type of thing we want to get back from the database.
   switch (type) {
@@ -985,7 +982,7 @@ void CollectionModel::InitQuery(GroupBy type, CollectionQuery *q) {
 
 }
 
-void CollectionModel::FilterQuery(GroupBy type, CollectionItem *item, CollectionQuery *q) {
+void CollectionModel::FilterQuery(const GroupBy type, CollectionItem *item, CollectionQuery *q) {
 
   // Say how we want the query to be filtered.  This is done once for each parent going up the tree.
 
@@ -1078,7 +1075,7 @@ void CollectionModel::FilterQuery(GroupBy type, CollectionItem *item, Collection
 
 }
 
-CollectionItem *CollectionModel::InitItem(GroupBy type, bool signal, CollectionItem *parent, int container_level) {
+CollectionItem *CollectionModel::InitItem(const GroupBy type, const bool signal, CollectionItem *parent, const int container_level) {
 
   CollectionItem::Type item_type = type == GroupBy_None ? CollectionItem::Type_Song : CollectionItem::Type_Container;
 
@@ -1093,7 +1090,7 @@ CollectionItem *CollectionModel::InitItem(GroupBy type, bool signal, CollectionI
 
 }
 
-CollectionItem *CollectionModel::ItemFromQuery(GroupBy type, bool signal, bool create_divider, CollectionItem *parent, const SqlRow &row, int container_level) {
+CollectionItem *CollectionModel::ItemFromQuery(const GroupBy type, const bool signal, const bool create_divider, CollectionItem *parent, const SqlRow &row, const int container_level) {
 
   CollectionItem *item = InitItem(type, signal, parent, container_level);
 
@@ -1216,7 +1213,12 @@ CollectionItem *CollectionModel::ItemFromQuery(GroupBy type, bool signal, bool c
       item->metadata.InitFromQuery(row, true);
       item->key = item->metadata.title();
       item->display_text = item->metadata.TitleWithCompilationArtist();
-      item->sort_text = SortTextForSong(item->metadata);
+      if (item->container_level == 1 && !IsAlbumGrouping(group_by_[0])) {
+        item->sort_text = SortText(item->metadata.title());
+      }
+      else {
+        item->sort_text = SortTextForSong(item->metadata);
+      }
       break;
   }
 
@@ -1226,7 +1228,7 @@ CollectionItem *CollectionModel::ItemFromQuery(GroupBy type, bool signal, bool c
 
 }
 
-CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool create_divider, CollectionItem *parent, const Song &s, int container_level) {
+CollectionItem *CollectionModel::ItemFromSong(const GroupBy type, const bool signal, const bool create_divider, CollectionItem *parent, const Song &s, const int container_level) {
 
   CollectionItem *item = InitItem(type, signal, parent, container_level);
 
@@ -1357,7 +1359,12 @@ CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool cr
       item->metadata = s;
       item->key = s.title();
       item->display_text = s.TitleWithCompilationArtist();
-      item->sort_text = SortTextForSong(s);
+      if (item->container_level == 1 && !IsAlbumGrouping(group_by_[0])) {
+        item->sort_text = SortText(s.title());
+      }
+      else {
+        item->sort_text = SortTextForSong(s);
+      }
       break;
   }
 
@@ -1368,7 +1375,7 @@ CollectionItem *CollectionModel::ItemFromSong(GroupBy type, bool signal, bool cr
 
 }
 
-void CollectionModel::FinishItem(GroupBy type, bool signal, bool create_divider, CollectionItem *parent, CollectionItem *item) {
+void CollectionModel::FinishItem(const GroupBy type, const bool signal, const bool create_divider, CollectionItem *parent, CollectionItem *item) {
 
   if (type == GroupBy_None) item->lazy_loaded = true;
 
@@ -1460,19 +1467,19 @@ QString CollectionModel::SortTextForArtist(QString artist) {
 
 }
 
-QString CollectionModel::SortTextForNumber(int number) {
+QString CollectionModel::SortTextForNumber(const int number) {
 
   return QString("%1").arg(number, 4, 10, QChar('0'));
 }
 
-QString CollectionModel::SortTextForYear(int year) {
+QString CollectionModel::SortTextForYear(const int year) {
 
   QString str = QString::number(year);
   return QString("0").repeated(qMax(0, 4 - str.length())) + str;
 
 }
 
-QString CollectionModel::SortTextForBitrate(int bitrate) {
+QString CollectionModel::SortTextForBitrate(const int bitrate) {
 
   QString str = QString::number(bitrate);
   return QString("0").repeated(qMax(0, 3 - str.length())) + str;
@@ -1538,9 +1545,9 @@ bool CollectionModel::CompareItems(const CollectionItem *a, const CollectionItem
 
 }
 
-int CollectionModel::MaximumCacheSize(QSettings *s, const char *size_id, const char *size_unit_id) const {
+int CollectionModel::MaximumCacheSize(QSettings *s, const char *size_id, const char *size_unit_id, const int cache_size_default) const {
 
-  int size = s->value(size_id, 80).toInt();
+  int size = s->value(size_id, cache_size_default).toInt();
   int unit = s->value(size_unit_id, CollectionSettingsPage::CacheSizeUnit::CacheSizeUnit_MB).toInt() + 1;
 
   do {
@@ -1596,7 +1603,7 @@ SongList CollectionModel::GetChildSongs(const QModelIndex &idx) const {
   return GetChildSongs(QModelIndexList() << idx);
 }
 
-void CollectionModel::SetFilterAge(int age) {
+void CollectionModel::SetFilterAge(const int age) {
   query_options_.set_max_age(age);
   ResetAsync();
 }
@@ -1631,7 +1638,7 @@ void CollectionModel::SetGroupBy(const Grouping &g) {
 
 }
 
-const CollectionModel::GroupBy &CollectionModel::Grouping::operator[](int i) const {
+const CollectionModel::GroupBy &CollectionModel::Grouping::operator[](const int i) const {
 
   switch (i) {
     case 0: return first;
@@ -1643,7 +1650,7 @@ const CollectionModel::GroupBy &CollectionModel::Grouping::operator[](int i) con
 
 }
 
-CollectionModel::GroupBy &CollectionModel::Grouping::operator[](int i) {
+CollectionModel::GroupBy &CollectionModel::Grouping::operator[](const int i) {
 
   switch (i) {
     case 0: return first;
@@ -1657,21 +1664,21 @@ CollectionModel::GroupBy &CollectionModel::Grouping::operator[](int i) {
 }
 
 
-void CollectionModel::TotalSongCountUpdatedSlot(int count) {
+void CollectionModel::TotalSongCountUpdatedSlot(const int count) {
 
   total_song_count_ = count;
   emit TotalSongCountUpdated(count);
 
 }
 
-void CollectionModel::TotalArtistCountUpdatedSlot(int count) {
+void CollectionModel::TotalArtistCountUpdatedSlot(const int count) {
 
   total_artist_count_ = count;
   emit TotalArtistCountUpdated(count);
 
 }
 
-void CollectionModel::TotalAlbumCountUpdatedSlot(int count) {
+void CollectionModel::TotalAlbumCountUpdatedSlot(const int count) {
 
   total_album_count_ = count;
   emit TotalAlbumCountUpdated(count);

@@ -233,6 +233,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void OpenSettingsDialogAtPage(SettingsDialog::Page page);
 
   void TabSwitched();
+  void ToggleSidebar(const bool checked);
+  void ToggleSearchCoverAuto(const bool checked);
   void SaveGeometry();
   void SavePlaybackStatus();
   void LoadPlaybackStatus();

@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2020, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +61,11 @@ AlbumCoverFetcherSearch::AlbumCoverFetcherSearch(
 
 }
 
+AlbumCoverFetcherSearch::~AlbumCoverFetcherSearch() {
+  pending_requests_.clear();
+  Cancel();
+}
+
 void AlbumCoverFetcherSearch::TerminateSearch() {
 
   for (quint64 id : pending_requests_.keys()) {
@@ -72,12 +78,23 @@ void AlbumCoverFetcherSearch::TerminateSearch() {
 
 void AlbumCoverFetcherSearch::Start(CoverProviders *cover_providers) {
 
-  for (CoverProvider *provider : cover_providers->List()) {
+  QList<CoverProvider*> cover_providers_sorted = cover_providers->List();
+  std::stable_sort(cover_providers_sorted.begin(), cover_providers_sorted.end(), ProviderCompareOrder);
 
-    // Skip provider if it does not have fetchall set, and we are doing fetchall - "Fetch Missing Covers".
+  for (CoverProvider *provider : cover_providers_sorted) {
+
+    if (!provider->is_enabled()) continue;
+
+    // Skip any provider that requires authentication but is not authenticated.
+    if (provider->AuthenticationRequired() && !provider->IsAuthenticated()) {
+      continue;
+    }
+
+    // Skip provider if it does not have fetchall set and we are doing fetchall - "Fetch Missing Covers".
     if (!provider->fetchall() && request_.fetchall) {
       continue;
     }
+
     // If album is missing, check if we can still use this provider by searching using artist + title.
     if (!provider->allow_missing_album() && request_.album.isEmpty()) {
       continue;
@@ -193,6 +210,7 @@ void AlbumCoverFetcherSearch::FetchMoreImages() {
 
 void AlbumCoverFetcherSearch::ProviderCoverFetchFinished(QNetworkReply *reply) {
 
+  disconnect(reply, &QNetworkReply::finished, this, nullptr);
   reply->deleteLater();
 
   if (!pending_image_loads_.contains(reply)) return;
@@ -268,7 +286,7 @@ void AlbumCoverFetcherSearch::SendBestImage() {
     cover_url = best_image.first.image_url;
     image = best_image.second;
 
-    qLog(Info) << "Using " << best_image.first.image_url << "from" << best_image.first.provider << "with score" << best_image.first.score;
+    qLog(Info) << "Using" << best_image.first.image_url << "from" << best_image.first.provider << "with score" << best_image.first.score;
 
     statistics_.chosen_images_by_provider_[best_image.first.provider]++;
     statistics_.chosen_images_++;
@@ -292,11 +310,17 @@ void AlbumCoverFetcherSearch::Cancel() {
   }
   else if (!pending_image_loads_.isEmpty()) {
     for (QNetworkReply *reply : pending_image_loads_.keys()) {
+      disconnect(reply, &QNetworkReply::finished, this, nullptr);
       reply->abort();
+      reply->deleteLater();
     }
     pending_image_loads_.clear();
   }
 
+}
+
+bool AlbumCoverFetcherSearch::ProviderCompareOrder(CoverProvider *a, CoverProvider *b) {
+  return a->order() < b->order();
 }
 
 bool AlbumCoverFetcherSearch::CoverSearchResultCompareScore(const CoverSearchResult &a, const CoverSearchResult &b) {

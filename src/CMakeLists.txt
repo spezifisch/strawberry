@@ -197,11 +197,14 @@ set(SOURCES
   covermanager/coverexportrunnable.cpp
   covermanager/currentalbumcoverloader.cpp
   covermanager/coverfromurldialog.cpp
+  covermanager/jsoncoverprovider.cpp
   covermanager/lastfmcoverprovider.cpp
   covermanager/musicbrainzcoverprovider.cpp
   covermanager/discogscoverprovider.cpp
   covermanager/deezercoverprovider.cpp
   covermanager/qobuzcoverprovider.cpp
+  covermanager/musixmatchcoverprovider.cpp
+  covermanager/spotifycoverprovider.cpp
 
   lyrics/lyricsproviders.cpp
   lyrics/lyricsprovider.cpp
@@ -211,18 +214,23 @@ set(SOURCES
   lyrics/auddlyricsprovider.cpp
   lyrics/ovhlyricsprovider.cpp
   lyrics/lololyricsprovider.cpp
+  lyrics/geniuslyricsprovider.cpp
+  lyrics/musixmatchlyricsprovider.cpp
+  lyrics/chartlyricsprovider.cpp
 
   settings/settingsdialog.cpp
   settings/settingspage.cpp
   settings/behavioursettingspage.cpp
   settings/collectionsettingspage.cpp
   settings/backendsettingspage.cpp
-  settings/contextsettingspage.cpp
   settings/playlistsettingspage.cpp
+  settings/scrobblersettingspage.cpp
+  settings/coverssettingspage.cpp
+  settings/lyricssettingspage.cpp
   settings/networkproxysettingspage.cpp
   settings/appearancesettingspage.cpp
+  settings/contextsettingspage.cpp
   settings/notificationssettingspage.cpp
-  settings/scrobblersettingspage.cpp
 
   dialogs/about.cpp
   dialogs/console.cpp
@@ -309,6 +317,7 @@ set(HEADERS
   core/standarditemiconloader.h
   core/systemtrayicon.h
   core/mimedata.h
+  core/stylesheetloader.h
 
   engine/enginebase.h
   engine/devicefinders.h
@@ -397,11 +406,14 @@ set(HEADERS
   covermanager/coverexportrunnable.h
   covermanager/currentalbumcoverloader.h
   covermanager/coverfromurldialog.h
+  covermanager/jsoncoverprovider.h
   covermanager/lastfmcoverprovider.h
   covermanager/musicbrainzcoverprovider.h
   covermanager/discogscoverprovider.h
   covermanager/deezercoverprovider.h
   covermanager/qobuzcoverprovider.h
+  covermanager/musixmatchcoverprovider.h
+  covermanager/spotifycoverprovider.h
 
   lyrics/lyricsproviders.h
   lyrics/lyricsprovider.h
@@ -411,18 +423,23 @@ set(HEADERS
   lyrics/auddlyricsprovider.h
   lyrics/ovhlyricsprovider.h
   lyrics/lololyricsprovider.h
+  lyrics/geniuslyricsprovider.h
+  lyrics/musixmatchlyricsprovider.h
+  lyrics/chartlyricsprovider.h
 
   settings/settingsdialog.h
   settings/settingspage.h
   settings/behavioursettingspage.h
   settings/collectionsettingspage.h
   settings/backendsettingspage.h
-  settings/contextsettingspage.h
   settings/playlistsettingspage.h
+  settings/scrobblersettingspage.h
+  settings/coverssettingspage.h
+  settings/lyricssettingspage.h
   settings/networkproxysettingspage.h
   settings/appearancesettingspage.h
+  settings/contextsettingspage.h
   settings/notificationssettingspage.h
-  settings/scrobblersettingspage.h
 
   dialogs/about.h
   dialogs/errordialog.h
@@ -523,10 +540,12 @@ set(UI
   settings/backendsettingspage.ui
   settings/contextsettingspage.ui
   settings/playlistsettingspage.ui
+  settings/scrobblersettingspage.ui
+  settings/coverssettingspage.ui
+  settings/lyricssettingspage.ui
   settings/networkproxysettingspage.ui
   settings/appearancesettingspage.ui
   settings/notificationssettingspage.ui
-  settings/scrobblersettingspage.ui
 
   equalizer/equalizer.ui
   equalizer/equalizerslider.ui

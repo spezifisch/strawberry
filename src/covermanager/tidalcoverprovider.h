@@ -32,14 +32,14 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-#include "coverprovider.h"
+#include "jsoncoverprovider.h"
+#include "tidal/tidalservice.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
 class Application;
-class TidalService;
 
-class TidalCoverProvider : public CoverProvider {
+class TidalCoverProvider : public JsonCoverProvider {
   Q_OBJECT
 
  public:
@@ -47,12 +47,14 @@ class TidalCoverProvider : public CoverProvider {
   bool StartSearch(const QString &artist, const QString &album, const QString &title, const int id);
   void CancelSearch(const int id);
 
+  bool IsAuthenticated() const { return service_ && service_->authenticated(); }
+  void Deauthenticate() { if (service_) service_->Logout(); }
+
  private slots:
   void HandleSearchReply(QNetworkReply *reply, const int id);
 
  private:
   QByteArray GetReplyData(QNetworkReply *reply);
-  QJsonObject ExtractJsonObj(const QByteArray &data);
   void Error(const QString &error, const QVariant &debug = QVariant());
 
  private:

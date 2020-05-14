@@ -190,6 +190,8 @@ class CollectionBackend : public CollectionBackendInterface {
 
   Song::Source Source() const;
 
+  void AddOrUpdateSongsAsync(const SongList &songs);
+
  public slots:
   void Exit();
   void LoadDirectories();

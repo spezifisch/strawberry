@@ -367,6 +367,10 @@ void OpenInFileManager(const QString &path) {
     command_params.removeAt(command_params.indexOf("%U"));
   }
 
+  if (command.startsWith("/usr/bin/")) {
+    command = command.split("/").last();
+  }
+
   if (command.isEmpty() || command == "exo-open") {
     QFileInfo info(path);
     if (!info.exists()) return;
@@ -987,6 +991,16 @@ QString ReplaceVariable(const QString &variable, const Song &song, const QString
 
 bool IsColorDark(const QColor &color) {
   return ((30 * color.red() + 59 * color.green() + 11 * color.blue()) / 100) <= 130;
+}
+
+QList<QByteArray> ImageFormatsForMimeType(const QByteArray &mimetype) {
+
+  if (mimetype == "image/bmp") return QList<QByteArray>() << "BMP";
+  else if (mimetype == "image/gif") return QList<QByteArray>() << "GIF";
+  else if (mimetype == "image/jpeg") return QList<QByteArray>() << "JPG";
+  else if (mimetype == "image/png") return QList<QByteArray>() << "PNG";
+  else return QList<QByteArray>();
+
 }
 
 }  // namespace Utilities

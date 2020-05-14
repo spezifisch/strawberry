@@ -24,6 +24,7 @@
 #include <QString>
 #include <QUrl>
 #include <QImage>
+#include <QImageReader>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonObject>
@@ -36,6 +37,7 @@
 #include "core/song.h"
 #include "core/timeconstants.h"
 #include "core/application.h"
+#include "core/utilities.h"
 #include "covermanager/albumcoverloader.h"
 #include "tidalservice.h"
 #include "tidalurlhandler.h"
@@ -82,14 +84,14 @@ TidalRequest::~TidalRequest() {
 
   while (!replies_.isEmpty()) {
     QNetworkReply *reply = replies_.takeFirst();
-    disconnect(reply, 0, this, 0);
+    disconnect(reply, nullptr, this, nullptr);
     if (reply->isRunning()) reply->abort();
     reply->deleteLater();
   }
 
   while (!album_cover_replies_.isEmpty()) {
     QNetworkReply *reply = album_cover_replies_.takeFirst();
-    disconnect(reply, 0, this, 0);
+    disconnect(reply, nullptr, this, nullptr);
     if (reply->isRunning()) reply->abort();
     reply->deleteLater();
   }
@@ -328,6 +330,7 @@ void TidalRequest::ArtistsReplyReceived(QNetworkReply *reply, const int limit_re
 
   if (!replies_.contains(reply)) return;
   replies_.removeAll(reply);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   QByteArray data = GetReplyData(reply, (offset_requested == 0));
@@ -519,6 +522,7 @@ void TidalRequest::AlbumsReceived(QNetworkReply *reply, const QString &artist_id
 
   if (!replies_.contains(reply)) return;
   replies_.removeAll(reply);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   QByteArray data = GetReplyData(reply, auto_login);
@@ -785,6 +789,7 @@ void TidalRequest::SongsReceived(QNetworkReply *reply, const QString &artist_id,
 
   if (!replies_.contains(reply)) return;
   replies_.removeAll(reply);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   QByteArray data = GetReplyData(reply, auto_login);
@@ -1125,6 +1130,7 @@ void TidalRequest::AlbumCoverReceived(QNetworkReply *reply, const QString &album
 
   if (album_cover_replies_.contains(reply)) {
     album_cover_replies_.removeAll(reply);
+    disconnect(reply, nullptr, this, nullptr);
     reply->deleteLater();
   }
   else {
@@ -1151,27 +1157,51 @@ void TidalRequest::AlbumCoverReceived(QNetworkReply *reply, const QString &album
     return;
   }
 
-  QByteArray data = reply->readAll();
-  if (data.isEmpty()) {
-    Error(QString("Received empty image data for %1").arg(url.toString()));
-    album_covers_requests_sent_.remove(album_id);
+  if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200) {
+    Error(QString("Received HTTP code %1 for %2.").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()).arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
     AlbumCoverFinishCheck();
     return;
   }
 
-  QImage image;
-  if (image.loadFromData(data)) {
+  QString mimetype = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+  if (!QImageReader::supportedMimeTypes().contains(mimetype.toUtf8())) {
+    Error(QString("Unsupported mimetype for image reader %1 for %2").arg(mimetype).arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
+    AlbumCoverFinishCheck();
+    return;
+  }
 
-    if (image.save(filename, "JPG")) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
+  QList<QByteArray> format_list = QImageReader::imageFormatsForMimeType(mimetype.toUtf8());
+#else
+  QList<QByteArray> format_list = Utilities::ImageFormatsForMimeType(mimetype.toUtf8());
+#endif
+
+  QByteArray data = reply->readAll();
+  if (format_list.isEmpty() || data.isEmpty()) {
+    Error(QString("Received empty image data for %1").arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
+    AlbumCoverFinishCheck();
+    return;
+  }
+  QByteArray format = format_list.first();
+
+  QImage image;
+  if (image.loadFromData(data, format)) {
+    if (image.save(filename, format)) {
       while (album_covers_requests_sent_.contains(album_id)) {
         Song *song = album_covers_requests_sent_.take(album_id);
         song->set_art_automatic(QUrl::fromLocalFile(filename));
       }
     }
-
+    else {
+      Error(QString("Error saving image data to %1").arg(filename));
+      if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
+    }
   }
   else {
-    album_covers_requests_sent_.remove(album_id);
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
     Error(QString("Error decoding image data from %1").arg(url.toString()));
   }
 

@@ -31,6 +31,7 @@
 #include <QString>
 #include <QUrl>
 #include <QImage>
+#include <QImageReader>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -100,6 +101,7 @@ void AlbumCoverFetcherSearch::Start(CoverProviders *cover_providers) {
       continue;
     }
 
+    connect(provider, SIGNAL(SearchResults(int, CoverSearchResults)), SLOT(ProviderSearchResults(int, CoverSearchResults)));
     connect(provider, SIGNAL(SearchFinished(int, CoverSearchResults)), SLOT(ProviderSearchFinished(int, CoverSearchResults)));
     const int id = cover_providers->NextId();
     const bool success = provider->StartSearch(request_.artist, request_.album, request_.title, id);
@@ -117,10 +119,15 @@ void AlbumCoverFetcherSearch::Start(CoverProviders *cover_providers) {
 
 }
 
-void AlbumCoverFetcherSearch::ProviderSearchFinished(const int id, const CoverSearchResults &results) {
+void AlbumCoverFetcherSearch::ProviderSearchResults(const int id, const CoverSearchResults &results) {
 
   if (!pending_requests_.contains(id)) return;
-  CoverProvider *provider = pending_requests_.take(id);
+  CoverProvider *provider = pending_requests_[id];
+  ProviderSearchResults(provider, results);
+
+}
+
+void AlbumCoverFetcherSearch::ProviderSearchResults(CoverProvider *provider, const CoverSearchResults &results) {
 
   CoverSearchResults results_copy(results);
   for (int i = 0 ; i < results_copy.count() ; ++i) {
@@ -140,6 +147,15 @@ void AlbumCoverFetcherSearch::ProviderSearchFinished(const int id, const CoverSe
   // Add results from the current provider to our pool
   results_.append(results_copy);
   statistics_.total_images_by_provider_[provider->name()]++;
+
+}
+
+void AlbumCoverFetcherSearch::ProviderSearchFinished(const int id, const CoverSearchResults &results) {
+
+  if (!pending_requests_.contains(id)) return;
+
+  CoverProvider *provider = pending_requests_.take(id);
+  ProviderSearchResults(provider, results);
 
   // Do we have more providers left?
   if (!pending_requests_.isEmpty()) {
@@ -210,7 +226,7 @@ void AlbumCoverFetcherSearch::FetchMoreImages() {
 
 void AlbumCoverFetcherSearch::ProviderCoverFetchFinished(QNetworkReply *reply) {
 
-  disconnect(reply, &QNetworkReply::finished, this, nullptr);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   if (!pending_image_loads_.contains(reply)) return;
@@ -225,18 +241,24 @@ void AlbumCoverFetcherSearch::ProviderCoverFetchFinished(QNetworkReply *reply) {
   if (reply->error() != QNetworkReply::NoError) {
     qLog(Error) << "Error requesting" << reply->url() << reply->errorString();
   }
+  else if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200) {
+    qLog(Error) << "Error requesting" << reply->url() << "received HTTP code" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  }
   else {
-    QImage image;
-    if (image.loadFromData(reply->readAll())) {
-
-      result.score += ScoreImage(image);
-      candidate_images_.insertMulti(result.score, CandidateImage(result, image));
-
-      qLog(Debug) << reply->url() << "from" << result.provider << "scored" << result.score;
-
+    QString mimetype = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+    if (QImageReader::supportedMimeTypes().contains(mimetype.toUtf8())) {
+      QImage image;
+      if (image.loadFromData(reply->readAll())) {
+        result.score += ScoreImage(image);
+        candidate_images_.insertMulti(result.score, CandidateImage(result, image));
+        qLog(Debug) << reply->url() << "from" << result.provider << "scored" << result.score;
+      }
+      else {
+        qLog(Error) << "Error decoding image data from" << reply->url();
+      }
     }
     else {
-      qLog(Error) << "Error decoding image data from" << reply->url();
+      qLog(Error) << "Unsupported mimetype for image reader:" << mimetype << "from" << reply->url();
     }
   }
 

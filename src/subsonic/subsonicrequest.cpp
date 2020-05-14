@@ -29,6 +29,7 @@
 #include <QUrl>
 #include <QRegExp>
 #include <QImage>
+#include <QImageReader>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -43,6 +44,7 @@
 #include "core/logging.h"
 #include "core/song.h"
 #include "core/timeconstants.h"
+#include "core/utilities.h"
 #include "covermanager/albumcoverloader.h"
 #include "subsonicservice.h"
 #include "subsonicurlhandler.h"
@@ -80,14 +82,14 @@ SubsonicRequest::~SubsonicRequest() {
 
   while (!replies_.isEmpty()) {
     QNetworkReply *reply = replies_.takeFirst();
-    disconnect(reply, 0, this, 0);
+    disconnect(reply, nullptr, this, nullptr);
     if (reply->isRunning()) reply->abort();
     reply->deleteLater();
   }
 
   while (!album_cover_replies_.isEmpty()) {
     QNetworkReply *reply = album_cover_replies_.takeFirst();
-    disconnect(reply, 0, this, 0);
+    disconnect(reply, nullptr, this, nullptr);
     if (reply->isRunning()) reply->abort();
     reply->deleteLater();
   }
@@ -162,6 +164,7 @@ void SubsonicRequest::AlbumsReplyReceived(QNetworkReply *reply, const int offset
 
   if (!replies_.contains(reply)) return;
   replies_.removeAll(reply);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   --albums_requests_active_;
@@ -351,10 +354,11 @@ void SubsonicRequest::FlushAlbumSongsRequests() {
 
 }
 
-void SubsonicRequest::AlbumSongsReplyReceived(QNetworkReply *reply, const QString &artist_id, const QString &album_id, const QString &album_artist) {
+void SubsonicRequest::AlbumSongsReplyReceived(QNetworkReply *reply, const QString artist_id, const QString album_id, const QString album_artist) {
 
   if (!replies_.contains(reply)) return;
   replies_.removeAll(reply);
+  disconnect(reply, nullptr, this, nullptr);
   reply->deleteLater();
 
   --album_songs_requests_active_;
@@ -722,10 +726,11 @@ void SubsonicRequest::FlushAlbumCoverRequests() {
 
 }
 
-void SubsonicRequest::AlbumCoverReceived(QNetworkReply *reply, const QString &album_id, const QUrl &url, const QString &filename) {
+void SubsonicRequest::AlbumCoverReceived(QNetworkReply *reply, const QString album_id, const QUrl url, const QString filename) {
 
   if (album_cover_replies_.contains(reply)) {
     album_cover_replies_.removeAll(reply);
+    disconnect(reply, nullptr, this, nullptr);
     reply->deleteLater();
   }
   else {
@@ -746,32 +751,59 @@ void SubsonicRequest::AlbumCoverReceived(QNetworkReply *reply, const QString &al
   }
 
   if (reply->error() != QNetworkReply::NoError) {
-    Error(QString("%1 (%2)").arg(reply->errorString()).arg(reply->error()));
-    album_covers_requests_sent_.remove(album_id);
+    Error(QString("%1 (%2) for %3").arg(reply->errorString()).arg(reply->error()).arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
     AlbumCoverFinishCheck();
     return;
   }
+
+  if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200) {
+    Error(QString("Received HTTP code %1 for %2.").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()).arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
+    AlbumCoverFinishCheck();
+    return;
+  }
+
+  QString mimetype = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+  if (!QImageReader::supportedMimeTypes().contains(mimetype.toUtf8())) {
+    Error(QString("Unsupported mimetype for image reader %1 for %2").arg(mimetype).arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
+    AlbumCoverFinishCheck();
+    return;
+  }
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
+  QList<QByteArray> format_list = QImageReader::imageFormatsForMimeType(mimetype.toUtf8());
+#else
+  QList<QByteArray> format_list = Utilities::ImageFormatsForMimeType(mimetype.toUtf8());
+#endif
 
   QByteArray data = reply->readAll();
-  if (data.isEmpty()) {
+  if (format_list.isEmpty() || data.isEmpty()) {
     Error(QString("Received empty image data for %1").arg(url.toString()));
-    album_covers_requests_sent_.remove(album_id);
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
     AlbumCoverFinishCheck();
     return;
   }
+  QByteArray format = format_list.first();
+  QString fullfilename = filename + "." + format.toLower();
 
   QImage image;
-  if (image.loadFromData(data)) {
-    if (image.save(filename, "JPG")) {
+  if (image.loadFromData(data, format)) {
+    if (image.save(fullfilename, format)) {
       while (album_covers_requests_sent_.contains(album_id)) {
         Song *song = album_covers_requests_sent_.take(album_id);
-        song->set_art_automatic(QUrl::fromLocalFile(filename));
+        song->set_art_automatic(QUrl::fromLocalFile(fullfilename));
       }
+    }
+    else {
+      Error(QString("Error saving image data to %1.").arg(fullfilename));
+      if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
     }
   }
   else {
-    album_covers_requests_sent_.remove(album_id);
-    Error(QString("Error decoding image data from %1").arg(url.toString()));
+    Error(QString("Error decoding image data from %1.").arg(url.toString()));
+    if (album_covers_requests_sent_.contains(album_id)) album_covers_requests_sent_.remove(album_id);
   }
 
   AlbumCoverFinishCheck();

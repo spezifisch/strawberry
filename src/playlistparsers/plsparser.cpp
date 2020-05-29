@@ -34,6 +34,12 @@
 
 class CollectionBackendInterface;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+#  define qt_endl Qt::endl
+#else
+#  define qt_endl endl
+#endif
+
 PLSParser::PLSParser(CollectionBackendInterface *collection, QObject *parent)
     : ParserBase(collection, parent) {}
 
@@ -81,15 +87,15 @@ SongList PLSParser::Load(QIODevice *device, const QString &playlist_path, const 
 void PLSParser::Save(const SongList &songs, QIODevice *device, const QDir &dir, Playlist::Path path_type) const {
 
   QTextStream s(device);
-  s << "[playlist]" << endl;
-  s << "Version=2" << endl;
-  s << "NumberOfEntries=" << songs.count() << endl;
+  s << "[playlist]" << qt_endl;
+  s << "Version=2" << qt_endl;
+  s << "NumberOfEntries=" << songs.count() << qt_endl;
 
   int n = 1;
   for (const Song &song : songs) {
-    s << "File" << n << "=" << URLOrFilename(song.url(), dir, path_type) << endl;
-    s << "Title" << n << "=" << song.title() << endl;
-    s << "Length" << n << "=" << song.length_nanosec() / kNsecPerSec << endl;
+    s << "File" << n << "=" << URLOrFilename(song.url(), dir, path_type) << qt_endl;
+    s << "Title" << n << "=" << song.title() << qt_endl;
+    s << "Length" << n << "=" << song.length_nanosec() / kNsecPerSec << qt_endl;
     ++n;
   }
 

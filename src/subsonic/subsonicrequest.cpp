@@ -453,9 +453,8 @@ void SubsonicRequest::AlbumSongsReplyReceived(QNetworkReply *reply, const QStrin
 
   for (Song &song : songs) {
     if (compilation) song.set_compilation_detected(true);
-    if (multidisc) {
-      QString album_full(QString("%1 - (Disc %2)").arg(song.album()).arg(song.disc()));
-      song.set_album(album_full);
+    if (!multidisc) {
+      song.set_disc(0);
     }
     songs_ << song;
   }
@@ -688,7 +687,7 @@ void SubsonicRequest::AddAlbumCoverRequest(Song &song) {
   if (!cover_url.isValid()) return;
 
   if (album_covers_requests_sent_.contains(cover_url)) {
-    album_covers_requests_sent_.insertMulti(cover_url, &song);
+    album_covers_requests_sent_.insert(cover_url, &song);
     return;
   }
 
@@ -698,7 +697,7 @@ void SubsonicRequest::AddAlbumCoverRequest(Song &song) {
   request.filename = Song::ImageCacheDir(Song::Source_Subsonic) + "/" + cover_url_query.queryItemValue("id");
   if (request.filename.isEmpty()) return;
 
-  album_covers_requests_sent_.insertMulti(cover_url, &song);
+  album_covers_requests_sent_.insert(cover_url, &song);
   ++album_covers_requested_;
 
   album_cover_requests_queue_.enqueue(request);

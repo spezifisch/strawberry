@@ -1034,7 +1034,7 @@ void Playlist::InsertItemsWithoutUndo(const PlaylistItemList &items, int pos, bo
     if (item->source() == Song::Source_Collection) {
       int id = item->Metadata().id();
       if (id != -1) {
-        collection_items_by_id_.insertMulti(id, item);
+        collection_items_by_id_.insert(id, item);
       }
     }
 
@@ -1110,12 +1110,13 @@ void Playlist::UpdateItems(const SongList &songs) {
   // we want to update: if an item corresponds to the song (we rely on URL for this), we update the item with the new metadata,
   // then we remove song from our list because we will not need to check it again.
   // And we also update undo actions.
-  QLinkedList<Song> songs_list;
+
+  QList<Song> songs_list;
   for (const Song &song : songs) songs_list.append(song);
 
   for (int i = 0;  i < items_.size() ; i++) {
     // Update current items list
-    QMutableLinkedListIterator<Song> it(songs_list);
+    QMutableListIterator<Song> it(songs_list);
     while (it.hasNext()) {
       const Song &song = it.next();
       const PlaylistItemPtr &item = items_[i];
@@ -1124,7 +1125,7 @@ void Playlist::UpdateItems(const SongList &songs) {
         if (song.is_collection_song()) {
           new_item = PlaylistItemPtr(new CollectionPlaylistItem(song));
           if (collection_items_by_id_.contains(song.id(), item)) collection_items_by_id_.remove(song.id(), item);
-          collection_items_by_id_.insertMulti(song.id(), new_item);
+          collection_items_by_id_.insert(song.id(), new_item);
         }
         else {
           new_item = PlaylistItemPtr(new SongPlaylistItem(song));

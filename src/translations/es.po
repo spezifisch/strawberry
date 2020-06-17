@@ -487,6 +487,10 @@ msgstr "Interrumpir"
 msgid "Abort collection scan"
 msgstr "Cancelar el escaneo de la colección"
 
+#: ../build/src/ui_about.h:155
+msgid "About"
+msgstr ""
+
 #: ../build/src/ui_mainwindow.h:693
 msgid "About &Qt"
 msgstr "Acerca de &Qt"
@@ -914,7 +918,7 @@ msgstr "Inicio de sesión"
 msgid "Authentication failed"
 msgstr "Fallo de inicio de sesión"
 
-#: dialogs/about.cpp:152
+#: dialogs/about.cpp:141
 msgid "Author and maintainer"
 msgstr ""
 
@@ -1069,7 +1073,7 @@ msgstr "Búfer"
 msgid "Buffer duration"
 msgstr "Duración del búfer"
 
-#: engine/gstengine.cpp:630
+#: engine/gstengine.cpp:629
 msgid "Buffering"
 msgstr "Guardando en búfer"
 
@@ -1138,11 +1142,11 @@ msgstr "Inicializar caché de disco"
 msgid "Clear playlist"
 msgstr "Vaciar lista de reproducción"
 
-#: dialogs/about.cpp:170
+#: dialogs/about.cpp:159
 msgid "Clementine authors"
 msgstr "Autores de Clementine"
 
-#: dialogs/about.cpp:179
+#: dialogs/about.cpp:168
 msgid "Clementine contributors"
 msgstr "Colaboradores de Clementine"
 
@@ -1278,7 +1282,7 @@ msgstr ""
 "Salta al siguiente elemento en la lista de reproducción si una canción no "
 "está disponible"
 
-#: dialogs/about.cpp:161
+#: dialogs/about.cpp:150
 msgid "Contributors"
 msgstr "Colaboradores"
 
@@ -2275,7 +2279,7 @@ msgstr "Alta (%1 fps)"
 msgid "Icon"
 msgstr "Icono"
 
-#: widgets/fancytabwidget.cpp:605
+#: widgets/fancytabwidget.cpp:603
 msgid "Icons on top"
 msgstr "Iconos en la parte superior"
 
@@ -2299,9 +2303,9 @@ msgstr ""
 "Si continúas este dispositivo funcionará con lentitud y las pistas que se "
 "copien en él podrían no funcionar."
 
-#: dialogs/about.cpp:137
+#: dialogs/about.cpp:126
 msgid ""
-"If you like this Strawberry and can make use of it, consider sponsoring or "
+"If you like Strawberry and can make use of it, consider sponsoring or "
 "donating."
 msgstr ""
 
@@ -2368,7 +2372,7 @@ msgstr "Pistas de introducción"
 msgid "Invalid reply from web browser. Missing token."
 msgstr "Respuesta inválida del servidor web. Falta token."
 
-#: dialogs/about.cpp:127
+#: dialogs/about.cpp:116
 msgid ""
 "It is a fork of Clementine released in 2018 aimed at music collectors and "
 "audiophiles."
@@ -2406,7 +2410,7 @@ msgstr "Salón grande"
 msgid "Large album cover"
 msgstr "Portada de álbum grande"
 
-#: widgets/fancytabwidget.cpp:601
+#: widgets/fancytabwidget.cpp:599
 msgid "Large sidebar"
 msgstr "Barra lateral grande"
 
@@ -2647,7 +2651,7 @@ msgstr "Humor"
 msgid "Moodbar"
 msgstr "Barra de humor"
 
-#: moodbar/moodbarproxystyle.cpp:380 ../build/src/ui_moodbarsettingspage.h:98
+#: moodbar/moodbarproxystyle.cpp:378 ../build/src/ui_moodbarsettingspage.h:98
 msgid "Moodbar style"
 msgstr "Estilo de la barra de humor"
 
@@ -2982,7 +2986,7 @@ msgstr "Intérprete"
 msgid "Pixel"
 msgstr "Píxel"
 
-#: widgets/fancytabwidget.cpp:603
+#: widgets/fancytabwidget.cpp:601
 msgid "Plain sidebar"
 msgstr "Barra lateral simple"
 
@@ -3708,7 +3712,7 @@ msgstr "Mostrar una notificación en la bandeja del siste&ma"
 msgid "Show a pretty OSD"
 msgstr "Mostrar panel de información en pantalla chulo"
 
-#: widgets/playingwidget.cpp:141
+#: widgets/playingwidget.cpp:139
 msgid "Show above status bar"
 msgstr "Mostrar sobre la barra de estado"
 
@@ -3765,7 +3769,7 @@ msgstr "Mostrar en Varios artistas"
 msgid "Show love button"
 msgstr "Mostrar el botón \"Me gusta\""
 
-#: moodbar/moodbarproxystyle.cpp:375
+#: moodbar/moodbarproxystyle.cpp:373
 msgid "Show moodbar"
 msgstr "Mostrar barra de humor"
 
@@ -3862,7 +3866,7 @@ msgstr "Omitir pista"
 msgid "Small album cover"
 msgstr "Portada de álbum pequeña"
 
-#: widgets/fancytabwidget.cpp:602
+#: widgets/fancytabwidget.cpp:600
 msgid "Small sidebar"
 msgstr "Barra lateral pequeña"
 
@@ -3982,11 +3986,11 @@ msgstr ""
 msgid "Strawberry can show a message when the track changes."
 msgstr "Strawberry puede mostrar un mensaje cuando la pista cambie."
 
-#: dialogs/about.cpp:125
+#: dialogs/about.cpp:114
 msgid "Strawberry is a music player and music collection organizer."
 msgstr "Strawberry es un reproductor y catalogador de colecciones musicales."
 
-#: dialogs/about.cpp:131
+#: dialogs/about.cpp:120
 #, qt-format
 msgid ""
 "Strawberry is free software released under GPL. The source code is available "
@@ -4057,7 +4061,7 @@ msgstr "Colores del sistema"
 msgid "Tabbar colors"
 msgstr "Colores barra pestañas"
 
-#: widgets/fancytabwidget.cpp:604
+#: widgets/fancytabwidget.cpp:602
 msgid "Tabs on top"
 msgstr "Pestañas en la parte superior"
 
@@ -4093,11 +4097,11 @@ msgstr "¡Prueba correcta!"
 msgid "Text options"
 msgstr "Opciones del texto"
 
-#: dialogs/about.cpp:188
+#: dialogs/about.cpp:177
 msgid "Thanks to"
 msgstr "Gracias a"
 
-#: dialogs/about.cpp:196
+#: dialogs/about.cpp:185
 msgid "Thanks to all the other Amarok and Clementine contributors."
 msgstr "Gracias al resto de colaboradores de Amarok y Clementine"
 
@@ -4519,7 +4523,7 @@ msgstr "Varios artistas"
 msgid "Verify server certificate"
 msgstr "Verificar el certificado del servidor"
 
-#: dialogs/about.cpp:121
+#: dialogs/about.cpp:110
 #, qt-format
 msgid "Version %1"
 msgstr "Versión %1"
@@ -4656,7 +4660,7 @@ msgid "You can change the way the songs in the collection are organised."
 msgstr ""
 "Puedes modificar el modo en que se organizan las canciones en la colección."
 
-#: dialogs/about.cpp:139
+#: dialogs/about.cpp:128
 #, qt-format
 msgid ""
 "You can sponsor the author on %1. You can also make a one-time payment "
@@ -4687,7 +4691,7 @@ msgstr ""
 "style:italic;\">Habilitar dispositivos de accesibilidad</span>\" para "
 "utilizar atajos globales en Strawberry."
 
-#: dialogs/about.cpp:133
+#: dialogs/about.cpp:122
 #, qt-format
 msgid ""
 "You should have received a copy of the GNU General Public License along with "
@@ -4706,7 +4710,7 @@ msgstr "La colección está vacía."
 msgid "Zero"
 msgstr "Cero"
 
-#: playlist/playlistundocommands.cpp:47
+#: playlist/playlistundocommands.cpp:46
 #, c-format, qt-plural-format
 msgctxt ""
 msgid "add %n songs"
@@ -4748,7 +4752,7 @@ msgstr "hw"
 msgid "kbps"
 msgstr "kb/s"
 
-#: playlist/playlistundocommands.cpp:104
+#: playlist/playlistundocommands.cpp:103
 #, c-format, qt-plural-format
 msgctxt ""
 msgid "move %n songs"
@@ -4766,7 +4770,7 @@ msgstr "opciones"
 msgid "p&lughw"
 msgstr "p&lughw"
 
-#: playlist/playlistundocommands.cpp:72 playlist/playlistundocommands.cpp:93
+#: playlist/playlistundocommands.cpp:71 playlist/playlistundocommands.cpp:92
 #, c-format, qt-plural-format
 msgctxt ""
 msgid "remove %n songs"
@@ -4776,7 +4780,7 @@ msgstr "quitar %n canciones"
 msgid "searches the collection for all artists that contain the word"
 msgstr "busca en la colección todos los artistas que contengan la palabra"
 
-#: playlist/playlistundocommands.cpp:136
+#: playlist/playlistundocommands.cpp:135
 msgid "shuffle songs"
 msgstr "mezclar canciones"
 
@@ -4784,7 +4788,7 @@ msgstr "mezclar canciones"
 msgid "songs"
 msgstr ""
 
-#: playlist/playlistundocommands.cpp:128
+#: playlist/playlistundocommands.cpp:127
 msgid "sort songs"
 msgstr "ordenar canciones"
 

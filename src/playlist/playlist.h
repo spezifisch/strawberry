@@ -95,7 +95,7 @@ class Playlist : public QAbstractListModel {
 
  public:
   explicit Playlist(PlaylistBackend *backend, TaskManager *task_manager, CollectionBackend *collection, int id, const QString &special_type = QString(), bool favorite = false, QObject *parent = nullptr);
-  ~Playlist();
+  ~Playlist() override;
 
   void SkipTracks(const QModelIndexList &source_indexes);
 
@@ -267,18 +267,18 @@ class Playlist : public QAbstractListModel {
 #endif
 
   // QAbstractListModel
-  int rowCount(const QModelIndex& = QModelIndex()) const { return items_.count(); }
-  int columnCount(const QModelIndex& = QModelIndex()) const { return ColumnCount; }
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  bool setData(const QModelIndex &index, const QVariant &value, int role);
-  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-  Qt::ItemFlags flags(const QModelIndex &index) const;
-  QStringList mimeTypes() const;
-  Qt::DropActions supportedDropActions() const;
-  QMimeData *mimeData(const QModelIndexList &indexes) const;
-  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-  void sort(int column, Qt::SortOrder order);
-  bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
+  int rowCount(const QModelIndex& = QModelIndex()) const override { return items_.count(); }
+  int columnCount(const QModelIndex& = QModelIndex()) const override { return ColumnCount; }
+  QVariant data(const QModelIndex &idx, int role = Qt::DisplayRole) const override;
+  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
+  QStringList mimeTypes() const override;
+  Qt::DropActions supportedDropActions() const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
+  void sort(int column, Qt::SortOrder order) override;
+  bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
   static bool ComparePathDepths(Qt::SortOrder, PlaylistItemPtr, PlaylistItemPtr);
 
@@ -309,7 +309,7 @@ class Playlist : public QAbstractListModel {
 
   void InsertUrls(const QList<QUrl> &urls, int pos = -1, bool play_now = false, bool enqueue = false, bool enqueue_next = false);
   // Removes items with given indices from the playlist. This operation is not undoable.
-  void RemoveItemsWithoutUndo(const QList<int> &indices);
+  void RemoveItemsWithoutUndo(const QList<int> &indicesIn);
 
  signals:
   void RestoreFinished();
@@ -341,7 +341,7 @@ class Playlist : public QAbstractListModel {
 
   // Modify the playlist without changing the undo stack.  These are used by our friends in PlaylistUndoCommands
   void InsertItemsWithoutUndo(const PlaylistItemList &items, int pos, bool enqueue = false, bool enqueue_next = false);
-  PlaylistItemList RemoveItemsWithoutUndo(int pos, int count);
+  PlaylistItemList RemoveItemsWithoutUndo(const int row, const int count);
   void MoveItemsWithoutUndo(const QList<int> &source_rows, int pos);
   void MoveItemWithoutUndo(int source, int dest);
   void MoveItemsWithoutUndo(int start, const QList<int> &dest_rows);

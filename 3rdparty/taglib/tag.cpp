@@ -29,35 +29,24 @@
 
 using namespace Strawberry_TagLib::TagLib;
 
-class Tag::TagPrivate
-{
+class Tag::TagPrivate {};
 
-};
+Tag::Tag() : d(nullptr) {}
 
-Tag::Tag() :
-d(nullptr)
-{
+Tag::~Tag() {}
 
-}
-
-Tag::~Tag()
-{
-
-}
-
-bool Tag::isEmpty() const
-{
+bool Tag::isEmpty() const {
   return (title().isEmpty() &&
-          artist().isEmpty() &&
-          album().isEmpty() &&
-          comment().isEmpty() &&
-          genre().isEmpty() &&
-          year() == 0 &&
-          track() == 0);
+    artist().isEmpty() &&
+    album().isEmpty() &&
+    comment().isEmpty() &&
+    genre().isEmpty() &&
+    year() == 0 &&
+    track() == 0);
 }
 
-PropertyMap Tag::properties() const
-{
+PropertyMap Tag::properties() const {
+
   PropertyMap map;
   if (!(title().isEmpty()))
     map["TITLE"].append(title());
@@ -74,14 +63,13 @@ PropertyMap Tag::properties() const
   if (!(track() == 0))
     map["TRACKNUMBER"].append(String::number(track()));
   return map;
+
 }
 
-void Tag::removeUnsupportedProperties(const StringList&)
-{
-}
+void Tag::removeUnsupportedProperties(const StringList &) {}
 
-PropertyMap Tag::setProperties(const PropertyMap &origProps)
-{
+PropertyMap Tag::setProperties(const PropertyMap &origProps) {
+
   PropertyMap properties(origProps);
   properties.removeEmpty();
   StringList oneValueSet;
@@ -89,31 +77,36 @@ PropertyMap Tag::setProperties(const PropertyMap &origProps)
   if (properties.contains("TITLE")) {
     setTitle(properties["TITLE"].front());
     oneValueSet.append("TITLE");
-  } else
+  }
+  else
     setTitle(String());
 
   if (properties.contains("ARTIST")) {
     setArtist(properties["ARTIST"].front());
     oneValueSet.append("ARTIST");
-  } else
+  }
+  else
     setArtist(String());
 
   if (properties.contains("ALBUM")) {
     setAlbum(properties["ALBUM"].front());
     oneValueSet.append("ALBUM");
-  } else
+  }
+  else
     setAlbum(String());
 
   if (properties.contains("COMMENT")) {
     setComment(properties["COMMENT"].front());
     oneValueSet.append("COMMENT");
-  } else
+  }
+  else
     setComment(String());
 
   if (properties.contains("GENRE")) {
     setGenre(properties["GENRE"].front());
     oneValueSet.append("GENRE");
-  } else
+  }
+  else
     setGenre(String());
 
   if (properties.contains("DATE")) {
@@ -122,7 +115,8 @@ PropertyMap Tag::setProperties(const PropertyMap &origProps)
     if (ok) {
       setYear(date);
       oneValueSet.append("DATE");
-    } else
+    }
+    else
       setYear(0);
   }
   else
@@ -134,7 +128,8 @@ PropertyMap Tag::setProperties(const PropertyMap &origProps)
     if (ok) {
       setTrack(track);
       oneValueSet.append("TRACKNUMBER");
-    } else
+    }
+    else
       setTrack(0);
   }
   else
@@ -142,17 +137,18 @@ PropertyMap Tag::setProperties(const PropertyMap &origProps)
 
   // for each tag that has been set above, remove the first entry in the corresponding
   // value list. The others will be returned as unsupported by this format.
-  for(StringList::ConstIterator it = oneValueSet.begin(); it != oneValueSet.end(); ++it) {
+  for (StringList::ConstIterator it = oneValueSet.begin(); it != oneValueSet.end(); ++it) {
     if (properties[*it].size() == 1)
       properties.erase(*it);
     else
-      properties[*it].erase( properties[*it].begin() );
+      properties[*it].erase(properties[*it].begin());
   }
   return properties;
+
 }
 
-void Tag::duplicate(const Tag *source, Tag *target, bool overwrite) // static
-{
+void Tag::duplicate(const Tag *source, Tag *target, bool overwrite) {  // static
+
   if (overwrite) {
     target->setTitle(source->title());
     target->setArtist(source->artist());
@@ -178,4 +174,5 @@ void Tag::duplicate(const Tag *source, Tag *target, bool overwrite) // static
     if (target->track() == 0)
       target->setTrack(source->track());
   }
+
 }

@@ -35,64 +35,51 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace S3M;
 
-class S3M::File::FilePrivate
-{
-public:
-  explicit FilePrivate(AudioProperties::ReadStyle propertiesStyle)
-    : properties(propertiesStyle)
-  {
-  }
+class S3M::File::FilePrivate {
+ public:
+  explicit FilePrivate(AudioProperties::ReadStyle propertiesStyle) : properties(propertiesStyle) {}
 
-  Mod::Tag        tag;
+  Mod::Tag tag;
   S3M::Properties properties;
 };
 
-S3M::File::File(FileName file, bool readProperties,
-                AudioProperties::ReadStyle propertiesStyle) :
-  Mod::FileBase(file),
-  d(new FilePrivate(propertiesStyle))
-{
-  if(isOpen())
+S3M::File::File(FileName file, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(file), d(new FilePrivate(propertiesStyle)) {
+
+  if (isOpen())
     read(readProperties);
+
 }
 
-S3M::File::File(IOStream *stream, bool readProperties,
-                AudioProperties::ReadStyle propertiesStyle) :
-  Mod::FileBase(stream),
-  d(new FilePrivate(propertiesStyle))
-{
-  if(isOpen())
+S3M::File::File(IOStream *stream, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(stream), d(new FilePrivate(propertiesStyle)) {
+
+  if (isOpen())
     read(readProperties);
+
 }
 
-S3M::File::~File()
-{
+S3M::File::~File() {
   delete d;
 }
 
-Mod::Tag *S3M::File::tag() const
-{
+Mod::Tag *S3M::File::tag() const {
   return &d->tag;
 }
 
-PropertyMap S3M::File::properties() const
-{
+PropertyMap S3M::File::properties() const {
   return d->tag.properties();
 }
 
-PropertyMap S3M::File::setProperties(const PropertyMap &properties)
-{
+PropertyMap S3M::File::setProperties(const PropertyMap &properties) {
   return d->tag.setProperties(properties);
 }
 
-S3M::Properties *S3M::File::audioProperties() const
-{
+S3M::Properties *S3M::File::audioProperties() const {
   return &d->properties;
 }
 
-bool S3M::File::save()
-{
-  if(readOnly()) {
+bool S3M::File::save() {
+
+  if (readOnly()) {
     debug("S3M::File::save() - Cannot save to a read only file.");
     return false;
   }
@@ -108,35 +95,35 @@ bool S3M::File::save()
   unsigned short length = 0;
   unsigned short sampleCount = 0;
 
-  if(!readU16L(length) || !readU16L(sampleCount))
+  if (!readU16L(length) || !readU16L(sampleCount))
     return false;
 
   seek(28, Current);
 
   int channels = 0;
-  for(int i = 0; i < 32; ++ i) {
+  for (int i = 0; i < 32; ++i) {
     unsigned char setting = 0;
-    if(!readByte(setting))
+    if (!readByte(setting))
       return false;
     // or if(setting >= 128)?
     // or channels = i + 1;?
     // need a better spec!
-    if(setting != 0xff) ++ channels;
+    if (setting != 0xff) ++channels;
   }
 
   seek(channels, Current);
 
   StringList lines = d->tag.comment().split("\n");
   // write comment as sample names:
-  for(unsigned short i = 0; i < sampleCount; ++ i) {
-    seek(96L + length + ((long)i << 1));
+  for (unsigned short i = 0; i < sampleCount; ++i) {
+    seek(96L + length + (static_cast<long>(i) << 1));
 
     unsigned short instrumentOffset = 0;
-    if(!readU16L(instrumentOffset))
+    if (!readU16L(instrumentOffset))
       return false;
-    seek(((long)instrumentOffset << 4) + 48);
+    seek((static_cast<long>(instrumentOffset) << 4) + 48);
 
-    if(i < lines.size())
+    if (i < lines.size())
       writeString(lines[i], 27);
     else
       writeString(String(), 27);
@@ -144,11 +131,12 @@ bool S3M::File::save()
     writeByte(0);
   }
   return true;
+
 }
 
-void S3M::File::read(bool)
-{
-  if(!isOpen())
+void S3M::File::read(bool) {
+
+  if (!isOpen())
     return;
 
   READ_STRING(d->tag.setTitle, 28);
@@ -188,21 +176,21 @@ void S3M::File::read(bool)
   seek(12, Current);
 
   int channels = 0;
-  for(int i = 0; i < 32; ++ i) {
+  for (int i = 0; i < 32; ++i) {
     READ_BYTE_AS(setting);
     // or if(setting >= 128)?
     // or channels = i + 1;?
     // need a better spec!
-    if(setting != 0xff) ++ channels;
+    if (setting != 0xff) ++channels;
   }
   d->properties.setChannels(channels);
 
   seek(96);
   unsigned short realLength = 0;
-  for(unsigned short i = 0; i < length; ++ i) {
+  for (unsigned short i = 0; i < length; ++i) {
     READ_BYTE_AS(order);
-    if(order == 255) break;
-    if(order != 254) ++ realLength;
+    if (order == 255) break;
+    if (order != 254) ++realLength;
   }
   d->properties.setLengthInPatterns(realLength);
 
@@ -213,11 +201,11 @@ void S3M::File::read(bool)
   //       However, there I never found instruments (SCRI) but
   //       instead samples (SCRS).
   StringList comment;
-  for(unsigned short i = 0; i < sampleCount; ++ i) {
-    seek(96L + length + ((long)i << 1));
+  for (unsigned short i = 0; i < sampleCount; ++i) {
+    seek(96L + length + (static_cast<long>(i) << 1));
 
     READ_U16L_AS(sampleHeaderOffset);
-    seek((long)sampleHeaderOffset << 4);
+    seek(static_cast<long>(sampleHeaderOffset) << 4);
 
     READ_BYTE_AS(sampleType);
     READ_STRING_AS(dosFileName, 13);
@@ -245,4 +233,5 @@ void S3M::File::read(bool)
 
   d->tag.setComment(comment.toString("\n"));
   d->tag.setTrackerName("ScreamTracker III");
+
 }

@@ -50,7 +50,7 @@ class Udisks2Lister : public DeviceLister {
 
  public:
   explicit Udisks2Lister();
-  ~Udisks2Lister();
+  ~Udisks2Lister() override;
 
   QStringList DeviceUniqueIDs() override;
   QVariantList DeviceIcons(const QString &id) override;
@@ -71,8 +71,8 @@ class Udisks2Lister : public DeviceLister {
   bool Init() override;
 
  private slots:
-  void DBusInterfaceAdded(const QDBusObjectPath &path, const InterfacesAndProperties &ifaces);
-  void DBusInterfaceRemoved(const QDBusObjectPath &path, const QStringList &ifaces);
+  void DBusInterfaceAdded(const QDBusObjectPath &path, const InterfacesAndProperties &interfaces);
+  void DBusInterfaceRemoved(const QDBusObjectPath &path, const QStringList &interfaces);
   void JobCompleted(bool success, const QString &message);
 
  private:

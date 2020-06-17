@@ -155,7 +155,7 @@ QString CollectionFilterWidget::group_by(const int number) { return group_by() +
 void CollectionFilterWidget::UpdateGroupByActions() {
 
   if (group_by_group_) {
-    disconnect(group_by_group_, 0, 0, 0);
+    disconnect(group_by_group_, nullptr, nullptr, nullptr);
     delete group_by_group_;
   }
 
@@ -264,11 +264,11 @@ void CollectionFilterWidget::FocusOnFilter(QKeyEvent *event) {
 void CollectionFilterWidget::SetCollectionModel(CollectionModel *model) {
 
   if (model_) {
-    disconnect(model_, 0, this, 0);
-    disconnect(model_, 0, group_by_dialog_.get(), 0);
-    disconnect(group_by_dialog_.get(), 0, model_, 0);
+    disconnect(model_, nullptr, this, nullptr);
+    disconnect(model_, nullptr, group_by_dialog_.get(), nullptr);
+    disconnect(group_by_dialog_.get(), nullptr, model_, nullptr);
     for (QAction *action : filter_ages_.keys()) {
-      disconnect(action, &QAction::triggered, model_, 0);
+      disconnect(action, &QAction::triggered, model_, nullptr);
     }
   }
 
@@ -290,7 +290,7 @@ void CollectionFilterWidget::SetCollectionModel(CollectionModel *model) {
     s.beginGroup(settings_group_);
     model_->SetGroupBy(CollectionModel::Grouping(
         CollectionModel::GroupBy(s.value(group_by(1), int(CollectionModel::GroupBy_AlbumArtist)).toInt()),
-        CollectionModel::GroupBy(s.value(group_by(2), int(CollectionModel::GroupBy_Album)).toInt()),
+        CollectionModel::GroupBy(s.value(group_by(2), int(CollectionModel::GroupBy_AlbumDisc)).toInt()),
         CollectionModel::GroupBy(s.value(group_by(3), int(CollectionModel::GroupBy_None)).toInt())));
   }
 

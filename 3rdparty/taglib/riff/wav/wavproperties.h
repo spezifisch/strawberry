@@ -32,134 +32,95 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  class ByteVector;
+class ByteVector;
 
-  namespace RIFF {
+namespace RIFF {
+namespace WAV {
 
-    namespace WAV {
+class File;
 
-      class File;
+//! An implementation of audio property reading for WAV
 
-      //! An implementation of audio property reading for WAV
+/*!
+ * This reads the data from an WAV stream found in the AudioProperties
+ * API.
+ */
 
-      /*!
-       * This reads the data from an WAV stream found in the AudioProperties
-       * API.
-       */
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
+  /*!
+   * Create an instance of WAV::Properties with the data read from the WAV::File \a file.
+   */
+  Properties(File *file, ReadStyle style);
 
-      class TAGLIB_EXPORT Properties : public AudioProperties
-      {
-      public:
-        /*!
-         * Create an instance of WAV::Properties with the data read from the
-         * ByteVector \a data.
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED Properties(const ByteVector &data, ReadStyle style);
+  /*!
+   * Destroys this WAV::Properties instance.
+   */
+  virtual ~Properties();
 
-        /*!
-         * Create an instance of WAV::Properties with the data read from the
-         * ByteVector \a data and the length calculated using \a streamLength.
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED Properties(const ByteVector &data, unsigned int streamLength, ReadStyle style);
+  /*!
+   * Returns the length of the file in seconds.
+   * The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-        /*!
-         * Create an instance of WAV::Properties with the data read from the
-         * WAV::File \a file.
-         */
-        Properties(File *file, ReadStyle style);
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-        /*!
-         * Destroys this WAV::Properties instance.
-         */
-        virtual ~Properties();
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \note This method is just an alias of lengthInSeconds().
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \see lengthInMilliseconds()
-         */
-        // BIC: make virtual
-        int lengthInSeconds() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-        /*!
-         * Returns the length of the file in milliseconds.
-         *
-         * \see lengthInSeconds()
-         */
-        // BIC: make virtual
-        int lengthInMilliseconds() const;
+  /*!
+   * Returns the number of bits per audio sample.
+   */
+  int bitsPerSample() const;
 
-        /*!
-         * Returns the average bit rate of the file in kb/s.
-         */
-        virtual int bitrate() const;
+  /*!
+   * Returns the number of sample frames.
+   */
+  unsigned int sampleFrames() const;
 
-        /*!
-         * Returns the sample rate in Hz.
-         */
-        virtual int sampleRate() const;
+  /*!
+   * Returns the format ID of the file.
+   * 0 for unknown, 1 for PCM, 2 for ADPCM, 3 for 32/64-bit IEEE754, and so forth.
+   *
+   * \note For further information, refer to the WAVE Form Registration Numbers in RFC 2361.
+   */
+  int format() const;
 
-        /*!
-         * Returns the number of audio channels.
-         */
-        virtual int channels() const;
+ private:
+  Properties(const Properties &);
+  Properties &operator=(const Properties &);
 
-        /*!
-         * Returns the number of bits per audio sample.
-         */
-        int bitsPerSample() const;
+  void read(File *file);
 
-        /*!
-         * Returns the number of bits per audio sample.
-         *
-         * \note This method is just an alias of bitsPerSample().
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED int sampleWidth() const;
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
 
-        /*!
-         * Returns the number of sample frames.
-         */
-        unsigned int sampleFrames() const;
-
-        /*!
-         * Returns the format ID of the file.
-         * 0 for unknown, 1 for PCM, 2 for ADPCM, 3 for 32/64-bit IEEE754, and
-         * so forth.
-         *
-         * \note For further information, refer to the WAVE Form Registration
-         * Numbers in RFC 2361.
-         */
-        int format() const;
-
-      private:
-        Properties(const Properties &);
-        Properties &operator=(const Properties &);
-
-        void read(File *file);
-
-        class PropertiesPrivate;
-        PropertiesPrivate *d;
-      };
-    }
-  }
-}
-}
+}  // namespace WAV
+}  // namespace RIFF
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

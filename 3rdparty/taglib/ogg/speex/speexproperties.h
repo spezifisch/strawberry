@@ -34,98 +34,80 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace Ogg {
+namespace Speex {
 
-  namespace Ogg {
+class File;
 
-    namespace Speex {
+//! An implementation of audio property reading for Ogg Speex
+//! This reads the data from an Ogg Speex stream found in the AudioProperties API.
 
-      class File;
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
+  /*!
+   * Create an instance of Speex::Properties with the data read from the Speex::File \a file.
+   */
+  Properties(File *file, ReadStyle style = Average);
 
-      //! An implementation of audio property reading for Ogg Speex
+  /*!
+   * Destroys this Speex::Properties instance.
+   */
+  virtual ~Properties();
 
-      /*!
-       * This reads the data from an Ogg Speex stream found in the AudioProperties
-       * API.
-       */
+  /*!
+   * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-      class TAGLIB_EXPORT Properties : public AudioProperties
-      {
-      public:
-        /*!
-         * Create an instance of Speex::Properties with the data read from the
-         * Speex::File \a file.
-         */
-        Properties(File *file, ReadStyle style = Average);
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-        /*!
-         * Destroys this Speex::Properties instance.
-         */
-        virtual ~Properties();
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \note This method is just an alias of lengthInSeconds().
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the nominal bit rate as read from the Speex header in kb/s.
+   */
+  int bitrateNominal() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \see lengthInMilliseconds()
-         */
-        // BIC: make virtual
-        int lengthInSeconds() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-        /*!
-         * Returns the length of the file in milliseconds.
-         *
-         * \see lengthInSeconds()
-         */
-        // BIC: make virtual
-        int lengthInMilliseconds() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-        /*!
-         * Returns the average bit rate of the file in kb/s.
-         */
-        virtual int bitrate() const;
+  /*!
+   * Returns the Speex version, currently "0" (as specified by the spec).
+   */
+  int speexVersion() const;
 
-        /*!
-         * Returns the nominal bit rate as read from the Speex header in kb/s.
-         */
-        int bitrateNominal() const;
+ private:
+  Properties(const Properties &);
+  Properties &operator=(const Properties &);
 
-        /*!
-         * Returns the sample rate in Hz.
-         */
-        virtual int sampleRate() const;
+  void read(File *file);
 
-        /*!
-         * Returns the number of audio channels.
-         */
-        virtual int channels() const;
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
 
-        /*!
-         * Returns the Speex version, currently "0" (as specified by the spec).
-         */
-        int speexVersion() const;
-
-      private:
-        Properties(const Properties &);
-        Properties &operator=(const Properties &);
-
-        void read(File *file);
-
-        class PropertiesPrivate;
-        PropertiesPrivate *d;
-      };
-    }
-  }
-}
-}
+}  // namespace Speex
+}  // namespace Ogg
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

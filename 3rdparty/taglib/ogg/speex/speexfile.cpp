@@ -37,15 +37,11 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace Strawberry_TagLib::TagLib::Ogg;
 
-class Speex::File::FilePrivate
-{
-public:
-  FilePrivate() :
-    comment(0),
-    properties(0) {}
+class Speex::File::FilePrivate {
+ public:
+  FilePrivate() : comment(nullptr), properties(nullptr) {}
 
-  ~FilePrivate()
-  {
+  ~FilePrivate() {
     delete comment;
     delete properties;
   }
@@ -58,78 +54,69 @@ public:
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Ogg::Speex::File::isSupported(IOStream *stream)
-{
+bool Ogg::Speex::File::isSupported(IOStream *stream) {
+
   // A Speex file has IDs "OggS" and "Speex   " somewhere.
 
   const ByteVector buffer = Utils::readHeader(stream, bufferSize(), false);
   return (buffer.find("OggS") >= 0 && buffer.find("Speex   ") >= 0);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Speex::File::File(FileName file, bool readProperties, Properties::ReadStyle) :
-  Ogg::File(file),
-  d(new FilePrivate())
-{
-  if(isOpen())
+Speex::File::File(FileName file, bool readProperties, Properties::ReadStyle) : Ogg::File(file), d(new FilePrivate()) {
+  if (isOpen())
     read(readProperties);
 }
 
-Speex::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) :
-  Ogg::File(stream),
-  d(new FilePrivate())
-{
-  if(isOpen())
+Speex::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) : Ogg::File(stream), d(new FilePrivate()) {
+  if (isOpen())
     read(readProperties);
 }
 
-Speex::File::~File()
-{
+Speex::File::~File() {
   delete d;
 }
 
-Ogg::XiphComment *Speex::File::tag() const
-{
+Ogg::XiphComment *Speex::File::tag() const {
   return d->comment;
 }
 
-PropertyMap Speex::File::properties() const
-{
+PropertyMap Speex::File::properties() const {
   return d->comment->properties();
 }
 
-PropertyMap Speex::File::setProperties(const PropertyMap &properties)
-{
+PropertyMap Speex::File::setProperties(const PropertyMap &properties) {
   return d->comment->setProperties(properties);
 }
 
-Speex::Properties *Speex::File::audioProperties() const
-{
+Speex::Properties *Speex::File::audioProperties() const {
   return d->properties;
 }
 
-bool Speex::File::save()
-{
-  if(!d->comment)
+bool Speex::File::save() {
+
+  if (!d->comment)
     d->comment = new Ogg::XiphComment();
 
   setPacket(1, d->comment->render());
 
   return Ogg::File::save();
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void Speex::File::read(bool readProperties)
-{
+void Speex::File::read(bool readProperties) {
+
   ByteVector speexHeaderData = packet(0);
 
-  if(!speexHeaderData.startsWith("Speex   ")) {
+  if (!speexHeaderData.startsWith("Speex   ")) {
     debug("Speex::File::read() -- invalid Speex identification header");
     setValid(false);
     return;
@@ -139,6 +126,7 @@ void Speex::File::read(bool readProperties)
 
   d->comment = new Ogg::XiphComment(commentHeaderData);
 
-  if(readProperties)
+  if (readProperties)
     d->properties = new Properties(this);
+
 }

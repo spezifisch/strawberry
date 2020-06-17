@@ -35,111 +35,89 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace APE {
 
-  namespace APE {
+class File;
 
-    class File;
+//! An implementation of audio property reading for APE
 
-    //! An implementation of audio property reading for APE
+/*!
+ * This reads the data from an APE stream found in the AudioProperties API.
+ */
 
-    /*!
-     * This reads the data from an APE stream found in the AudioProperties
-     * API.
-     */
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
 
-    class TAGLIB_EXPORT Properties : public AudioProperties
-    {
-    public:
-      /*!
-       * Create an instance of APE::Properties with the data read from the
-       * APE::File \a file.
-       *
-       * \deprecated
-       */
-      TAGLIB_DEPRECATED Properties(File *file, ReadStyle style = Average);
+  /*!
+  * Create an instance of APE::Properties with the data read from the APE::File \a file.
+   */
+  Properties(File *file, long streamLength, ReadStyle style = Average);
 
-      /*!
-       * Create an instance of APE::Properties with the data read from the
-       * APE::File \a file.
-       */
-      Properties(File *file, long streamLength, ReadStyle style = Average);
+  /*!
+   * Destroys this APE::Properties instance.
+   */
+  virtual ~Properties();
 
-      /*!
-       * Destroys this APE::Properties instance.
-       */
-      virtual ~Properties();
+  /*!
+   * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \note This method is just an alias of lengthInSeconds().
-       *
-       * \deprecated
-       */
-      TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \see lengthInMilliseconds()
-       */
-      // BIC: make virtual
-      int lengthInSeconds() const;
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-      /*!
-       * Returns the length of the file in milliseconds.
-       *
-       * \see lengthInSeconds()
-       */
-      // BIC: make virtual
-      int lengthInMilliseconds() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-      /*!
-       * Returns the average bit rate of the file in kb/s.
-       */
-      virtual int bitrate() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-      /*!
-       * Returns the sample rate in Hz.
-       */
-      virtual int sampleRate() const;
+  /*!
+   * Returns the number of bits per audio sample.
+   */
+  int bitsPerSample() const;
 
-      /*!
-       * Returns the number of audio channels.
-       */
-      virtual int channels() const;
+  /*!
+   * Returns the total number of audio samples in file.
+   */
+  unsigned int sampleFrames() const;
 
-      /*!
-       * Returns the number of bits per audio sample.
-       */
-      int bitsPerSample() const;
+  /*!
+   * Returns APE version.
+   */
+  int version() const;
 
-      /*!
-       * Returns the total number of audio samples in file.
-       */
-      unsigned int sampleFrames() const;
+ private:
+  Properties(const Properties &);
+  Properties &operator=(const Properties &);
 
-      /*!
-       * Returns APE version.
-       */
-      int version() const;
+  void read(File *file, long streamLength);
 
-    private:
-      Properties(const Properties &);
-      Properties &operator=(const Properties &);
+  void analyzeCurrent(File *file);
+  void analyzeOld(File *file);
 
-      void read(File *file, long streamLength);
-
-      void analyzeCurrent(File *file);
-      void analyzeOld(File *file);
-
-      class PropertiesPrivate;
-      PropertiesPrivate *d;
-    };
-  }
-}
-}
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
+}  // namespace APE
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

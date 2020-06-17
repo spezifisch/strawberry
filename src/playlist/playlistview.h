@@ -83,8 +83,8 @@ class PlaylistProxyStyle : public QProxyStyle {
  public:
   explicit PlaylistProxyStyle();
 
-  void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-  void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+  void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const override;
+  void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const override;
 
  private:
   std::unique_ptr<QCommonStyle> common_style_;
@@ -92,10 +92,10 @@ class PlaylistProxyStyle : public QProxyStyle {
 
 class PlaylistView : public QTreeView {
   Q_OBJECT
- public:
 
+ public:
   explicit PlaylistView(QWidget *parent = nullptr);
-  ~PlaylistView();
+  ~PlaylistView() override;
 
   static ColumnAlignmentMap DefaultColumnAlignment();
 
@@ -110,12 +110,10 @@ class PlaylistView : public QTreeView {
   AppearanceSettingsPage::BackgroundImageType background_image_type() const { return background_image_type_; }
   Qt::Alignment column_alignment(int section) const;
 
-  // QTreeView
-  void drawTree(QPainter *painter, const QRegion &region) const;
-  void drawRow(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-  void setModel(QAbstractItemModel *model);
-
   void ResetColumns();
+
+  // QTreeView
+  void setModel(QAbstractItemModel *model) override;
 
  public slots:
   void ReloadSettings();
@@ -155,12 +153,12 @@ class PlaylistView : public QTreeView {
   void resizeEvent(QResizeEvent* event);
 
   // QAbstractScrollArea
-  void scrollContentsBy(int dx, int dy);
+  void scrollContentsBy(int dx, int dy) override;
 
   // QAbstractItemView
-  void rowsInserted(const QModelIndex &parent, int start, int end);
-  bool edit(const QModelIndex &index, QAbstractItemView::EditTrigger trigger, QEvent *event);
-  void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
+  void rowsInserted(const QModelIndex &parent, int start, int end) override;
+  bool edit(const QModelIndex &index, QAbstractItemView::EditTrigger trigger, QEvent *event) override;
+  void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint) override;
 
  private slots:
   void InhibitAutoscrollTimeout();

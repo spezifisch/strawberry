@@ -37,7 +37,7 @@ class MoodbarPipeline : public QObject {
 
  public:
   explicit MoodbarPipeline(const QUrl& local_filename);
-  ~MoodbarPipeline();
+  ~MoodbarPipeline() override;
 
   static bool IsAvailable();
 
@@ -53,7 +53,7 @@ class MoodbarPipeline : public QObject {
  private:
   GstElement* CreateElement(const QString& factory_name);
 
-  void ReportError(GstMessage* message);
+  void ReportError(GstMessage *msg);
   void Stop(bool success);
   void Cleanup();
 

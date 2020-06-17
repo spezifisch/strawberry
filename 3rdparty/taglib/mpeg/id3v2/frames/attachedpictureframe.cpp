@@ -31,11 +31,9 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace ID3v2;
 
-class AttachedPictureFrame::AttachedPictureFramePrivate
-{
-public:
-  AttachedPictureFramePrivate() : textEncoding(String::Latin1),
-                                  type(AttachedPictureFrame::Other) {}
+class AttachedPictureFrame::AttachedPictureFramePrivate {
+ public:
+  AttachedPictureFramePrivate() : textEncoding(String::Latin1), type(AttachedPictureFrame::Other) {}
 
   String::Type textEncoding;
   String mimeType;
@@ -48,77 +46,58 @@ public:
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-AttachedPictureFrame::AttachedPictureFrame() :
-  Frame("APIC"),
-  d(new AttachedPictureFramePrivate())
-{
-}
+AttachedPictureFrame::AttachedPictureFrame() : Frame("APIC"), d(new AttachedPictureFramePrivate()) {}
 
-AttachedPictureFrame::AttachedPictureFrame(const ByteVector &data) :
-  Frame(data),
-  d(new AttachedPictureFramePrivate())
-{
+AttachedPictureFrame::AttachedPictureFrame(const ByteVector &data) : Frame(data), d(new AttachedPictureFramePrivate()) {
   setData(data);
 }
 
-AttachedPictureFrame::~AttachedPictureFrame()
-{
+AttachedPictureFrame::~AttachedPictureFrame() {
   delete d;
 }
 
-String AttachedPictureFrame::toString() const
-{
+String AttachedPictureFrame::toString() const {
   String s = "[" + d->mimeType + "]";
   return d->description.isEmpty() ? s : d->description + " " + s;
 }
 
-String::Type AttachedPictureFrame::textEncoding() const
-{
+String::Type AttachedPictureFrame::textEncoding() const {
   return d->textEncoding;
 }
 
-void AttachedPictureFrame::setTextEncoding(String::Type t)
-{
+void AttachedPictureFrame::setTextEncoding(String::Type t) {
   d->textEncoding = t;
 }
 
-String AttachedPictureFrame::mimeType() const
-{
+String AttachedPictureFrame::mimeType() const {
   return d->mimeType;
 }
 
-void AttachedPictureFrame::setMimeType(const String &m)
-{
+void AttachedPictureFrame::setMimeType(const String &m) {
   d->mimeType = m;
 }
 
-AttachedPictureFrame::Type AttachedPictureFrame::type() const
-{
+AttachedPictureFrame::Type AttachedPictureFrame::type() const {
   return d->type;
 }
 
-void AttachedPictureFrame::setType(Type t)
-{
+void AttachedPictureFrame::setType(Type t) {
   d->type = t;
 }
 
-String AttachedPictureFrame::description() const
-{
+String AttachedPictureFrame::description() const {
   return d->description;
 }
 
-void AttachedPictureFrame::setDescription(const String &desc)
-{
+void AttachedPictureFrame::setDescription(const String &desc) {
   d->description = desc;
 }
 
-ByteVector AttachedPictureFrame::picture() const
-{
+ByteVector AttachedPictureFrame::picture() const {
   return d->data;
 }
 
-void AttachedPictureFrame::setPicture(const ByteVector &p)
-{
+void AttachedPictureFrame::setPicture(const ByteVector &p) {
   d->data = p;
 }
 
@@ -126,9 +105,9 @@ void AttachedPictureFrame::setPicture(const ByteVector &p)
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-void AttachedPictureFrame::parseFields(const ByteVector &data)
-{
-  if(data.size() < 5) {
+void AttachedPictureFrame::parseFields(const ByteVector &data) {
+
+  if (data.size() < 5) {
     debug("A picture frame must contain at least 5 bytes.");
     return;
   }
@@ -139,19 +118,20 @@ void AttachedPictureFrame::parseFields(const ByteVector &data)
 
   d->mimeType = readStringField(data, String::Latin1, &pos);
   /* Now we need at least two more bytes available */
-  if(static_cast<unsigned int>(pos) + 1 >= data.size()) {
+  if (static_cast<unsigned int>(pos) + 1 >= data.size()) {
     debug("Truncated picture frame.");
     return;
   }
 
-  d->type = (Strawberry_TagLib::TagLib::ID3v2::AttachedPictureFrame::Type)data[pos++];
+  d->type = static_cast<ID3v2::AttachedPictureFrame::Type>(data[pos++]);
   d->description = readStringField(data, d->textEncoding, &pos);
 
   d->data = data.mid(pos);
+
 }
 
-ByteVector AttachedPictureFrame::renderFields() const
-{
+ByteVector AttachedPictureFrame::renderFields() const {
+
   ByteVector data;
 
   String::Type encoding = checkTextEncoding(d->description, d->textEncoding);
@@ -165,16 +145,14 @@ ByteVector AttachedPictureFrame::renderFields() const
   data.append(d->data);
 
   return data;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-AttachedPictureFrame::AttachedPictureFrame(const ByteVector &data, Header *h) :
-  Frame(h),
-  d(new AttachedPictureFramePrivate())
-{
+AttachedPictureFrame::AttachedPictureFrame(const ByteVector &data, Header *h) : Frame(h), d(new AttachedPictureFramePrivate()) {
   parseFields(fieldData(data));
 }
 
@@ -182,9 +160,9 @@ AttachedPictureFrame::AttachedPictureFrame(const ByteVector &data, Header *h) :
 // support for ID3v2.2 PIC frames
 ////////////////////////////////////////////////////////////////////////////////
 
-void AttachedPictureFrameV22::parseFields(const ByteVector &data)
-{
-  if(data.size() < 5) {
+void AttachedPictureFrameV22::parseFields(const ByteVector &data) {
+
+  if (data.size() < 5) {
     debug("A picture frame must contain at least 5 bytes.");
     return;
   }
@@ -198,21 +176,24 @@ void AttachedPictureFrameV22::parseFields(const ByteVector &data)
   // convert fixed string image type to mime string
   if (fixedString.upper() == "JPG") {
     d->mimeType = "image/jpeg";
-  } else if (fixedString.upper() == "PNG") {
+  }
+  else if (fixedString.upper() == "PNG") {
     d->mimeType = "image/png";
-  } else {
+  }
+  else {
     debug("probably unsupported image type");
     d->mimeType = "image/" + fixedString;
   }
 
-  d->type = (Strawberry_TagLib::TagLib::ID3v2::AttachedPictureFrame::Type)data[pos++];
+  d->type = static_cast<ID3v2::AttachedPictureFrame::Type>(data[pos++]);
   d->description = readStringField(data, d->textEncoding, &pos);
 
   d->data = data.mid(pos);
+
 }
 
-AttachedPictureFrameV22::AttachedPictureFrameV22(const ByteVector &data, Header *h)
-{
+AttachedPictureFrameV22::AttachedPictureFrameV22(const ByteVector &data, Header *h) {
+
   // set v2.2 header to make fieldData work correctly
   setHeader(h, true);
 
@@ -222,4 +203,5 @@ AttachedPictureFrameV22::AttachedPictureFrameV22(const ByteVector &data, Header 
   Frame::Header *newHeader = new Frame::Header("APIC");
   newHeader->setFrameSize(h->frameSize());
   setHeader(newHeader, true);
+
 }

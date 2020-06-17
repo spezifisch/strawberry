@@ -22,7 +22,7 @@
 #include "config.h"
 
 #include <memory>
-#include <stdlib.h>
+#include <cstdlib>
 #include <iconv.h>
 
 #include <QtGlobal>
@@ -68,7 +68,7 @@
 #  include <QRandomGenerator>
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 
 #ifdef Q_OS_LINUX
 #  include <unistd.h>
@@ -461,7 +461,7 @@ void OpenInFileBrowser(const QList<QUrl> &urls) {
 
 }
 
-QByteArray Hmac(const QByteArray &key, const QByteArray &data, HashFunction method) {
+QByteArray Hmac(const QByteArray &key, const QByteArray &data, const HashFunction method) {
 
   const int kBlockSize = 64;  // bytes
   Q_ASSERT(key.length() <= kBlockSize);
@@ -657,7 +657,7 @@ const char *EnumToString(const QMetaObject &meta, const char *name, int value) {
   if (index == -1) return "[UnknownEnum]";
   QMetaEnum metaenum = meta.enumerator(index);
   const char *result = metaenum.valueToKey(value);
-  if (result == 0) return "[UnknownEnumValue]";
+  if (!result) return "[UnknownEnumValue]";
   return result;
 
 }
@@ -875,7 +875,7 @@ QString UnicodeToAscii(const QString &unicode) {
 #endif
 
   iconv_t conv = iconv_open("ASCII//TRANSLIT", "UTF-8");
-  if (conv == (iconv_t) -1) return unicode;
+  if (conv == reinterpret_cast<iconv_t>(-1)) return unicode;
 
   QByteArray utf8 = unicode.toUtf8();
 

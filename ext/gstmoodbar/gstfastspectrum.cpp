@@ -65,7 +65,7 @@ static void gst_fastspectrum_set_property (GObject * object, guint prop_id, cons
 static void gst_fastspectrum_get_property (GObject * object, guint prop_id, GValue * value, GParamSpec * pspec);
 static gboolean gst_fastspectrum_start (GstBaseTransform * trans);
 static gboolean gst_fastspectrum_stop (GstBaseTransform * trans);
-static GstFlowReturn gst_fastspectrum_transform_ip (GstBaseTransform * trans, GstBuffer * in);
+static GstFlowReturn gst_fastspectrum_transform_ip (GstBaseTransform *trans, GstBuffer *buffer);
 static gboolean gst_fastspectrum_setup (GstAudioFilter * base, const GstAudioInfo * info);
 
 static void gst_fastspectrum_class_init (GstFastSpectrumClass * klass) {
@@ -265,7 +265,7 @@ static void input_data_mixed_float(const guint8* _in, double* out, guint len, do
   Q_UNUSED(max_value);
 
   guint j, ip = 0;
-  gfloat *in = (gfloat *) _in;
+  const gfloat *in = reinterpret_cast<const gfloat*>(_in);
 
   for (j = 0; j < len; j++) {
     out[op] = in[ip++];
@@ -279,7 +279,7 @@ static void input_data_mixed_double (const guint8 * _in, double* out, guint len,
   Q_UNUSED(max_value);
 
   guint j, ip = 0;
-  gdouble *in = (gdouble *) _in;
+  const gdouble *in = reinterpret_cast<const gdouble*>(_in);
 
   for (j = 0; j < len; j++) {
     out[op] = in[ip++];
@@ -291,7 +291,7 @@ static void input_data_mixed_double (const guint8 * _in, double* out, guint len,
 static void input_data_mixed_int32_max (const guint8 * _in, double* out, guint len, double max_value, guint op, guint nfft) {
 
   guint j, ip = 0;
-  gint32 *in = (gint32 *) _in;
+  const gint32 *in = reinterpret_cast<const gint32*>(_in);
 
   for (j = 0; j < len; j++) {
     out[op] = in[ip++] / max_value;
@@ -323,7 +323,7 @@ static void input_data_mixed_int24_max (const guint8 * _in, double* out, guint l
 static void input_data_mixed_int16_max (const guint8 * _in, double * out, guint len, double max_value, guint op, guint nfft) {
 
   guint j, ip = 0;
-  gint16 *in = (gint16 *) _in;
+  const gint16 *in = reinterpret_cast<const gint16*>(_in);
 
   for (j = 0; j < len; j++) {
     out[op] = in[ip++] / max_value;
@@ -335,7 +335,7 @@ static void input_data_mixed_int16_max (const guint8 * _in, double * out, guint 
 static gboolean gst_fastspectrum_setup (GstAudioFilter * base, const GstAudioInfo * info) {
 
   GstFastSpectrum *spectrum = GST_FASTSPECTRUM (base);
-  GstFastSpectrumInputData input_data = NULL;
+  GstFastSpectrumInputData input_data = nullptr;
 
   g_mutex_lock (&spectrum->lock);
   switch (GST_AUDIO_INFO_FORMAT (info)) {
@@ -390,7 +390,7 @@ static void gst_fastspectrum_run_fft (GstFastSpectrum * spectrum, guint input_po
 
 }
 
-static GstFlowReturn gst_fastspectrum_transform_ip (GstBaseTransform * trans, GstBuffer * buffer) {
+static GstFlowReturn gst_fastspectrum_transform_ip (GstBaseTransform *trans, GstBuffer *buffer) {
 
   GstFastSpectrum *spectrum = GST_FASTSPECTRUM (trans);
   guint rate = GST_AUDIO_FILTER_RATE (spectrum);

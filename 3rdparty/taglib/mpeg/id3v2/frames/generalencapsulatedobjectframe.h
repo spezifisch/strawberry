@@ -35,147 +35,145 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace ID3v2 {
 
-  namespace ID3v2 {
+//! An ID3v2 general encapsulated object frame implementation
 
-    //! An ID3v2 general encapsulated object frame implementation
+/*!
+ * This is an implementation of ID3v2 general encapsulated objects.
+ * Arbitrary binary data may be included in tags, stored in GEOB frames.
+ * There may be multiple GEOB frames in a single tag.
+ * Each GEOB it labelled with a content description (which may be blank),
+ * a required mime-type, and a file name (may be blank).
+ * The content description uniquely identifies the GEOB frame in the tag.
+ */
 
-    /*!
-     * This is an implementation of ID3v2 general encapsulated objects.
-     * Arbitrary binary data may be included in tags, stored in GEOB frames.
-     * There may be multiple GEOB frames in a single tag.  Each GEOB it
-     * labelled with a content description (which may be blank), a required
-     * mime-type, and a file name (may be blank).  The content description
-     * uniquely identifies the GEOB frame in the tag.
-     */
+class TAGLIB_EXPORT GeneralEncapsulatedObjectFrame : public Frame {
+  friend class FrameFactory;
 
-    class TAGLIB_EXPORT GeneralEncapsulatedObjectFrame : public Frame
-    {
-      friend class FrameFactory;
+ public:
+  /*!
+   * Constructs an empty object frame.
+   * The description, file name and text encoding should be set manually.
+   */
+  GeneralEncapsulatedObjectFrame();
 
-    public:
+  /*!
+   * Constructs a GeneralEncapsulatedObjectFrame frame based on \a data.
+   *
+   * \warning This is \em not data for the encapsulated object, for that use
+   * setObject().
+   * This constructor is used when reading the frame from the disk.
+   */
+  explicit GeneralEncapsulatedObjectFrame(const ByteVector &data);
 
-      /*!
-       * Constructs an empty object frame.  The description, file name and text
-       * encoding should be set manually.
-       */
-      GeneralEncapsulatedObjectFrame();
+  /*!
+   * Destroys the GeneralEncapsulatedObjectFrame instance.
+   */
+  virtual ~GeneralEncapsulatedObjectFrame();
 
-      /*!
-       * Constructs a GeneralEncapsulatedObjectFrame frame based on \a data.
-       *
-       * \warning This is \em not data for the encapsulated object, for that use
-       * setObject().  This constructor is used when reading the frame from the
-       * disk.
-       */
-      explicit GeneralEncapsulatedObjectFrame(const ByteVector &data);
+  /*!
+   * Returns a string containing the description, file name and mime-type
+   */
+  virtual String toString() const;
 
-      /*!
-       * Destroys the GeneralEncapsulatedObjectFrame instance.
-       */
-      virtual ~GeneralEncapsulatedObjectFrame();
+  /*!
+   * Returns the text encoding used for the description and file name.
+   *
+   * \see setTextEncoding()
+   * \see description()
+   * \see fileName()
+   */
+  String::Type textEncoding() const;
 
-      /*!
-       * Returns a string containing the description, file name and mime-type
-       */
-      virtual String toString() const;
+  /*!
+   * Set the text encoding used for the description and file name.
+   *
+   * \see description()
+   * \see fileName()
+   */
+  void setTextEncoding(String::Type encoding);
 
-      /*!
-       * Returns the text encoding used for the description and file name.
-       *
-       * \see setTextEncoding()
-       * \see description()
-       * \see fileName()
-       */
-      String::Type textEncoding() const;
+  /*!
+   * Returns the mime type of the object.
+   */
+  String mimeType() const;
 
-      /*!
-       * Set the text encoding used for the description and file name.
-       *
-       * \see description()
-       * \see fileName()
-       */
-      void setTextEncoding(String::Type encoding);
+  /*!
+   * Sets the mime type of the object.
+   */
+  void setMimeType(const String &type);
 
-      /*!
-       * Returns the mime type of the object.
-       */
-      String mimeType() const;
+  /*!
+   * Returns the file name of the object.
+   *
+   * \see setFileName()
+   */
+  String fileName() const;
 
-      /*!
-       * Sets the mime type of the object.
-       */
-      void setMimeType(const String &type);
+  /*!
+   * Sets the file name for the object.
+   *
+   * \see fileName()
+   */
+  void setFileName(const String &name);
 
-      /*!
-       * Returns the file name of the object.
-       *
-       * \see setFileName()
-       */
-      String fileName() const;
+  /*!
+   * Returns the content description of the object.
+   *
+   * \see setDescription()
+   * \see textEncoding()
+   * \see setTextEncoding()
+   */
 
-      /*!
-       * Sets the file name for the object.
-       *
-       * \see fileName()
-       */
-      void setFileName(const String &name);
+  String description() const;
 
-      /*!
-       * Returns the content description of the object.
-       *
-       * \see setDescription()
-       * \see textEncoding()
-       * \see setTextEncoding()
-       */
+  /*!
+   * Sets the content description of the object to \a desc.
+   *
+   * \see description()
+   * \see textEncoding()
+   * \see setTextEncoding()
+   */
 
-      String description() const;
+  void setDescription(const String &desc);
 
-      /*!
-       * Sets the content description of the object to \a desc.
-       *
-       * \see description()
-       * \see textEncoding()
-       * \see setTextEncoding()
-       */
+  /*!
+   * Returns the object data as a ByteVector.
+   *
+   * \note ByteVector has a data() method that returns a const char * which
+   * should make it easy to export this data to external programs.
+   *
+   * \see setObject()
+   * \see mimeType()
+   */
+  ByteVector object() const;
 
-      void setDescription(const String &desc);
+  /*!
+   * Sets the object data to \a data.
+   * \a data should be of the type specified in this frame's mime-type specification.
+   *
+   * \see object()
+   * \see mimeType()
+   * \see setMimeType()
+   */
+  void setObject(const ByteVector &data);
 
-      /*!
-       * Returns the object data as a ByteVector.
-       *
-       * \note ByteVector has a data() method that returns a const char * which
-       * should make it easy to export this data to external programs.
-       *
-       * \see setObject()
-       * \see mimeType()
-       */
-      ByteVector object() const;
+ protected:
+  virtual void parseFields(const ByteVector &data);
+  virtual ByteVector renderFields() const;
 
-      /*!
-       * Sets the object data to \a data.  \a data should be of the type specified in
-       * this frame's mime-type specification.
-       *
-       * \see object()
-       * \see mimeType()
-       * \see setMimeType()
-       */
-      void setObject(const ByteVector &object);
+ private:
+  GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h);
+  GeneralEncapsulatedObjectFrame(const GeneralEncapsulatedObjectFrame &);
+  GeneralEncapsulatedObjectFrame &operator=(const GeneralEncapsulatedObjectFrame &);
 
-    protected:
-      virtual void parseFields(const ByteVector &data);
-      virtual ByteVector renderFields() const;
+  class GeneralEncapsulatedObjectFramePrivate;
+  GeneralEncapsulatedObjectFramePrivate *d;
+};
 
-    private:
-      GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h);
-      GeneralEncapsulatedObjectFrame(const GeneralEncapsulatedObjectFrame &);
-      GeneralEncapsulatedObjectFrame &operator=(const GeneralEncapsulatedObjectFrame &);
-
-      class GeneralEncapsulatedObjectFramePrivate;
-      GeneralEncapsulatedObjectFramePrivate *d;
-    };
-  }
-}
-}
+}  // namespace ID3v2
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

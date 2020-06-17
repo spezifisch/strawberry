@@ -45,25 +45,19 @@ class GlobalShortcutsSettingsPage : public SettingsPage {
 
  public:
   explicit GlobalShortcutsSettingsPage(SettingsDialog *dialog);
-  ~GlobalShortcutsSettingsPage();
+  ~GlobalShortcutsSettingsPage() override;
+
   static const char *kSettingsGroup;
 
-  bool IsEnabled() const;
+  bool IsEnabled() const override;
 
-  void Load();
-  void Save();
+  void Load() override;
+  void Save() override;
 
  private slots:
-
-#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
-#ifdef HAVE_X11
   void X11Changed(bool);
-#endif
-#ifdef HAVE_DBUS
   void GSDChanged(bool);
   void OpenGnomeKeybindingProperties();
-#endif
-#endif
 
   void ItemClicked(QTreeWidgetItem*);
   void NoneClicked();

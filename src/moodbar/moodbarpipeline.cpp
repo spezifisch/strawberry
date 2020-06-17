@@ -17,7 +17,7 @@
 
 #include "moodbarpipeline.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <glib-object.h>
 
 #include <QObject>
@@ -132,7 +132,7 @@ void MoodbarPipeline::Start() {
 
 }
 
-void MoodbarPipeline::ReportError(GstMessage* msg) {
+void MoodbarPipeline::ReportError(GstMessage *msg) {
 
   GError* error;
   gchar* debugs;

@@ -27,7 +27,7 @@
 #include <gio/gio.h>
 #include <memory>
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <string>
 
 #include <gst/gst.h>
@@ -72,8 +72,7 @@ const char *GstEngine::kDirectSoundSink = "directsoundsink";
 const char *GstEngine::kOSXAudioSink = "osxaudiosink";
 
 GstEngine::GstEngine(TaskManager *task_manager)
-    : Engine::Base(),
-      task_manager_(task_manager),
+    : task_manager_(task_manager),
       buffering_task_id_(-1),
       latest_buffer_(nullptr),
       stereo_balancer_enabled_(false),
@@ -211,7 +210,7 @@ void GstEngine::Stop(const bool stop_after) {
 
   // Check if we started a fade out. If it isn't finished yet and the user pressed stop, we cancel the fader and just stop the playback.
   if (is_fading_out_to_pause_) {
-    disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), 0, 0);
+    disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), nullptr, nullptr);
     is_fading_out_to_pause_ = false;
     has_faded_out_ = true;
 
@@ -233,7 +232,7 @@ void GstEngine::Pause() {
 
   // Check if we started a fade out. If it isn't finished yet and the user pressed play, we inverse the fader and resume the playback.
   if (is_fading_out_to_pause_) {
-    disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), 0, 0);
+    disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), nullptr, nullptr);
     current_pipeline_->StartFader(fadeout_pause_duration_nanosec_, QTimeLine::Forward, QTimeLine::EaseInOutCurve, false);
     is_fading_out_to_pause_ = false;
     has_faded_out_ = false;
@@ -264,7 +263,7 @@ void GstEngine::Unpause() {
     // Check if we faded out last time. If yes, fade in no matter what the settings say.
     // If we pause with fadeout, deactivate fadeout and resume playback, the player would be muted if not faded in.
     if (has_faded_out_) {
-      disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), 0, 0);
+      disconnect(current_pipeline_.get(), SIGNAL(FaderFinished()), nullptr, nullptr);
       current_pipeline_->StartFader(fadeout_pause_duration_nanosec_, QTimeLine::Forward, QTimeLine::EaseInOutCurve, false);
       has_faded_out_ = false;
     }
@@ -322,7 +321,7 @@ const Engine::Scope &GstEngine::scope(const int chunk_length) {
   // The new buffer could have a different size
   if (have_new_buffer_) {
     if (latest_buffer_) {
-      scope_chunks_ = ceil(((double)GST_BUFFER_DURATION(latest_buffer_) / (double)(chunk_length * kNsecPerMsec)));
+      scope_chunks_ = ceil((static_cast<double>(GST_BUFFER_DURATION(latest_buffer_) / static_cast<double>(chunk_length * kNsecPerMsec))));
     }
 
     // if the buffer is shorter than the chunk length
@@ -515,7 +514,7 @@ void GstEngine::HandlePipelineError(const int pipeline_id, const QString &messag
   BufferingFinished();
   emit StateChanged(Engine::Error);
 
-  if (domain == (int)GST_RESOURCE_ERROR && (error_code == (int)GST_RESOURCE_ERROR_NOT_FOUND || error_code == (int)GST_RESOURCE_ERROR_NOT_AUTHORIZED)) {
+  if (domain == static_cast<int>(GST_RESOURCE_ERROR) && (error_code == static_cast<int>(GST_RESOURCE_ERROR_NOT_FOUND) || error_code == static_cast<int>(GST_RESOURCE_ERROR_NOT_AUTHORIZED))) {
      emit InvalidSongRequested(stream_url_);
    }
   else {
@@ -713,7 +712,7 @@ void GstEngine::StartFadeout() {
   if (is_fading_out_to_pause_) return;
 
   fadeout_pipeline_ = current_pipeline_;
-  disconnect(fadeout_pipeline_.get(), 0, 0, 0);
+  disconnect(fadeout_pipeline_.get(), nullptr, nullptr, nullptr);
   fadeout_pipeline_->RemoveAllBufferConsumers();
 
   fadeout_pipeline_->StartFader(fadeout_duration_nanosec_, QTimeLine::Backward);
@@ -724,7 +723,7 @@ void GstEngine::StartFadeout() {
 void GstEngine::StartFadeoutPause() {
 
   fadeout_pause_pipeline_ = current_pipeline_;
-  disconnect(fadeout_pause_pipeline_.get(), SIGNAL(FaderFinished()), 0, 0);
+  disconnect(fadeout_pause_pipeline_.get(), SIGNAL(FaderFinished()), nullptr, nullptr);
 
   fadeout_pause_pipeline_->StartFader(fadeout_pause_duration_nanosec_, QTimeLine::Backward, QTimeLine::EaseInOutCurve, false);
   if (fadeout_pipeline_ && fadeout_pipeline_->state() == GST_STATE_PLAYING) {

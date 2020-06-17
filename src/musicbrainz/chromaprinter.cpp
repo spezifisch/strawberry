@@ -21,9 +21,9 @@
 #include "config.h"
 
 #include <glib-object.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <sys/types.h>
 #include <chromaprint.h>
 #include <gst/gst.h>
@@ -54,8 +54,6 @@ static const int kTimeoutSecs = 10;
 Chromaprinter::Chromaprinter(const QString &filename)
     : filename_(filename),
       convert_element_(nullptr) {}
-
-Chromaprinter::~Chromaprinter() {}
 
 GstElement *Chromaprinter::CreateElement(const QString &factory_name, GstElement *bin) {
 

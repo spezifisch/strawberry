@@ -31,92 +31,78 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace MP4 {
 
-  namespace MP4 {
+class Atoms;
+class File;
 
-    class Atoms;
-    class File;
+//! An implementation of MP4 audio properties
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
+  enum Codec {
+    Unknown = 0,
+    AAC,
+    ALAC
+  };
 
-    //! An implementation of MP4 audio properties
-    class TAGLIB_EXPORT Properties : public AudioProperties
-    {
-    public:
-      enum Codec {
-        Unknown = 0,
-        AAC,
-        ALAC
-      };
+  Properties(File *file, Atoms *atoms, ReadStyle style = Average);
+  virtual ~Properties();
 
-      Properties(File *file, Atoms *atoms, ReadStyle style = Average);
-      virtual ~Properties();
+  /*!
+   * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \note This method is just an alias of lengthInSeconds().
-       *
-       * \deprecated
-       */
-      TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \see lengthInMilliseconds()
-       */
-      // BIC: make virtual
-      int lengthInSeconds() const;
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-      /*!
-       * Returns the length of the file in milliseconds.
-       *
-       * \see lengthInSeconds()
-       */
-      // BIC: make virtual
-      int lengthInMilliseconds() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-      /*!
-       * Returns the average bit rate of the file in kb/s.
-       */
-      virtual int bitrate() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-      /*!
-       * Returns the sample rate in Hz.
-       */
-      virtual int sampleRate() const;
+  /*!
+   * Returns the number of bits per audio sample.
+   */
+  virtual int bitsPerSample() const;
 
-      /*!
-       * Returns the number of audio channels.
-       */
-      virtual int channels() const;
+  /*!
+   * Returns whether or not the file is encrypted.
+   */
+  bool isEncrypted() const;
 
-      /*!
-       * Returns the number of bits per audio sample.
-       */
-      virtual int bitsPerSample() const;
+  /*!
+   * Returns the codec used in the file.
+   */
+  Codec codec() const;
 
-      /*!
-       * Returns whether or not the file is encrypted.
-       */
-      bool isEncrypted() const;
+ private:
+  void read(File *file, Atoms *atoms);
 
-      /*!
-       * Returns the codec used in the file.
-       */
-      Codec codec() const;
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
 
-    private:
-      void read(File *file, Atoms *atoms);
-
-      class PropertiesPrivate;
-      PropertiesPrivate *d;
-    };
-
-  }
-
-}
-}
+}  // namespace MP4
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

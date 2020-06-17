@@ -71,7 +71,7 @@ class InternetSearchView : public QWidget {
 
  public:
   explicit InternetSearchView(QWidget *parent = nullptr);
-  ~InternetSearchView();
+  ~InternetSearchView() override;
 
   enum SearchType {
     SearchType_Artists = 1,
@@ -104,9 +104,9 @@ class InternetSearchView : public QWidget {
     }
   };
 
-  void showEvent(QShowEvent *e);
-  bool eventFilter(QObject *object, QEvent *e);
-  void timerEvent(QTimerEvent *e);
+  void showEvent(QShowEvent *e) override;
+  bool eventFilter(QObject *object, QEvent *e) override;
+  void timerEvent(QTimerEvent *e) override;
 
   // These functions treat queries in the same way as CollectionQuery.
   // They're useful for figuring out whether you got a result because it matched in the song title or the artist/album name.
@@ -149,10 +149,10 @@ class InternetSearchView : public QWidget {
   void StartSearch(const QString &query);
   void SearchDone(const int service_id, const SongList &songs, const QString &error);
 
-  void UpdateStatus(const int id, const QString &text);
-  void ProgressSetMaximum(const int id, const int progress);
-  void UpdateProgress(const int id, const int max);
-  void AddResults(const int id, const ResultList &results);
+  void UpdateStatus(const int service_id, const QString &text);
+  void ProgressSetMaximum(const int service_id, const int max);
+  void UpdateProgress(const int service_id, const int progress);
+  void AddResults(const int service_id, const ResultList &results);
 
   void FocusOnFilter(QKeyEvent *e);
 

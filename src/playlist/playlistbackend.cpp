@@ -23,7 +23,7 @@
 
 #include <memory>
 #include <functional>
-#include <assert.h>
+#include <cassert>
 
 #include <QObject>
 #include <QApplication>
@@ -66,8 +66,6 @@ PlaylistBackend::PlaylistBackend(Application *app, QObject *parent)
   original_thread_ = thread();
 
 }
-
-PlaylistBackend::~PlaylistBackend() {}
 
 void PlaylistBackend::Close() {
 

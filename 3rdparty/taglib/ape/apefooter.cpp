@@ -35,16 +35,14 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace APE;
 
-class APE::Footer::FooterPrivate
-{
-public:
-  FooterPrivate() :
-    version(0),
-    footerPresent(true),
-    headerPresent(false),
-    isHeader(false),
-    itemCount(0),
-    tagSize(0) {}
+class APE::Footer::FooterPrivate {
+ public:
+  FooterPrivate() : version(0),
+                    footerPresent(true),
+                    headerPresent(false),
+                    isHeader(false),
+                    itemCount(0),
+                    tagSize(0) {}
 
   unsigned int version;
 
@@ -61,13 +59,11 @@ public:
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned int APE::Footer::size()
-{
+unsigned int APE::Footer::size() {
   return 32;
 }
 
-ByteVector APE::Footer::fileIdentifier()
-{
+ByteVector APE::Footer::fileIdentifier() {
   return ByteVector("APETAGEX");
 }
 
@@ -75,100 +71,84 @@ ByteVector APE::Footer::fileIdentifier()
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-APE::Footer::Footer() :
-  d(new FooterPrivate())
-{
+APE::Footer::Footer() : d(new FooterPrivate()) {
 }
 
-APE::Footer::Footer(const ByteVector &data) :
-  d(new FooterPrivate())
-{
+APE::Footer::Footer(const ByteVector &data) : d(new FooterPrivate()) {
   parse(data);
 }
 
-APE::Footer::~Footer()
-{
+APE::Footer::~Footer() {
   delete d;
 }
 
-unsigned int APE::Footer::version() const
-{
+unsigned int APE::Footer::version() const {
   return d->version;
 }
 
-bool APE::Footer::headerPresent() const
-{
+bool APE::Footer::headerPresent() const {
   return d->headerPresent;
 }
 
-bool APE::Footer::footerPresent() const
-{
+bool APE::Footer::footerPresent() const {
   return d->footerPresent;
 }
 
-bool APE::Footer::isHeader() const
-{
+bool APE::Footer::isHeader() const {
   return d->isHeader;
 }
 
-void APE::Footer::setHeaderPresent(bool b) const
-{
+void APE::Footer::setHeaderPresent(bool b) const {
   d->headerPresent = b;
 }
 
-unsigned int APE::Footer::itemCount() const
-{
+unsigned int APE::Footer::itemCount() const {
   return d->itemCount;
 }
 
-void APE::Footer::setItemCount(unsigned int s)
-{
+void APE::Footer::setItemCount(unsigned int s) {
   d->itemCount = s;
 }
 
-unsigned int APE::Footer::tagSize() const
-{
+unsigned int APE::Footer::tagSize() const {
   return d->tagSize;
 }
 
-unsigned int APE::Footer::completeTagSize() const
-{
-  if(d->headerPresent)
+unsigned int APE::Footer::completeTagSize() const {
+  if (d->headerPresent)
     return d->tagSize + size();
   else
     return d->tagSize;
 }
 
-void APE::Footer::setTagSize(unsigned int s)
-{
+void APE::Footer::setTagSize(unsigned int s) {
   d->tagSize = s;
 }
 
-void APE::Footer::setData(const ByteVector &data)
-{
+void APE::Footer::setData(const ByteVector &data) {
   parse(data);
 }
 
-ByteVector APE::Footer::renderFooter() const
-{
+ByteVector APE::Footer::renderFooter() const {
   return render(false);
 }
 
-ByteVector APE::Footer::renderHeader() const
-{
-  if(!d->headerPresent)
+ByteVector APE::Footer::renderHeader() const {
+
+  if (!d->headerPresent)
     return ByteVector();
   else
     return render(true);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-void APE::Footer::parse(const ByteVector &data)
-{
-  if(data.size() < size())
+void APE::Footer::parse(const ByteVector &data) {
+
+  if (data.size() < size())
     return;
 
   // The first eight bytes, data[0..7], are the File Identifier, "APETAGEX".
@@ -195,8 +175,8 @@ void APE::Footer::parse(const ByteVector &data)
 
 }
 
-ByteVector APE::Footer::render(bool isHeader) const
-{
+ByteVector APE::Footer::render(bool isHeader) const {
+
   ByteVector v;
 
   // add the file identifier -- "APETAGEX"
@@ -221,7 +201,7 @@ ByteVector APE::Footer::render(bool isHeader) const
   std::bitset<32> flags;
 
   flags[31] = d->headerPresent;
-  flags[30] = false; // footer is always present
+  flags[30] = false;  // footer is always present
   flags[29] = isHeader;
 
   v.append(ByteVector::fromUInt(flags.to_ulong(), false));
@@ -231,4 +211,5 @@ ByteVector APE::Footer::render(bool isHeader) const
   v.append(ByteVector::fromLongLong(0));
 
   return v;
+
 }

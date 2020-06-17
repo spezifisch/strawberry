@@ -36,226 +36,199 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  class Tag;
+class Tag;
 
-  namespace ID3v2 { class Tag; class FrameFactory; }
-  namespace ID3v1 { class Tag; }
+namespace ID3v2 {
+class Tag;
+class FrameFactory;
+}  // namespace ID3v2
+namespace ID3v1 {
+class Tag;
+}
 
-  //! An implementation of TrueAudio metadata
+//! An implementation of TrueAudio metadata
+
+/*!
+ * This is implementation of TrueAudio metadata.
+ *
+ * This supports ID3v1 and ID3v2 tags as well as reading stream properties from the file.
+ */
+
+namespace TrueAudio {
+
+//! An implementation of TagLib::File with TrueAudio specific methods
+
+/*!
+ * This implements and provides an interface for TrueAudio files to the
+ * TagLib::Tag and TagLib::AudioProperties interfaces by way of implementing the
+ * abstract TagLib::File API as well as providing some additional information specific to TrueAudio files.
+ */
+
+class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
+ public:
+  /*!
+   * This set of flags is used for various operations and is suitable for being OR-ed together.
+   */
+  enum TagTypes {
+    //! Empty set.  Matches no tag types.
+    NoTags = 0x0000,
+    //! Matches ID3v1 tags.
+    ID3v1 = 0x0001,
+    //! Matches ID3v2 tags.
+    ID3v2 = 0x0002,
+    //! Matches all tag types.
+    AllTags = 0xffff
+  };
 
   /*!
-   * This is implementation of TrueAudio metadata.
+   * Constructs a TrueAudio file from \a file.
+   * If \a readProperties is true the file's audio properties will also be read.
    *
-   * This supports ID3v1 and ID3v2 tags as well as reading stream
-   * properties from the file.
+   * \note In the current implementation, \a propertiesStyle is ignored.
    */
+  File(FileName file, bool readProperties = true,
+    Properties::ReadStyle propertiesStyle = Properties::Average);
 
-  namespace TrueAudio {
+  /*!
+   * Constructs a TrueAudio file from \a file.
+   * If \a readProperties is true the file's audio properties will also be read.
+   *
+   * If this file contains and ID3v2 tag the frames will be created using \a frameFactory.
+   *
+   * \note In the current implementation, \a propertiesStyle is ignored.
+   */
+  File(FileName file, ID3v2::FrameFactory *frameFactory, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
 
-    //! An implementation of TagLib::File with TrueAudio specific methods
+  /*!
+   * Constructs a TrueAudio file from \a stream.
+   * If \a readProperties is true the file's audio properties will also be read.
+   *
+   * \note TagLib will *not* take ownership of the stream, the caller is responsible for deleting it after the File object.
+   *
+   * \note In the current implementation, \a propertiesStyle is ignored.
+   */
+  File(IOStream *stream, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
 
-    /*!
-     * This implements and provides an interface for TrueAudio files to the
-     * TagLib::Tag and TagLib::AudioProperties interfaces by way of implementing
-     * the abstract TagLib::File API as well as providing some additional
-     * information specific to TrueAudio files.
-     */
+  /*!
+   * Constructs a TrueAudio file from \a stream.
+   * If \a readProperties is true the file's audio properties will also be read.
+   *
+   * \note TagLib will *not* take ownership of the stream, the caller is responsible for deleting it after the File object.
+   *
+   * If this file contains and ID3v2 tag the frames will be created using \a frameFactory.
+   *
+   * \note In the current implementation, \a propertiesStyle is ignored.
+   */
+  File(IOStream *stream, ID3v2::FrameFactory *frameFactory, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
 
-    class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File
-    {
-    public:
-      /*!
-       * This set of flags is used for various operations and is suitable for
-       * being OR-ed together.
-       */
-      enum TagTypes {
-        //! Empty set.  Matches no tag types.
-        NoTags  = 0x0000,
-        //! Matches ID3v1 tags.
-        ID3v1   = 0x0001,
-        //! Matches ID3v2 tags.
-        ID3v2   = 0x0002,
-        //! Matches all tag types.
-        AllTags = 0xffff
-      };
+  /*!
+   * Destroys this instance of the File.
+   */
+  virtual ~File();
 
-      /*!
-       * Constructs a TrueAudio file from \a file.  If \a readProperties is true
-       * the file's audio properties will also be read.
-       *
-       * \note In the current implementation, \a propertiesStyle is ignored.
-       */
-      File(FileName file, bool readProperties = true,
-           Properties::ReadStyle propertiesStyle = Properties::Average);
+  /*!
+   * Returns the Tag for this file.
+   */
+  virtual Strawberry_TagLib::TagLib::Tag *tag() const;
 
-      /*!
-       * Constructs a TrueAudio file from \a file.  If \a readProperties is true
-       * the file's audio properties will also be read.
-       *
-       * If this file contains and ID3v2 tag the frames will be created using
-       * \a frameFactory.
-       *
-       * \note In the current implementation, \a propertiesStyle is ignored.
-       */
-      File(FileName file, ID3v2::FrameFactory *frameFactory,
-           bool readProperties = true,
-           Properties::ReadStyle propertiesStyle = Properties::Average);
+  /*!
+   * Implements the unified property interface -- export function.
+   * If the file contains both ID3v1 and v2 tags, only ID3v2 will be converted to the PropertyMap.
+   */
+  PropertyMap properties() const;
 
-      /*!
-       * Constructs a TrueAudio file from \a stream.  If \a readProperties is true
-       * the file's audio properties will also be read.
-       *
-       * \note TagLib will *not* take ownership of the stream, the caller is
-       * responsible for deleting it after the File object.
-       *
-       * \note In the current implementation, \a propertiesStyle is ignored.
-       */
-      File(IOStream *stream, bool readProperties = true,
-           Properties::ReadStyle propertiesStyle = Properties::Average);
+  /*!
+   * Implements the unified property interface -- import function.
+   * Creates in ID3v2 tag if necessary. If an ID3v1 tag exists, it will be updated as well, within the limitations of ID3v1.
+   */
+  PropertyMap setProperties(const PropertyMap &);
 
-      /*!
-       * Constructs a TrueAudio file from \a stream.  If \a readProperties is true
-       * the file's audio properties will also be read.
-       *
-       * \note TagLib will *not* take ownership of the stream, the caller is
-       * responsible for deleting it after the File object.
-       *
-       * If this file contains and ID3v2 tag the frames will be created using
-       * \a frameFactory.
-       *
-       * \note In the current implementation, \a propertiesStyle is ignored.
-       */
-      File(IOStream *stream, ID3v2::FrameFactory *frameFactory,
-           bool readProperties = true,
-           Properties::ReadStyle propertiesStyle = Properties::Average);
+  void removeUnsupportedProperties(const StringList &properties);
 
-      /*!
-       * Destroys this instance of the File.
-       */
-      virtual ~File();
+  /*!
+   * Returns the TrueAudio::Properties for this file.
+   * If no audio properties were read then this will return a null pointer.
+   */
+  virtual Properties *audioProperties() const;
+  /*!
+   * Saves the file.
+   */
+  virtual bool save();
 
-      /*!
-       * Returns the Tag for this file.
-       */
-      virtual Strawberry_TagLib::TagLib::Tag *tag() const;
+  /*!
+   * Returns a pointer to the ID3v1 tag of the file.
+   *
+   * If \a create is false (the default) this may return a null pointer if there is no valid ID3v1 tag.
+   * If \a create is true it will create an ID3v1 tag if one does not exist and returns a valid pointer.
+   *
+   * \note This may return a valid pointer regardless of whether or not the file on disk has an ID3v1 tag.
+   * Use hasID3v1Tag() to check if the file on disk actually has an ID3v1 tag.
+   *
+   * \note The Tag <b>is still</b> owned by the MPEG::File and should not be deleted by the user.
+   * It will be deleted when the file (object) is destroyed.
+   *
+   * \see hasID3v1Tag()
+   */
+  ID3v1::Tag *ID3v1Tag(bool create = false);
 
-      /*!
-       * Implements the unified property interface -- export function.
-       * If the file contains both ID3v1 and v2 tags, only ID3v2 will be
-       * converted to the PropertyMap.
-       */
-      PropertyMap properties() const;
+  /*!
+   * Returns a pointer to the ID3v2 tag of the file.
+   *
+   * If \a create is false (the default) this may return a null pointer if there is no valid ID3v2 tag.
+   * If \a create is true it will create an ID3v2 tag if one does not exist and returns a valid pointer.
+   *
+   * \note This may return a valid pointer regardless of whether or not the file on disk has an ID3v2 tag.
+   * Use hasID3v2Tag() to check if the file on disk actually has an ID3v2 tag.
+   *
+   * \note The Tag <b>is still</b> owned by the MPEG::File and should not be deleted by the user.
+   * It will be deleted when the file (object) is destroyed.
+   *
+   * \see hasID3v2Tag()
+   */
+  ID3v2::Tag *ID3v2Tag(bool create = false);
 
-      /*!
-       * Implements the unified property interface -- import function.
-       * Creates in ID3v2 tag if necessary. If an ID3v1 tag exists, it will
-       * be updated as well, within the limitations of ID3v1.
-       */
-      PropertyMap setProperties(const PropertyMap &);
+  /*!
+   * This will remove the tags that match the OR-ed together TagTypes from the file.
+   * By default it removes all tags.
+   *
+   * \note This will also invalidate pointers to the tags as their memory will be freed.
+   * \note In order to make the removal permanent save() still needs to be called
+   */
+  void strip(int tags = AllTags);
 
-      void removeUnsupportedProperties(const StringList &properties);
+  /*!
+   * Returns whether or not the file on disk actually has an ID3v1 tag.
+   *
+   * \see ID3v1Tag()
+   */
+  bool hasID3v1Tag() const;
 
-      /*!
-       * Returns the TrueAudio::Properties for this file.  If no audio properties
-       * were read then this will return a null pointer.
-       */
-      virtual Properties *audioProperties() const;
+  /*!
+   * Returns whether or not the file on disk actually has an ID3v2 tag.
+   *
+   * \see ID3v2Tag()
+   */
+  bool hasID3v2Tag() const;
 
-      /*!
-       * Set the ID3v2::FrameFactory to something other than the default.
-       *
-       * \see ID3v2FrameFactory
-       * \deprecated This value should be passed in via the constructor
-       */
-      TAGLIB_DEPRECATED void setID3v2FrameFactory(const ID3v2::FrameFactory *factory);
+  /*!
+   * Returns whether or not the given \a stream can be opened as a TrueAudio file.
+   *
+   * \note This method is designed to do a quick check.  The result may not necessarily be correct.
+   */
+  static bool isSupported(IOStream *stream);
 
-      /*!
-       * Saves the file.
-       */
-      virtual bool save();
+ private:
+  File(const File &);
+  File &operator=(const File &);
 
-      /*!
-       * Returns a pointer to the ID3v1 tag of the file.
-       *
-       * If \a create is false (the default) this may return a null pointer
-       * if there is no valid ID3v1 tag.  If \a create is true it will create
-       * an ID3v1 tag if one does not exist and returns a valid pointer.
-       *
-       * \note This may return a valid pointer regardless of whether or not the
-       * file on disk has an ID3v1 tag.  Use hasID3v1Tag() to check if the file
-       * on disk actually has an ID3v1 tag.
-       *
-       * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
-       * deleted by the user.  It will be deleted when the file (object) is
-       * destroyed.
-       *
-       * \see hasID3v1Tag()
-       */
-      ID3v1::Tag *ID3v1Tag(bool create = false);
+  void read(bool readProperties);
 
-      /*!
-       * Returns a pointer to the ID3v2 tag of the file.
-       *
-       * If \a create is false (the default) this may return a null pointer
-       * if there is no valid ID3v2 tag.  If \a create is true it will create
-       * an ID3v2 tag if one does not exist and returns a valid pointer.
-       *
-       * \note This may return a valid pointer regardless of whether or not the
-       * file on disk has an ID3v2 tag.  Use hasID3v2Tag() to check if the file
-       * on disk actually has an ID3v2 tag.
-       *
-       * \note The Tag <b>is still</b> owned by the MPEG::File and should not be
-       * deleted by the user.  It will be deleted when the file (object) is
-       * destroyed.
-       *
-       * \see hasID3v2Tag()
-       */
-      ID3v2::Tag *ID3v2Tag(bool create = false);
+  class FilePrivate;
+  FilePrivate *d;
+};
 
-      /*!
-       * This will remove the tags that match the OR-ed together TagTypes from the
-       * file.  By default it removes all tags.
-       *
-       * \note This will also invalidate pointers to the tags
-       * as their memory will be freed.
-       * \note In order to make the removal permanent save() still needs to be called
-       */
-      void strip(int tags = AllTags);
-
-      /*!
-       * Returns whether or not the file on disk actually has an ID3v1 tag.
-       *
-       * \see ID3v1Tag()
-       */
-      bool hasID3v1Tag() const;
-
-      /*!
-       * Returns whether or not the file on disk actually has an ID3v2 tag.
-       *
-       * \see ID3v2Tag()
-       */
-      bool hasID3v2Tag() const;
-
-      /*!
-       * Returns whether or not the given \a stream can be opened as a TrueAudio
-       * file.
-       *
-       * \note This method is designed to do a quick check.  The result may
-       * not necessarily be correct.
-       */
-      static bool isSupported(IOStream *stream);
-
-    private:
-      File(const File &);
-      File &operator=(const File &);
-
-      void read(bool readProperties);
-
-      class FilePrivate;
-      FilePrivate *d;
-    };
-  }
-}
-}
+}  // namespace TrueAudio
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

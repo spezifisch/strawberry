@@ -10,6 +10,8 @@ jobs:
       image: opensuse/leap:15.1
     steps:
       - uses: actions/checkout@v1.2.0
+      - name: Update packages
+        run: zypper --non-interactive --gpg-auto-import-keys ref
       - name: Install openSUSE dependencies
         run: >
             zypper --non-interactive --gpg-auto-import-keys install
@@ -79,6 +81,8 @@ jobs:
       image: opensuse/leap:15.1
     steps:
       - uses: actions/checkout@v1.2.0
+      - name: Update packages
+        run: zypper --non-interactive --gpg-auto-import-keys ref
       - name: Install openSUSE dependencies
         run: >
             zypper --non-interactive --gpg-auto-import-keys install
@@ -156,6 +160,8 @@ jobs:
       image: opensuse/leap:15.2
     steps:
       - uses: actions/checkout@v1.2.0
+      - name: Update packages
+        run: zypper --non-interactive --gpg-auto-import-keys ref
       - name: Install openSUSE dependencies
         run: >
             zypper --non-interactive --gpg-auto-import-keys install
@@ -478,8 +484,6 @@ jobs:
 
       - name: Install epel-release
         run: dnf install -y epel-release
-      - name: Install epel-release-latest-8.noarch.rpm
-        run: dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
       - name:  Install config-manager
         run: dnf install -y 'dnf-command(config-manager)'
       - name: Enable PowerTools
@@ -567,9 +571,6 @@ jobs:
       image: mageia:7
     steps:
       - uses: actions/checkout@v1.2.0
-
-      - name: Add extra media
-        run: urpmi.addmedia --distrib http://www.mirrorservice.org/sites/mageia.org/pub/mageia/distrib/7/x86_64
 
       - name: Update packages
         run: urpmi.update -a
@@ -1151,18 +1152,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1.2.0
 
-      - name: Add mingw repository
-        shell: bash
-        run:  zypper -n ar -c -f -n 'repo-mingw' https://download.opensuse.org/repositories/windows:/mingw:/win32/openSUSE_Tumbleweed/ repo-mingw
-
-      - name: Update packages
-        shell: bash
-        run:  zypper --non-interactive --gpg-auto-import-keys ref
-
-      - name: Install nsis
-        shell: bash
-        run:  zypper --non-interactive --gpg-auto-import-keys in mingw32-cross-nsis
-
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -1267,6 +1256,7 @@ jobs:
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstspeex.dll
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstlame.dll
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstaiff.dll
+          /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstfaac.dll
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstfaad.dll
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstisomp4.dll
           /usr/src/strawberry-mxe/usr/x86_64-w64-mingw32.shared/bin/gstreamer-1.0/libgstasf.dll

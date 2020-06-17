@@ -32,64 +32,61 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace ID3v2 {
 
-  namespace ID3v2 {
+//! ID3v2 extended header implementation
 
-    //! ID3v2 extended header implementation
+/*!
+ * This class implements ID3v2 extended headers.
+ * It attempts to follow, both semantically and programmatically,
+ * the structure specified in the ID3v2 standard.
+ * The API is based on the properties of ID3v2 extended headers specified there.
+ * If any of the terms used in this documentation are unclear please check the specification in the linked section.
+ * (Structure, <a href="id3v2-structure.html#3.2">3.2</a>)
+ */
 
-    /*!
-     * This class implements ID3v2 extended headers.  It attempts to follow,
-     * both semantically and programmatically, the structure specified in
-     * the ID3v2 standard.  The API is based on the properties of ID3v2 extended
-     * headers specified there.  If any of the terms used in this documentation
-     * are unclear please check the specification in the linked section.
-     * (Structure, <a href="id3v2-structure.html#3.2">3.2</a>)
-     */
+class TAGLIB_EXPORT ExtendedHeader {
+ public:
+  /*!
+   * Constructs an empty ID3v2 extended header.
+   */
+  ExtendedHeader();
 
-    class TAGLIB_EXPORT ExtendedHeader
-    {
-    public:
-      /*!
-       * Constructs an empty ID3v2 extended header.
-       */
-      ExtendedHeader();
+  /*!
+   * Destroys the extended header.
+   */
+  virtual ~ExtendedHeader();
 
-      /*!
-       * Destroys the extended header.
-       */
-      virtual ~ExtendedHeader();
+  /*!
+   * Returns the size of the extended header.  This is variable for the extended header.
+   */
+  unsigned int size() const;
 
-      /*!
-       * Returns the size of the extended header.  This is variable for the
-       * extended header.
-       */
-      unsigned int size() const;
+  /*!
+   * Sets the data that will be used as the extended header.
+   * Since the length is not known before the extended header has been parsed,
+   * this should just be a pointer to the first byte of the extended header.
+   * It will determine the length internally and make that available through size().
+   */
+  void setData(const ByteVector &data);
 
-      /*!
-       * Sets the data that will be used as the extended header.  Since the
-       * length is not known before the extended header has been parsed, this
-       * should just be a pointer to the first byte of the extended header.  It
-       * will determine the length internally and make that available through
-       * size().
-       */
-      void setData(const ByteVector &data);
+ protected:
+  /*!
+   * Called by setData() to parse the extended header data.
+   * It makes this information available through the public API.
+   */
+  void parse(const ByteVector &data);
 
-    protected:
-      /*!
-       * Called by setData() to parse the extended header data.  It makes this
-       * information available through the public API.
-       */
-      void parse(const ByteVector &data);
+ private:
+  ExtendedHeader(const ExtendedHeader &);
+  ExtendedHeader &operator=(const ExtendedHeader &);
 
-    private:
-      ExtendedHeader(const ExtendedHeader &);
-      ExtendedHeader &operator=(const ExtendedHeader &);
+  class ExtendedHeaderPrivate;
+  ExtendedHeaderPrivate *d;
+};
 
-      class ExtendedHeaderPrivate;
-      ExtendedHeaderPrivate *d;
-    };
+}  // namespace ID3v2
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
-  }
-}
-}
 #endif

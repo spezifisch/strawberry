@@ -35,178 +35,161 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  namespace ASF {
+namespace ASF {
 
-    typedef List<Attribute> AttributeList;
-    typedef Map<String, AttributeList> AttributeListMap;
+typedef List<Attribute> AttributeList;
+typedef Map<String, AttributeList> AttributeListMap;
 
-    class TAGLIB_EXPORT Tag : public Strawberry_TagLib::TagLib::Tag {
+class TAGLIB_EXPORT Tag : public Strawberry_TagLib::TagLib::Tag {
 
-      friend class File;
+  friend class File;
 
-    public:
+ public:
+  Tag();
 
-      Tag();
+  virtual ~Tag();
 
-      virtual ~Tag();
+  /*!
+   * Returns the track name.
+   */
+  virtual String title() const;
 
-      /*!
-       * Returns the track name.
-       */
-      virtual String title() const;
+  /*!
+   * Returns the artist name.
+   */
+  virtual String artist() const;
 
-      /*!
-       * Returns the artist name.
-       */
-      virtual String artist() const;
+  /*!
+   * Returns the album name; if no album name is present in the tag String::null will be returned.
+   */
+  virtual String album() const;
 
-      /*!
-       * Returns the album name; if no album name is present in the tag
-       * String::null will be returned.
-       */
-      virtual String album() const;
+  /*!
+   * Returns the track comment.
+   */
+  virtual String comment() const;
 
-      /*!
-       * Returns the track comment.
-       */
-      virtual String comment() const;
+  /*!
+   * Returns the genre name; if no genre is present in the tag String::null will be returned.
+   */
+  virtual String genre() const;
 
-      /*!
-       * Returns the genre name; if no genre is present in the tag String::null
-       * will be returned.
-       */
-      virtual String genre() const;
+  /*!
+   * Returns the rating.
+   */
+  virtual String rating() const;
 
-      /*!
-       * Returns the rating.
-       */
-      virtual String rating() const;
+  /*!
+   * Returns the genre name; if no genre is present in the tag String::null will be returned.
+   */
+  virtual String copyright() const;
 
-      /*!
-       * Returns the genre name; if no genre is present in the tag String::null
-       * will be returned.
-       */
-      virtual String copyright() const;
+  /*!
+   * Returns the year; if there is no year set, this will return 0.
+   */
+  virtual unsigned int year() const;
 
-      /*!
-       * Returns the year; if there is no year set, this will return 0.
-       */
-      virtual unsigned int year() const;
+  /*!
+   * Returns the track number; if there is no track number set, this will return 0.
+   */
+  virtual unsigned int track() const;
 
-      /*!
-       * Returns the track number; if there is no track number set, this will
-       * return 0.
-       */
-      virtual unsigned int track() const;
+  /*!
+   * Sets the title to \a s.
+   */
+  virtual void setTitle(const String &value);
 
-      /*!
-       * Sets the title to \a s.
-       */
-      virtual void setTitle(const String &s);
+  /*!
+   * Sets the artist to \a s.
+   */
+  virtual void setArtist(const String &value);
 
-      /*!
-       * Sets the artist to \a s.
-       */
-      virtual void setArtist(const String &s);
+  /*!
+   * Sets the album to \a s.  If \a s is String::null then this value will be cleared.
+   */
+  virtual void setAlbum(const String &value);
 
-      /*!
-       * Sets the album to \a s.  If \a s is String::null then this value will be
-       * cleared.
-       */
-      virtual void setAlbum(const String &s);
+  /*!
+   * Sets the comment to \a s.
+   */
+  virtual void setComment(const String &value);
 
-      /*!
-       * Sets the comment to \a s.
-       */
-      virtual void setComment(const String &s);
+  /*!
+   * Sets the rating to \a s.
+   */
+  virtual void setRating(const String &value);
 
-      /*!
-       * Sets the rating to \a s.
-       */
-      virtual void setRating(const String &s);
+  /*!
+   * Sets the copyright to \a s.
+   */
+  virtual void setCopyright(const String &value);
 
-      /*!
-       * Sets the copyright to \a s.
-       */
-      virtual void setCopyright(const String &s);
+  /*!
+   * Sets the genre to \a s.
+   */
+  virtual void setGenre(const String &value);
 
-      /*!
-       * Sets the genre to \a s.
-       */
-      virtual void setGenre(const String &s);
+  /*!
+   * Sets the year to \a i.  If \a s is 0 then this value will be cleared.
+   */
+  virtual void setYear(unsigned int value);
 
-      /*!
-       * Sets the year to \a i.  If \a s is 0 then this value will be cleared.
-       */
-      virtual void setYear(unsigned int i);
+  /*!
+   * Sets the track to \a i.  If \a s is 0 then this value will be cleared.
+   */
+  virtual void setTrack(unsigned int value);
 
-      /*!
-       * Sets the track to \a i.  If \a s is 0 then this value will be cleared.
-       */
-      virtual void setTrack(unsigned int i);
+  /*!
+   * Returns true if the tag does not contain any data.
+   * This should be reimplemented in subclasses that provide more than the basic tagging abilities in this class.
+   */
+  virtual bool isEmpty() const;
 
-      /*!
-       * Returns true if the tag does not contain any data.  This should be
-       * reimplemented in subclasses that provide more than the basic tagging
-       * abilities in this class.
-       */
-      virtual bool isEmpty() const;
+  /*!
+   * Returns a reference to the item list map.  This is an AttributeListMap of all of the items in the tag.
+   */
+  const AttributeListMap attributeListMap() const;
 
-      /*!
-       * \deprecated
-       */
-      AttributeListMap &attributeListMap();
+  /*!
+   * \return True if a value for \a attribute is currently set.
+   */
+  bool contains(const String &key) const;
 
-      /*!
-       * Returns a reference to the item list map.  This is an AttributeListMap of
-       * all of the items in the tag.
-       */
-      // BIC: return by value
-      const AttributeListMap &attributeListMap() const;
+  /*!
+   * Removes the \a key attribute from the tag
+   */
+  void removeItem(const String &key);
 
-      /*!
-       * \return True if a value for \a attribute is currently set.
-       */
-      bool contains(const String &name) const;
+  /*!
+   * \return The list of values for the key \a name, or an empty list if no values have been set.
+   */
+  AttributeList attribute(const String &name) const;
 
-      /*!
-       * Removes the \a key attribute from the tag
-       */
-      void removeItem(const String &name);
+  /*!
+   * Sets the \a key attribute to the value of \a attribute. If an attribute with the \a key is already present, it will be replaced.
+   */
+  void setAttribute(const String &name, const Attribute &attribute);
 
-      /*!
-       * \return The list of values for the key \a name, or an empty list if no
-       * values have been set.
-       */
-      AttributeList attribute(const String &name) const;
+  /*!
+   * Sets multiple \a values to the key \a name.
+   */
+  void setAttribute(const String &name, const AttributeList &values);
 
-      /*!
-       * Sets the \a key attribute to the value of \a attribute. If an attribute
-       * with the \a key is already present, it will be replaced.
-       */
-      void setAttribute(const String &name, const Attribute &attribute);
+  /*!
+   * Sets the \a key attribute to the value of \a attribute. If an attribute
+   * with the \a key is already present, it will be added to the list.
+   */
+  void addAttribute(const String &name, const Attribute &attribute);
 
-      /*!
-       * Sets multiple \a values to the key \a name.
-       */
-      void setAttribute(const String &name, const AttributeList &values);
+  PropertyMap properties() const;
+  void removeUnsupportedProperties(const StringList &props);
+  PropertyMap setProperties(const PropertyMap &props);
 
-      /*!
-       * Sets the \a key attribute to the value of \a attribute. If an attribute
-       * with the \a key is already present, it will be added to the list.
-       */
-      void addAttribute(const String &name, const Attribute &attribute);
-
-      PropertyMap properties() const;
-      void removeUnsupportedProperties(const StringList& properties);
-      PropertyMap setProperties(const PropertyMap &properties);
-
-    private:
-
-      class TagPrivate;
-      TagPrivate *d;
-    };
-  }
-}
-}
+ private:
+  class TagPrivate;
+  TagPrivate *d;
+};
+}  // namespace ASF
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 #endif

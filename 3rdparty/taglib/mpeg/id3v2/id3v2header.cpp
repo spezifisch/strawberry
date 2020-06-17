@@ -36,17 +36,15 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace ID3v2;
 
-class Header::HeaderPrivate
-{
-public:
-  HeaderPrivate() :
-    majorVersion(4),
-    revisionNumber(0),
-    unsynchronisation(false),
-    extendedHeader(false),
-    experimentalIndicator(false),
-    footerPresent(false),
-    tagSize(0) {}
+class Header::HeaderPrivate {
+ public:
+  HeaderPrivate() : majorVersion(4),
+                    revisionNumber(0),
+                    unsynchronisation(false),
+                    extendedHeader(false),
+                    experimentalIndicator(false),
+                    footerPresent(false),
+                    tagSize(0) {}
 
   unsigned int majorVersion;
   unsigned int revisionNumber;
@@ -63,13 +61,11 @@ public:
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned int Header::size()
-{
+unsigned int Header::size() {
   return 10;
 }
 
-ByteVector Header::fileIdentifier()
-{
+ByteVector Header::fileIdentifier() {
   return ByteVector::fromCString("ID3");
 }
 
@@ -77,95 +73,77 @@ ByteVector Header::fileIdentifier()
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Header::Header() :
-  d(new HeaderPrivate())
-{
+Header::Header() : d(new HeaderPrivate()) {
 }
 
-Header::Header(const ByteVector &data) :
-  d(new HeaderPrivate())
-{
+Header::Header(const ByteVector &data) : d(new HeaderPrivate()) {
   parse(data);
 }
 
-Header::~Header()
-{
+Header::~Header() {
   delete d;
 }
 
-unsigned int Header::majorVersion() const
-{
+unsigned int Header::majorVersion() const {
   return d->majorVersion;
 }
 
-void Header::setMajorVersion(unsigned int version)
-{
+void Header::setMajorVersion(unsigned int version) {
   d->majorVersion = version;
 }
 
-unsigned int Header::revisionNumber() const
-{
+unsigned int Header::revisionNumber() const {
   return d->revisionNumber;
 }
 
-bool Header::unsynchronisation() const
-{
+bool Header::unsynchronisation() const {
   return d->unsynchronisation;
 }
 
-bool Header::extendedHeader() const
-{
+bool Header::extendedHeader() const {
   return d->extendedHeader;
 }
 
-bool Header::experimentalIndicator() const
-{
+bool Header::experimentalIndicator() const {
   return d->experimentalIndicator;
 }
 
-bool Header::footerPresent() const
-{
+bool Header::footerPresent() const {
   return d->footerPresent;
 }
 
-unsigned int Header::tagSize() const
-{
+unsigned int Header::tagSize() const {
   return d->tagSize;
 }
 
-unsigned int Header::completeTagSize() const
-{
-  if(d->footerPresent)
+unsigned int Header::completeTagSize() const {
+  if (d->footerPresent)
     return d->tagSize + size() + Footer::size();
   else
     return d->tagSize + size();
 }
 
-void Header::setTagSize(unsigned int s)
-{
+void Header::setTagSize(unsigned int s) {
   d->tagSize = s;
 }
 
-void Header::setData(const ByteVector &data)
-{
+void Header::setData(const ByteVector &data) {
   parse(data);
 }
 
-ByteVector Header::render() const
-{
+ByteVector Header::render() const {
+
   ByteVector v;
 
   // add the file identifier -- "ID3"
   v.append(fileIdentifier());
 
-  // add the version number -- we always render a 2.4.0 tag regardless of what
-  // the tag originally was.
+  // add the version number -- we always render a 2.4.0 tag regardless of what the tag originally was.
 
   v.append(char(majorVersion()));
   v.append(char(0));
 
-  // Currently we don't actually support writing extended headers, footers or
-  // unsynchronized tags, make sure that the flags are set accordingly.
+  // Currently we don't actually support writing extended headers, footers or unsynchronized tags, make sure that the flags are set accordingly.
 
   d->extendedHeader = false;
   d->footerPresent = false;
@@ -185,34 +163,33 @@ ByteVector Header::render() const
   v.append(SynchData::fromUInt(d->tagSize));
 
   return v;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-void Header::parse(const ByteVector &data)
-{
-  if(data.size() < size())
+void Header::parse(const ByteVector &data) {
+
+  if (data.size() < size())
     return;
 
-  // do some sanity checking -- even in ID3v2.3.0 and less the tag size is a
-  // synch-safe integer, so all bytes must be less than 128.  If this is not
-  // true then this is an invalid tag.
+  // do some sanity checking -- even in ID3v2.3.0 and less the tag size is a synch-safe integer, so all bytes must be less than 128.
+  // If this is not true then this is an invalid tag.
 
-  // note that we're doing things a little out of order here -- the size is
-  // later in the bytestream than the version
+  // note that we're doing things a little out of order here -- the size is later in the bytestream than the version
 
   ByteVector sizeData = data.mid(6, 4);
 
-  if(sizeData.size() != 4) {
+  if (sizeData.size() != 4) {
     d->tagSize = 0;
     debug("TagLib::ID3v2::Header::parse() - The tag size as read was 0 bytes!");
     return;
   }
 
-  for(ByteVector::ConstIterator it = sizeData.begin(); it != sizeData.end(); it++) {
-    if(static_cast<unsigned char>(*it) >= 128) {
+  for (ByteVector::ConstIterator it = sizeData.begin(); it != sizeData.end(); it++) {
+    if (static_cast<unsigned char>(*it) >= 128) {
       d->tagSize = 0;
       debug("TagLib::ID3v2::Header::parse() - One of the size bytes in the id3v2 header was greater than the allowed 128.");
       return;
@@ -222,18 +199,19 @@ void Header::parse(const ByteVector &data)
   // The first three bytes, data[0..2], are the File Identifier, "ID3". (structure 3.1 "file identifier")
 
   // Read the version number from the fourth and fifth bytes.
-  d->majorVersion = data[3];   // (structure 3.1 "major version")
-  d->revisionNumber = data[4]; // (structure 3.1 "revision number")
+  d->majorVersion = data[3];    // (structure 3.1 "major version")
+  d->revisionNumber = data[4];  // (structure 3.1 "revision number")
 
   // Read the flags, the first four bits of the sixth byte.
   std::bitset<8> flags(data[5]);
 
-  d->unsynchronisation     = flags[7]; // (structure 3.1.a)
-  d->extendedHeader        = flags[6]; // (structure 3.1.b)
-  d->experimentalIndicator = flags[5]; // (structure 3.1.c)
-  d->footerPresent         = flags[4]; // (structure 3.1.d)
+  d->unsynchronisation = flags[7];      // (structure 3.1.a)
+  d->extendedHeader = flags[6];         // (structure 3.1.b)
+  d->experimentalIndicator = flags[5];  // (structure 3.1.c)
+  d->footerPresent = flags[4];          // (structure 3.1.d)
 
   // Get the size from the remaining four bytes (read above)
 
-  d->tagSize = SynchData::toUInt(sizeData); // (structure 3.1 "size")
+  d->tagSize = SynchData::toUInt(sizeData);  // (structure 3.1 "size")
+
 }

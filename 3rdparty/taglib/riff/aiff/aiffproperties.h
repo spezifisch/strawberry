@@ -30,139 +30,106 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
+namespace RIFF {
+namespace AIFF {
 
-  namespace RIFF {
+class File;
 
-    namespace AIFF {
+//! An implementation of audio property reading for AIFF
 
-      class File;
+/*!
+ * This reads the data from an AIFF stream found in the AudioProperties API.
+ */
 
-      //! An implementation of audio property reading for AIFF
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
 
-      /*!
-       * This reads the data from an AIFF stream found in the AudioProperties
-       * API.
-       */
+  /*!
+   * Create an instance of AIFF::Properties with the data read from the AIFF::File \a file.
+   */
+  Properties(File *file, ReadStyle style);
 
-      class TAGLIB_EXPORT Properties : public AudioProperties
-      {
-      public:
-        /*!
-         * Create an instance of AIFF::Properties with the data read from the
-         * ByteVector \a data.
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED Properties(const ByteVector &data, ReadStyle style);
+  /*!
+   * Destroys this AIFF::Properties instance.
+   */
+  virtual ~Properties();
 
-        /*!
-         * Create an instance of AIFF::Properties with the data read from the
-         * AIFF::File \a file.
-         */
-        Properties(File *file, ReadStyle style);
+  /*!
+   * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-        /*!
-         * Destroys this AIFF::Properties instance.
-         */
-        virtual ~Properties();
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \note This method is just an alias of lengthInSeconds().
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-        /*!
-         * Returns the length of the file in seconds.  The length is rounded down to
-         * the nearest whole second.
-         *
-         * \see lengthInMilliseconds()
-         */
-        // BIC: make virtual
-        int lengthInSeconds() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-        /*!
-         * Returns the length of the file in milliseconds.
-         *
-         * \see lengthInSeconds()
-         */
-        // BIC: make virtual
-        int lengthInMilliseconds() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-        /*!
-         * Returns the average bit rate of the file in kb/s.
-         */
-        virtual int bitrate() const;
+  /*!
+   * Returns the number of bits per audio sample.
+   */
+  int bitsPerSample() const;
 
-        /*!
-         * Returns the sample rate in Hz.
-         */
-        virtual int sampleRate() const;
+  /*!
+   * Returns the number of sample frames
+   */
+  unsigned int sampleFrames() const;
 
-        /*!
-         * Returns the number of audio channels.
-         */
-        virtual int channels() const;
+  /*!
+   * Returns true if the file is in AIFF-C format, false if AIFF format.
+   */
+  bool isAiffC() const;
 
-        /*!
-         * Returns the number of bits per audio sample.
-         */
-        int bitsPerSample() const;
+  /*!
+   * Returns the compression type of the AIFF-C file.  For example, "NONE" for not compressed, "ACE2" for ACE 2-to-1.
+   *
+   * If the file is in AIFF format, always returns an empty vector.
+   *
+   * \see isAiffC()
+   */
+  ByteVector compressionType() const;
 
-        /*!
-         * Returns the number of bits per audio sample.
-         *
-         * \note This method is just an alias of bitsPerSample().
-         *
-         * \deprecated
-         */
-        TAGLIB_DEPRECATED int sampleWidth() const;
+  /*!
+   * Returns the concrete compression name of the AIFF-C file.
+   *
+   * If the file is in AIFF format, always returns an empty string.
+   *
+   * \see isAiffC()
+   */
+  String compressionName() const;
 
-        /*!
-         * Returns the number of sample frames
-         */
-        unsigned int sampleFrames() const;
+ private:
+  Properties(const Properties &);
+  Properties &operator=(const Properties &);
 
-        /*!
-         * Returns true if the file is in AIFF-C format, false if AIFF format.
-         */
-        bool isAiffC() const;
+  void read(File *file);
 
-        /*!
-         * Returns the compression type of the AIFF-C file.  For example, "NONE" for
-         * not compressed, "ACE2" for ACE 2-to-1.
-         *
-         * If the file is in AIFF format, always returns an empty vector.
-         *
-         * \see isAiffC()
-         */
-        ByteVector compressionType() const;
-
-        /*!
-         * Returns the concrete compression name of the AIFF-C file.
-         *
-         * If the file is in AIFF format, always returns an empty string.
-         *
-         * \see isAiffC()
-         */
-        String compressionName() const;
-
-      private:
-        Properties(const Properties &);
-        Properties &operator=(const Properties &);
-
-        void read(File *file);
-
-        class PropertiesPrivate;
-        PropertiesPrivate *d;
-      };
-    }
-  }
-}
-}
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
+}  // namespace AIFF
+}  // namespace RIFF
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

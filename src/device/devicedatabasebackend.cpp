@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <QObject>
 #include <QThread>
@@ -48,8 +48,6 @@ DeviceDatabaseBackend::DeviceDatabaseBackend(QObject *parent) :
   original_thread_ = thread();
 
 }
-
-DeviceDatabaseBackend::~DeviceDatabaseBackend() {}
 
 void DeviceDatabaseBackend::Init(Database* db) { db_ = db; }
 

@@ -37,15 +37,11 @@
 using namespace Strawberry_TagLib::TagLib;
 using namespace Strawberry_TagLib::TagLib::Ogg;
 
-class Opus::File::FilePrivate
-{
-public:
-  FilePrivate() :
-    comment(0),
-    properties(0) {}
+class Opus::File::FilePrivate {
+ public:
+  FilePrivate() : comment(nullptr), properties(nullptr) {}
 
-  ~FilePrivate()
-  {
+  ~FilePrivate() {
     delete comment;
     delete properties;
   }
@@ -58,78 +54,73 @@ public:
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Ogg::Opus::File::isSupported(IOStream *stream)
-{
+bool Ogg::Opus::File::isSupported(IOStream *stream) {
+
   // An Opus file has IDs "OggS" and "OpusHead" somewhere.
 
   const ByteVector buffer = Utils::readHeader(stream, bufferSize(), false);
   return (buffer.find("OggS") >= 0 && buffer.find("OpusHead") >= 0);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Opus::File::File(FileName file, bool readProperties, Properties::ReadStyle) :
-  Ogg::File(file),
-  d(new FilePrivate())
-{
-  if(isOpen())
+Opus::File::File(FileName file, bool readProperties, Properties::ReadStyle) : Ogg::File(file), d(new FilePrivate()) {
+
+  if (isOpen())
     read(readProperties);
+
 }
 
-Opus::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) :
-  Ogg::File(stream),
-  d(new FilePrivate())
-{
-  if(isOpen())
+Opus::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) : Ogg::File(stream), d(new FilePrivate()) {
+
+  if (isOpen())
     read(readProperties);
+
 }
 
-Opus::File::~File()
-{
+Opus::File::~File() {
   delete d;
 }
 
-Ogg::XiphComment *Opus::File::tag() const
-{
+Ogg::XiphComment *Opus::File::tag() const {
   return d->comment;
 }
 
-PropertyMap Opus::File::properties() const
-{
+PropertyMap Opus::File::properties() const {
   return d->comment->properties();
 }
 
-PropertyMap Opus::File::setProperties(const PropertyMap &properties)
-{
+PropertyMap Opus::File::setProperties(const PropertyMap &properties) {
   return d->comment->setProperties(properties);
 }
 
-Opus::Properties *Opus::File::audioProperties() const
-{
+Opus::Properties *Opus::File::audioProperties() const {
   return d->properties;
 }
 
-bool Opus::File::save()
-{
-  if(!d->comment)
+bool Opus::File::save() {
+
+  if (!d->comment)
     d->comment = new Ogg::XiphComment();
 
   setPacket(1, ByteVector("OpusTags", 8) + d->comment->render(false));
 
   return Ogg::File::save();
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void Opus::File::read(bool readProperties)
-{
+void Opus::File::read(bool readProperties) {
+
   ByteVector opusHeaderData = packet(0);
 
-  if(!opusHeaderData.startsWith("OpusHead")) {
+  if (!opusHeaderData.startsWith("OpusHead")) {
     setValid(false);
     debug("Opus::File::read() -- invalid Opus identification header");
     return;
@@ -137,7 +128,7 @@ void Opus::File::read(bool readProperties)
 
   ByteVector commentHeaderData = packet(1);
 
-  if(!commentHeaderData.startsWith("OpusTags")) {
+  if (!commentHeaderData.startsWith("OpusTags")) {
     setValid(false);
     debug("Opus::File::read() -- invalid Opus tags header");
     return;
@@ -145,6 +136,7 @@ void Opus::File::read(bool readProperties)
 
   d->comment = new Ogg::XiphComment(commentHeaderData.mid(8));
 
-  if(readProperties)
+  if (readProperties)
     d->properties = new Properties(this);
+
 }

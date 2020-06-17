@@ -67,8 +67,6 @@ BlockAnalyzer::BlockAnalyzer(QWidget *parent)
 
 }
 
-BlockAnalyzer::~BlockAnalyzer() {}
-
 void BlockAnalyzer::resizeEvent(QResizeEvent *e) {
 
   QWidget::resizeEvent(e);
@@ -386,10 +384,10 @@ void BlockAnalyzer::drawBackground() {
 
   QPainter p(&background_);
 
-  if (p.paintEngine() == 0) return;
+  if (!p.paintEngine()) return;
 
-  for (int x = 0; (uint)x < columns_; ++x)
-    for (int y = 0; (uint)y < rows_; ++y)
+  for (int x = 0; static_cast<uint>(x) < columns_; ++x)
+    for (int y = 0; static_cast<uint>(y) < rows_; ++y)
       p.fillRect(x * (kWidth + 1), y * (kHeight + 1) + y_, kWidth, kHeight, bgdark);
 
 }

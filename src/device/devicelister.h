@@ -38,7 +38,7 @@ class DeviceLister : public QObject {
 
  public:
   DeviceLister();
-  virtual ~DeviceLister();
+  ~DeviceLister() override;
 
   // Tries to start the thread and initialise the engine.  This object will be moved to the new thread.
   void Start();
@@ -74,7 +74,7 @@ class DeviceLister : public QObject {
  public slots:
   virtual void UpdateDeviceFreeSpace(const QString &id) = 0;
   virtual void ShutDown() {}
-  virtual void MountDevice(const QString &id, const int ret);
+  virtual void MountDevice(const QString &id, const int request_id);
   virtual void UnmountDevice(const QString &id) { Q_UNUSED(id); }
   virtual void Exit();
 

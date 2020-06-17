@@ -33,172 +33,159 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  class File;
+class File;
 
-  //! An ID3v1 implementation
+//! An ID3v1 implementation
 
-  namespace ID3v1 {
+namespace ID3v1 {
 
-    //! A abstraction for the string to data encoding in ID3v1 tags.
+//! A abstraction for the string to data encoding in ID3v1 tags.
 
-    /*!
-     * ID3v1 should in theory always contain ISO-8859-1 (Latin1) data.  In
-     * practice it does not.  TagLib by default only supports ISO-8859-1 data
-     * in ID3v1 tags.
-     *
-     * However by subclassing this class and reimplementing parse() and render()
-     * and setting your reimplementation as the default with
-     * ID3v1::Tag::setStringHandler() you can define how you would like these
-     * transformations to be done.
-     *
-     * \warning It is advisable <b>not</b> to write non-ISO-8859-1 data to ID3v1
-     * tags.  Please consider disabling the writing of ID3v1 tags in the case
-     * that the data is not ISO-8859-1.
-     *
-     * \see ID3v1::Tag::setStringHandler()
-     */
+/*!
+ * ID3v1 should in theory always contain ISO-8859-1 (Latin1) data. In practice it does not.
+ * TagLib by default only supports ISO-8859-1 data in ID3v1 tags.
+ *
+ * However by subclassing this class and reimplementing parse() and render() and setting your reimplementation as the default with
+ * ID3v1::Tag::setStringHandler() you can define how you would like these transformations to be done.
+ *
+ * \warning It is advisable <b>not</b> to write non-ISO-8859-1 data to ID3v1 tags.
+ * Please consider disabling the writing of ID3v1 tags in the case that the data is not ISO-8859-1.
+ *
+ * \see ID3v1::Tag::setStringHandler()
+ */
 
-    class TAGLIB_EXPORT StringHandler
-    {
-      TAGLIB_IGNORE_MISSING_DESTRUCTOR
-    public:
-      // BIC: Add virtual destructor.
-      StringHandler();
+class TAGLIB_EXPORT StringHandler {
+  TAGLIB_IGNORE_MISSING_DESTRUCTOR
 
-      /*!
-       * Decode a string from \a data.  The default implementation assumes that
-       * \a data is an ISO-8859-1 (Latin1) character array.
-       */
-      virtual String parse(const ByteVector &data) const;
+ public:
+  // BIC: Add virtual destructor.
+  StringHandler();
 
-      /*!
-       * Encode a ByteVector with the data from \a s.  The default implementation
-       * assumes that \a s is an ISO-8859-1 (Latin1) string.  If the string is
-       * does not conform to ISO-8859-1, no value is written.
-       *
-       * \warning It is recommended that you <b>not</b> override this method, but
-       * instead do not write an ID3v1 tag in the case that the data is not
-       * ISO-8859-1.
-       */
-      virtual ByteVector render(const String &s) const;
-    };
+  /*!
+   * Decode a string from \a data.
+   * The default implementation assumes that \a data is an ISO-8859-1 (Latin1) character array.
+   */
+  virtual String parse(const ByteVector &data) const;
 
-    //! The main class in the ID3v1 implementation
+  /*!
+   * Encode a ByteVector with the data from \a s.
+   * The default implementation assumes that \a s is an ISO-8859-1 (Latin1) string.
+   * If the string is does not conform to ISO-8859-1, no value is written.
+   *
+   * \warning It is recommended that you <b>not</b> override this method, but
+   * instead do not write an ID3v1 tag in the case that the data is not ISO-8859-1.
+   */
+  virtual ByteVector render(const String &s) const;
+};
 
-    /*!
-     * This is an implementation of the ID3v1 format.  ID3v1 is both the simplest
-     * and most common of tag formats but is rather limited.  Because of its
-     * pervasiveness and the way that applications have been written around the
-     * fields that it provides, the generic TagLib::Tag API is a mirror of what is
-     * provided by ID3v1.
-     *
-     * ID3v1 tags should generally only contain Latin1 information.  However because
-     * many applications do not follow this rule there is now support for overriding
-     * the ID3v1 string handling using the ID3v1::StringHandler class.  Please see
-     * the documentation for that class for more information.
-     *
-     * \see StringHandler
-     *
-     * \note Most fields are truncated to a maximum of 28-30 bytes.  The
-     * truncation happens automatically when the tag is rendered.
-     */
+//! The main class in the ID3v1 implementation
 
-    class TAGLIB_EXPORT Tag : public Strawberry_TagLib::TagLib::Tag
-    {
-    public:
-      /*!
-       * Create an ID3v1 tag with default values.
-       */
-      Tag();
+/*!
+ * This is an implementation of the ID3v1 format.
+ * ID3v1 is both the simplest and most common of tag formats but is rather limited.
+ * Because of its pervasiveness and the way that applications have been written around the
+ * fields that it provides, the generic TagLib::Tag API is a mirror of what is provided by ID3v1.
+ *
+ * ID3v1 tags should generally only contain Latin1 information.
+ * However because many applications do not follow this rule there is now support for overriding
+ * the ID3v1 string handling using the ID3v1::StringHandler class.
+ * Please see the documentation for that class for more information.
+ *
+ * \see StringHandler
+ *
+ * \note Most fields are truncated to a maximum of 28-30 bytes.
+ * The truncation happens automatically when the tag is rendered.
+ */
 
-      /*!
-       * Create an ID3v1 tag and parse the data in \a file starting at
-       * \a tagOffset.
-       */
-      Tag(File *file, long tagOffset);
+class TAGLIB_EXPORT Tag : public Strawberry_TagLib::TagLib::Tag {
+ public:
+  /*!
+   * Create an ID3v1 tag with default values.
+   */
+  Tag();
 
-      /*!
-       * Destroys this Tag instance.
-       */
-      virtual ~Tag();
+  /*!
+   * Create an ID3v1 tag and parse the data in \a file starting at \a tagOffset.
+   */
+  Tag(File *file, long tagOffset);
 
-      /*!
-       * Renders the in memory values to a ByteVector suitable for writing to
-       * the file.
-       */
-      ByteVector render() const;
+  /*!
+   * Destroys this Tag instance.
+   */
+  virtual ~Tag();
 
-      /*!
-       * Returns the string "TAG" suitable for usage in locating the tag in a
-       * file.
-       */
-      static ByteVector fileIdentifier();
+  /*!
+   * Renders the in memory values to a ByteVector suitable for writing to the file.
+   */
+  ByteVector render() const;
 
-      // Reimplementations.
+  /*!
+   * Returns the string "TAG" suitable for usage in locating the tag in a file.
+   */
+  static ByteVector fileIdentifier();
 
-      virtual String title() const;
-      virtual String artist() const;
-      virtual String album() const;
-      virtual String comment() const;
-      virtual String genre() const;
-      virtual unsigned int year() const;
-      virtual unsigned int track() const;
+  // Reimplementations.
 
-      virtual void setTitle(const String &s);
-      virtual void setArtist(const String &s);
-      virtual void setAlbum(const String &s);
-      virtual void setComment(const String &s);
-      virtual void setGenre(const String &s);
-      virtual void setYear(unsigned int i);
-      virtual void setTrack(unsigned int i);
+  virtual String title() const;
+  virtual String artist() const;
+  virtual String album() const;
+  virtual String comment() const;
+  virtual String genre() const;
+  virtual unsigned int year() const;
+  virtual unsigned int track() const;
 
-      /*!
-       * Returns the genre in number.
-       *
-       * \note Normally 255 indicates that this tag contains no genre.
-       */
-      unsigned int genreNumber() const;
+  virtual void setTitle(const String &s);
+  virtual void setArtist(const String &s);
+  virtual void setAlbum(const String &s);
+  virtual void setComment(const String &s);
+  virtual void setGenre(const String &s);
+  virtual void setYear(unsigned int i);
+  virtual void setTrack(unsigned int i);
 
-      /*!
-       * Sets the genre in number to \a i.
-       *
-       * \note Valid value is from 0 up to 255. Normally 255 indicates that
-       * this tag contains no genre.
-       */
-      void setGenreNumber(unsigned int i);
+  /*!
+   * Returns the genre in number.
+   *
+   * \note Normally 255 indicates that this tag contains no genre.
+   */
+  unsigned int genreNumber() const;
 
-      /*!
-       * Sets the string handler that decides how the ID3v1 data will be
-       * converted to and from binary data.
-       * If the parameter \a handler is null, the previous handler is
-       * released and default ISO-8859-1 handler is restored.
-       *
-       * \note The caller is responsible for deleting the previous handler
-       * as needed after it is released.
-       *
-       * \see StringHandler
-       */
-      static void setStringHandler(const StringHandler *handler);
+  /*!
+   * Sets the genre in number to \a i.
+   *
+   * \note Valid value is from 0 up to 255. Normally 255 indicates that this tag contains no genre.
+   */
+  void setGenreNumber(unsigned int i);
 
-    protected:
-      /*!
-       * Reads from the file specified in the constructor.
-       */
-      void read();
-      /*!
-       * Pareses the body of the tag in \a data.
-       */
-      void parse(const ByteVector &data);
+  /*!
+   * Sets the string handler that decides how the ID3v1 data will be converted to and from binary data.
+   * If the parameter \a handler is null, the previous handler is released and default ISO-8859-1 handler is restored.
+   *
+   * \note The caller is responsible for deleting the previous handler as needed after it is released.
+   *
+   * \see StringHandler
+   */
+  static void setStringHandler(const StringHandler *handler);
 
-    private:
-      Tag(const Tag &);
-      Tag &operator=(const Tag &);
+ protected:
+  /*!
+   * Reads from the file specified in the constructor.
+   */
+  void read();
+  /*!
+   * Pareses the body of the tag in \a data.
+   */
+  void parse(const ByteVector &data);
 
-      class TagPrivate;
-      TagPrivate *d;
-    };
-  }
-}
-}
+ private:
+  Tag(const Tag &);
+  Tag &operator=(const Tag &);
+
+  class TagPrivate;
+  TagPrivate *d;
+};
+
+}  // namespace ID3v1
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

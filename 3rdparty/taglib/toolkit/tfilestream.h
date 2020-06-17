@@ -34,128 +34,119 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  class String;
-  class Tag;
-  class AudioProperties;
+class String;
+class Tag;
+class AudioProperties;
 
-  //! A file class with some useful methods for tag manipulation
+//! A file class with some useful methods for tag manipulation
+
+/*!
+ * This class is a basic file class with some methods that are particularly useful for tag editors.
+ * It has methods to take advantage of ByteVector and a binary search method for finding patterns in a file.
+ */
+
+class TAGLIB_EXPORT FileStream : public IOStream {
+ public:
+  /*!
+   * Construct a File object and opens the \a file.
+   * \a file should be a be a C-string in the local file system encoding.
+   */
+  FileStream(FileName file, bool openReadOnly = false);
 
   /*!
-   * This class is a basic file class with some methods that are particularly
-   * useful for tag editors.  It has methods to take advantage of
-   * ByteVector and a binary search method for finding patterns in a file.
+   * Construct a File object and opens the \a file using file descriptor.
    */
+  FileStream(int fileDescriptor, bool openReadOnly = false);
 
-  class TAGLIB_EXPORT FileStream : public IOStream
-  {
-  public:
-    /*!
-     * Construct a File object and opens the \a file.  \a file should be a
-     * be a C-string in the local file system encoding.
-     */
-    FileStream(FileName file, bool openReadOnly = false);
+  /*!
+   * Destroys this FileStream instance.
+   */
+  virtual ~FileStream();
 
-    /*!
-     * Construct a File object and opens the \a file using file descriptor.
-     */
-    FileStream(int fileDescriptor, bool openReadOnly = false);
+  /*!
+   * Returns the file name in the local file system encoding.
+   */
+  FileName name() const;
 
-    /*!
-     * Destroys this FileStream instance.
-     */
-    virtual ~FileStream();
+  /*!
+   * Reads a block of size \a length at the current get pointer.
+   */
+  ByteVector readBlock(unsigned long length);
 
-    /*!
-     * Returns the file name in the local file system encoding.
-     */
-    FileName name() const;
+  /*!
+   * Attempts to write the block \a data at the current get pointer.
+   * If the file is currently only opened read only -- i.e. readOnly() returns true -- this attempts to reopen the file in read/write mode.
+   *
+   * \note This should be used instead of using the streaming output operator for a ByteVector.
+   * And even this function is significantly slower than doing output with a char[].
+   */
+  void writeBlock(const ByteVector &data);
 
-    /*!
-     * Reads a block of size \a length at the current get pointer.
-     */
-    ByteVector readBlock(unsigned long length);
+  /*!
+   * Insert \a data at position \a start in the file overwriting \a replace bytes of the original content.
+   *
+   * \note This method is slow since it requires rewriting all of the file after the insertion point.
+   */
+  void insert(const ByteVector &data, unsigned long start = 0, unsigned long replace = 0);
 
-    /*!
-     * Attempts to write the block \a data at the current get pointer.  If the
-     * file is currently only opened read only -- i.e. readOnly() returns true --
-     * this attempts to reopen the file in read/write mode.
-     *
-     * \note This should be used instead of using the streaming output operator
-     * for a ByteVector.  And even this function is significantly slower than
-     * doing output with a char[].
-     */
-    void writeBlock(const ByteVector &data);
+  /*!
+   * Removes a block of the file starting a \a start and continuing for \a length bytes.
+   *
+   * \note This method is slow since it involves rewriting all of the file
+   * after the removed portion.
+   */
+  void removeBlock(unsigned long start = 0, unsigned long length = 0);
 
-    /*!
-     * Insert \a data at position \a start in the file overwriting \a replace
-     * bytes of the original content.
-     *
-     * \note This method is slow since it requires rewriting all of the file
-     * after the insertion point.
-     */
-    void insert(const ByteVector &data, unsigned long start = 0, unsigned long replace = 0);
+  /*!
+   * Returns true if the file is read only (or if the file can not be opened).
+   */
+  bool readOnly() const;
 
-    /*!
-     * Removes a block of the file starting a \a start and continuing for
-     * \a length bytes.
-     *
-     * \note This method is slow since it involves rewriting all of the file
-     * after the removed portion.
-     */
-    void removeBlock(unsigned long start = 0, unsigned long length = 0);
+  /*!
+   * Since the file can currently only be opened as an argument to the constructor (sort-of by design), this returns if that open succeeded.
+   */
+  bool isOpen() const;
 
-    /*!
-     * Returns true if the file is read only (or if the file can not be opened).
-     */
-    bool readOnly() const;
+  /*!
+   * Move the I/O pointer to \a offset in the file from position \a p.
+   * This defaults to seeking from the beginning of the file.
+   *
+   * \see Position
+   */
+  void seek(long offset, Position p = Beginning);
 
-    /*!
-     * Since the file can currently only be opened as an argument to the
-     * constructor (sort-of by design), this returns if that open succeeded.
-     */
-    bool isOpen() const;
+  /*!
+   * Reset the end-of-file and error flags on the file.
+   */
+  void clear();
 
-    /*!
-     * Move the I/O pointer to \a offset in the file from position \a p.  This
-     * defaults to seeking from the beginning of the file.
-     *
-     * \see Position
-     */
-    void seek(long offset, Position p = Beginning);
+  /*!
+   * Returns the current offset within the file.
+   */
+  long tell() const;
 
-    /*!
-     * Reset the end-of-file and error flags on the file.
-     */
-    void clear();
+  /*!
+   * Returns the length of the file.
+   */
+  long length();
 
-    /*!
-     * Returns the current offset within the file.
-     */
-    long tell() const;
+  /*!
+   * Truncates the file to a \a length.
+   */
+  void truncate(long length);
 
-    /*!
-     * Returns the length of the file.
-     */
-    long length();
+ protected:
+  /*!
+   * Returns the buffer size that is used for internal buffering.
+   */
+  static unsigned int bufferSize();
 
-    /*!
-     * Truncates the file to a \a length.
-     */
-    void truncate(long length);
+ private:
+  class FileStreamPrivate;
+  FileStreamPrivate *d;
+};
 
-  protected:
-
-    /*!
-     * Returns the buffer size that is used for internal buffering.
-     */
-    static unsigned int bufferSize();
-
-  private:
-    class FileStreamPrivate;
-    FileStreamPrivate *d;
-  };
-
-}
-}
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

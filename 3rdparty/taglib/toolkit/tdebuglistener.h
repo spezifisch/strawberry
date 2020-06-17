@@ -30,47 +30,43 @@
 #include "tstring.h"
 
 namespace Strawberry_TagLib {
-namespace TagLib
-{
-  //! An abstraction for the listener to the debug messages.
+namespace TagLib {
+//! An abstraction for the listener to the debug messages.
+
+/*!
+ * This class enables you to handle the debug messages in your preferred
+ * way by subclassing this class, reimplementing printMessage() and setting
+ * your reimplementation as the default with setDebugListener().
+ *
+ * \see setDebugListener()
+ */
+class TAGLIB_EXPORT DebugListener {
+ public:
+  DebugListener();
+  virtual ~DebugListener();
 
   /*!
-   * This class enables you to handle the debug messages in your preferred
-   * way by subclassing this class, reimplementing printMessage() and setting
-   * your reimplementation as the default with setDebugListener().
-   *
-   * \see setDebugListener()
+   * When overridden in a derived class, redirects \a msg to your preferred
+   * channel such as stderr, Windows debugger or so forth.
    */
-  class TAGLIB_EXPORT DebugListener
-  {
-  public:
-    DebugListener();
-    virtual ~DebugListener();
+  virtual void printMessage(const String &msg) = 0;
 
-    /*!
-     * When overridden in a derived class, redirects \a msg to your preferred
-     * channel such as stderr, Windows debugger or so forth.
-     */
-    virtual void printMessage(const String &msg) = 0;
+ private:
+  // Noncopyable
+  DebugListener(const DebugListener &);
+  DebugListener &operator=(const DebugListener &);
+};
 
-  private:
-    // Noncopyable
-    DebugListener(const DebugListener &);
-    DebugListener &operator=(const DebugListener &);
-  };
-
-  /*!
-   * Sets the listener that decides how the debug messages are redirected.
-   * If the parameter \a listener is null, the previous listener is released
-   * and default stderr listener is restored.
-   *
-   * \note The caller is responsible for deleting the previous listener
-   * as needed after it is released.
-   *
-   * \see DebugListener
-   */
-  TAGLIB_EXPORT void setDebugListener(DebugListener *listener);
-}
-}
+/*!
+ * Sets the listener that decides how the debug messages are redirected.
+ * If the parameter \a listener is null, the previous listener is released and default stderr listener is restored.
+ *
+ * \note The caller is responsible for deleting the previous listener as needed after it is released.
+ *
+ * \see DebugListener
+ */
+TAGLIB_EXPORT void setDebugListener(DebugListener *listener);
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

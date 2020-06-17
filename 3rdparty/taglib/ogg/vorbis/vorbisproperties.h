@@ -33,130 +33,115 @@ namespace Strawberry_TagLib {
 namespace TagLib {
 
 /*
- * This is just to make this appear to be in the Ogg namespace in the
- * documentation.  The typedef below will make this work with the current code.
- * In the next BIC version of TagLib this will be really moved into the Ogg
- * namespace.
+ * This is just to make this appear to be in the Ogg namespace in the documentation.
+ * The typedef below will make this work with the current code.
+ * In the next BIC version of TagLib this will be really moved into the Ogg namespace.
  */
 
 #ifdef DOXYGEN
-  namespace Ogg {
+namespace Ogg {
 #endif
 
-  namespace Vorbis {
+namespace Vorbis {
 
-    class File;
+class File;
 
-    //! An implementation of audio property reading for Ogg Vorbis
+//! An implementation of audio property reading for Ogg Vorbis
 
-    /*!
-     * This reads the data from an Ogg Vorbis stream found in the AudioProperties
-     * API.
-     */
+/*!
+ * This reads the data from an Ogg Vorbis stream found in the AudioProperties API.
+ */
 
-    class TAGLIB_EXPORT Properties : public AudioProperties
-    {
-    public:
-      /*!
-       * Create an instance of Vorbis::Properties with the data read from the
-       * Vorbis::File \a file.
-       */
-      Properties(File *file, ReadStyle style = Average);
+class TAGLIB_EXPORT Properties : public AudioProperties {
+ public:
+  /*!
+   * Create an instance of Vorbis::Properties with the data read from the Vorbis::File \a file.
+   */
+  Properties(File *file, ReadStyle style = Average);
 
-      /*!
-       * Destroys this VorbisProperties instance.
-       */
-      virtual ~Properties();
+  /*!
+   * Destroys this VorbisProperties instance.
+   */
+  virtual ~Properties();
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \note This method is just an alias of lengthInSeconds().
-       *
-       * \deprecated
-       */
-      TAGLIB_DEPRECATED virtual int length() const;
+  /*!
+   * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
+   *
+   * \see lengthInMilliseconds()
+   */
+  // BIC: make virtual
+  int lengthInSeconds() const;
 
-      /*!
-       * Returns the length of the file in seconds.  The length is rounded down to
-       * the nearest whole second.
-       *
-       * \see lengthInMilliseconds()
-       */
-      // BIC: make virtual
-      int lengthInSeconds() const;
+  /*!
+   * Returns the length of the file in milliseconds.
+   *
+   * \see lengthInSeconds()
+   */
+  // BIC: make virtual
+  int lengthInMilliseconds() const;
 
-      /*!
-       * Returns the length of the file in milliseconds.
-       *
-       * \see lengthInSeconds()
-       */
-      // BIC: make virtual
-      int lengthInMilliseconds() const;
+  /*!
+   * Returns the average bit rate of the file in kb/s.
+   */
+  virtual int bitrate() const;
 
-      /*!
-       * Returns the average bit rate of the file in kb/s.
-       */
-      virtual int bitrate() const;
+  /*!
+   * Returns the sample rate in Hz.
+   */
+  virtual int sampleRate() const;
 
-      /*!
-       * Returns the sample rate in Hz.
-       */
-      virtual int sampleRate() const;
+  /*!
+   * Returns the number of audio channels.
+   */
+  virtual int channels() const;
 
-      /*!
-       * Returns the number of audio channels.
-       */
-      virtual int channels() const;
+  /*!
+   * Returns the Vorbis version, currently "0" (as specified by the spec).
+   */
+  int vorbisVersion() const;
 
-      /*!
-       * Returns the Vorbis version, currently "0" (as specified by the spec).
-       */
-      int vorbisVersion() const;
+  /*!
+   * Returns the maximum bitrate as read from the Vorbis identification header.
+   */
+  int bitrateMaximum() const;
 
-      /*!
-       * Returns the maximum bitrate as read from the Vorbis identification
-       * header.
-       */
-      int bitrateMaximum() const;
+  /*!
+   * Returns the nominal bitrate as read from the Vorbis identification header.
+   */
+  int bitrateNominal() const;
 
-      /*!
-       * Returns the nominal bitrate as read from the Vorbis identification
-       * header.
-       */
-      int bitrateNominal() const;
+  /*!
+   * Returns the minimum bitrate as read from the Vorbis identification header.
+   */
+  int bitrateMinimum() const;
 
-      /*!
-       * Returns the minimum bitrate as read from the Vorbis identification
-       * header.
-       */
-      int bitrateMinimum() const;
+ private:
+  Properties(const Properties &);
+  Properties &operator=(const Properties &);
 
-    private:
-      Properties(const Properties &);
-      Properties &operator=(const Properties &);
+  void read(File *file);
 
-      void read(File *file);
-
-      class PropertiesPrivate;
-      PropertiesPrivate *d;
-    };
-  }
+  class PropertiesPrivate;
+  PropertiesPrivate *d;
+};
+}  // namespace Vorbis
 
 /*
- * To keep compatibility with the current version put Vorbis in the Ogg namespace
- * only in the docs and provide a typedef to make it work.  In the next BIC
- * version this will be removed and it will only exist in the Ogg namespace.
+ * To keep compatibility with the current version put Vorbis in the Ogg namespace only in the docs and provide a typedef to make it work.
+ * In the next BIC version this will be removed and it will only exist in the Ogg namespace.
  */
 
 #ifdef DOXYGEN
-  }
+}
 #else
-  namespace Ogg { namespace Vorbis { typedef Strawberry_TagLib::TagLib::AudioProperties AudioProperties; } }
+namespace Ogg {
+namespace Vorbis {
+typedef Strawberry_TagLib::TagLib::AudioProperties AudioProperties;
+}
+}  // namespace Ogg
 #endif
 
-}
-}
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

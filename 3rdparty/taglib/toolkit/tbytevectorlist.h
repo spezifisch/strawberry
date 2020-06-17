@@ -33,54 +33,44 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 
-  //! A list of ByteVectors
+//! A list of ByteVectors
+
+/*!
+ * A List specialization with some handy features useful for ByteVectors.
+ */
+
+class TAGLIB_EXPORT ByteVectorList : public List<ByteVector> {
+ public:
+  /*!
+   * Construct an empty ByteVectorList.
+   */
+  ByteVectorList();
 
   /*!
-   * A List specialization with some handy features useful for ByteVectors.
+   * Destroys this ByteVectorList instance.
+   */
+  virtual ~ByteVectorList();
+
+  /*!
+   * Convert the ByteVectorList to a ByteVector separated by \a separator.  By default a space is used.
+   */
+  ByteVector toByteVector(const ByteVector &separator = " ") const;
+
+  /*!
+   * Splits the ByteVector \a v into several strings at \a pattern.
+   * This will not include the pattern in the returned ByteVectors.
+   * \a max is the maximum number of entries that will be separated.
+   * If \a max for instance is 2 then a maximum of 1 match will be found and the vector will be split on that match.
    */
 
-  class TAGLIB_EXPORT ByteVectorList : public List<ByteVector>
-  {
-  public:
+  static ByteVectorList split(const ByteVector &v, const ByteVector &pattern, int byteAlign = 1, int max = 0);
 
-    /*!
-     * Construct an empty ByteVectorList.
-     */
-    ByteVectorList();
+ private:
+  class ByteVectorListPrivate;
+  ByteVectorListPrivate *d;
+};
 
-    /*!
-     * Destroys this ByteVectorList instance.
-     */
-    virtual ~ByteVectorList();
-
-    /*!
-     * Convert the ByteVectorList to a ByteVector separated by \a separator.  By
-     * default a space is used.
-     */
-    ByteVector toByteVector(const ByteVector &separator = " ") const;
-
-    /*!
-     * Splits the ByteVector \a v into several strings at \a pattern.  This will
-     * not include the pattern in the returned ByteVectors.
-     */
-    static ByteVectorList split(const ByteVector &v, const ByteVector &pattern,
-                                int byteAlign = 1);
-    /*!
-     * Splits the ByteVector \a v into several strings at \a pattern.  This will
-     * not include the pattern in the returned ByteVectors.  \a max is the
-     * maximum number of entries that will be separated.  If \a max for instance
-     * is 2 then a maximum of 1 match will be found and the vector will be split
-     * on that match.
-     */
-    // BIC: merge with the function above
-    static ByteVectorList split(const ByteVector &v, const ByteVector &pattern,
-                                int byteAlign, int max);
-  private:
-    class ByteVectorListPrivate;
-    ByteVectorListPrivate *d;
-  };
-
-}
-}
+}  // namespace TagLib
+}  // namespace Strawberry_TagLib
 
 #endif

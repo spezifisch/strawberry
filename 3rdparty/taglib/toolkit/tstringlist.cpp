@@ -27,21 +27,19 @@
 
 using namespace Strawberry_TagLib::TagLib;
 
-class StringListPrivate
-{
-
+class StringListPrivate {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // static members
 ////////////////////////////////////////////////////////////////////////////////
 
-StringList StringList::split(const String &s, const String &pattern)
-{
+StringList StringList::split(const String &s, const String &pattern) {
+
   StringList l;
 
   int previousOffset = 0;
-  for(int offset = s.find(pattern); offset != -1; offset = s.find(pattern, offset + 1)) {
+  for (int offset = s.find(pattern); offset != -1; offset = s.find(pattern, offset + 1)) {
     l.append(s.substr(previousOffset, offset - previousOffset));
     previousOffset = offset + 1;
   }
@@ -49,74 +47,67 @@ StringList StringList::split(const String &s, const String &pattern)
   l.append(s.substr(previousOffset, s.size() - previousOffset));
 
   return l;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-StringList::StringList() :
-  List<String>(),
-  d(nullptr)
-{
+StringList::StringList() : d(nullptr) {}
 
-}
-
-StringList::StringList(const String &s) :
-  List<String>(),
-  d(nullptr)
-{
+StringList::StringList(const String &s) : d(nullptr) {
   append(s);
 }
 
-StringList::StringList(const ByteVectorList &bl, String::Type t) : List<String>()
-{
+StringList::StringList(const ByteVectorList &bl, String::Type t) {
+
   ByteVectorList::ConstIterator i = bl.begin();
-  for(;i != bl.end(); i++) {
+  for (; i != bl.end(); i++) {
     append(String(*i, t));
   }
-}
-
-StringList::~StringList()
-{
 
 }
 
-String StringList::toString(const String &separator) const
-{
+StringList::~StringList() {}
+
+String StringList::toString(const String &separator) const {
+
   String s;
 
   ConstIterator it = begin();
   ConstIterator itEnd = end();
 
-  while(it != itEnd) {
+  while (it != itEnd) {
     s += *it;
     it++;
-    if(it != itEnd)
+    if (it != itEnd)
       s += separator;
   }
 
   return s;
+
 }
 
-StringList &StringList::append(const String &s)
-{
+StringList &StringList::append(const String &s) {
+
   List<String>::append(s);
   return *this;
+
 }
 
-StringList &StringList::append(const StringList &l)
-{
+StringList &StringList::append(const StringList &l) {
+
   List<String>::append(l);
   return *this;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // related functions
 ////////////////////////////////////////////////////////////////////////////////
 
-std::ostream &operator<<(std::ostream &s, const StringList &l)
-{
+std::ostream &operator<<(std::ostream &s, const StringList &l) {
   s << l.toString();
   return s;
 }

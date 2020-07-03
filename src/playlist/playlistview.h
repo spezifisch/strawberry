@@ -135,22 +135,26 @@ class PlaylistView : public QTreeView {
 
  protected:
   // QWidget
-  void keyPressEvent(QKeyEvent *event);
-  void contextMenuEvent(QContextMenuEvent *e);
-  void hideEvent(QHideEvent *event);
-  void showEvent(QShowEvent *event);
-  void timerEvent(QTimerEvent *event);
-  void mouseMoveEvent(QMouseEvent *event);
-  void mousePressEvent(QMouseEvent *event);
-  void leaveEvent(QEvent*);
-  void paintEvent(QPaintEvent *event);
-  void dragMoveEvent(QDragMoveEvent *event);
-  void dragEnterEvent(QDragEnterEvent *event);
-  void dragLeaveEvent(QDragLeaveEvent *event);
-  void dropEvent(QDropEvent *event);
-  bool eventFilter(QObject *object, QEvent *event);
-  void focusInEvent(QFocusEvent *event);
-  void resizeEvent(QResizeEvent* event);
+  void keyPressEvent(QKeyEvent *event) override;
+  void contextMenuEvent(QContextMenuEvent *e) override;
+  void hideEvent(QHideEvent *event) override;
+  void showEvent(QShowEvent *event) override;
+  void timerEvent(QTimerEvent *event) override;
+  void mouseMoveEvent(QMouseEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
+  void leaveEvent(QEvent*) override;
+  void paintEvent(QPaintEvent *event) override;
+  void dragMoveEvent(QDragMoveEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dragLeaveEvent(QDragLeaveEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
+  bool eventFilter(QObject *object, QEvent *event) override;
+  void focusInEvent(QFocusEvent *event) override;
+  void resizeEvent(QResizeEvent* event) override;
+
+  // QTreeView
+  void drawTree(QPainter *painter, const QRegion &region) const;
+  void drawRow(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
   // QAbstractScrollArea
   void scrollContentsBy(int dx, int dy) override;

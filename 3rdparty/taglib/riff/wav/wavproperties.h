@@ -46,17 +46,17 @@ class File;
  * API.
  */
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
   /*!
-   * Create an instance of WAV::Properties with the data read from the WAV::File \a file.
+   * Create an instance of WAV::AudioProperties with the data read from the WAV::File \a file.
    */
-  Properties(File *file, ReadStyle style);
+  explicit AudioProperties(File *file, ReadStyle style = Average);
 
   /*!
-   * Destroys this WAV::Properties instance.
+   * Destroys this WAV::AudioProperties instance.
    */
-  virtual ~Properties();
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.
@@ -64,31 +64,29 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz.
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * Returns the number of bits per audio sample.
@@ -109,13 +107,10 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   int format() const;
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
-
   void read(File *file);
 
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace WAV

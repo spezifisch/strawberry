@@ -80,7 +80,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs an DSDIFF file from \a stream.
@@ -90,13 +90,12 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, bool readProperties = true,
-    Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns a pointer to a tag that is the union of the ID3v2 and DIIN tags.
@@ -111,7 +110,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    * \see ID3v2Tag()
    * \see DIINTag()
    */
-  virtual Tag *tag() const;
+  Tag *tag() const override;
 
   /*!
    * Returns the ID3V2 Tag for this file.
@@ -133,21 +132,21 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    * Implements the unified property interface -- export function.
    * This method forwards to ID3v2::Tag::properties().
    */
-  PropertyMap properties() const;
+  PropertyMap properties() const override;
 
-  void removeUnsupportedProperties(const StringList &properties);
+  void removeUnsupportedProperties(const StringList &properties) override;
 
   /*!
    * Implements the unified property interface -- import function.
    * This method forwards to ID3v2::Tag::setProperties().
    */
-  PropertyMap setProperties(const PropertyMap &properties);
+  PropertyMap setProperties(const PropertyMap &properties) override;
 
   /*!
-   * Returns the AIFF::Properties for this file.
+   * Returns the AIFF::AudioProperties for this file.
    * If no audio properties were read then this will return a null pointer.
    */
-  virtual Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
 
   /*!
    * Save the file.  If at least one tag -- ID3v1 or DIIN -- exists this will duplicate its content into the other tag.
@@ -162,7 +161,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \see save(int tags)
    */
-  virtual bool save();
+  bool save() override;
 
   /*!
    * Save the file.  If \a strip is specified,
@@ -249,12 +248,11 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \warning This will update the file immediately.
    */
-  void setChildChunkData(const ByteVector &name, const ByteVector &data,
-    unsigned int childChunkNum);
+  void setChildChunkData(const ByteVector &name, const ByteVector &data, unsigned int childChunkNum);
 
   void updateRootChunksStructure(unsigned int startingChunk);
 
-  void read(bool readProperties, Properties::ReadStyle propertiesStyle);
+  void read(bool readProperties, AudioProperties::ReadStyle propertiesStyle);
   void writeChunk(const ByteVector &name, const ByteVector &data, unsigned long long offset, unsigned long replace = 0, unsigned int leadingPadding = 0);
 
   class FilePrivate;

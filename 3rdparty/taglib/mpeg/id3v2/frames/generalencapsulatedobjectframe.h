@@ -56,7 +56,7 @@ class TAGLIB_EXPORT GeneralEncapsulatedObjectFrame : public Frame {
    * Constructs an empty object frame.
    * The description, file name and text encoding should be set manually.
    */
-  GeneralEncapsulatedObjectFrame();
+  explicit GeneralEncapsulatedObjectFrame();
 
   /*!
    * Constructs a GeneralEncapsulatedObjectFrame frame based on \a data.
@@ -70,12 +70,12 @@ class TAGLIB_EXPORT GeneralEncapsulatedObjectFrame : public Frame {
   /*!
    * Destroys the GeneralEncapsulatedObjectFrame instance.
    */
-  virtual ~GeneralEncapsulatedObjectFrame();
+  ~GeneralEncapsulatedObjectFrame() override;
 
   /*!
    * Returns a string containing the description, file name and mime-type
    */
-  virtual String toString() const;
+  String toString() const override;
 
   /*!
    * Returns the text encoding used for the description and file name.
@@ -160,13 +160,13 @@ class TAGLIB_EXPORT GeneralEncapsulatedObjectFrame : public Frame {
   void setObject(const ByteVector &data);
 
  protected:
-  virtual void parseFields(const ByteVector &data);
-  virtual ByteVector renderFields() const;
+  void parseFields(const ByteVector &data) override;
+  ByteVector renderFields() const override;
 
  private:
-  GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h);
-  GeneralEncapsulatedObjectFrame(const GeneralEncapsulatedObjectFrame &);
-  GeneralEncapsulatedObjectFrame &operator=(const GeneralEncapsulatedObjectFrame &);
+  explicit GeneralEncapsulatedObjectFrame(const ByteVector &data, Header *h);
+  GeneralEncapsulatedObjectFrame(const GeneralEncapsulatedObjectFrame&);
+  GeneralEncapsulatedObjectFrame &operator=(const GeneralEncapsulatedObjectFrame&);
 
   class GeneralEncapsulatedObjectFramePrivate;
   GeneralEncapsulatedObjectFramePrivate *d;

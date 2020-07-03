@@ -98,7 +98,7 @@ class TAGLIB_EXPORT AttachedPictureFrame : public Frame {
    * Constructs an empty picture frame.
    * The description, content and text encoding should be set manually.
    */
-  AttachedPictureFrame();
+  explicit AttachedPictureFrame();
 
   /*!
    * Constructs an AttachedPicture frame based on \a data.
@@ -108,12 +108,12 @@ class TAGLIB_EXPORT AttachedPictureFrame : public Frame {
   /*!
    * Destroys the AttahcedPictureFrame instance.
    */
-  virtual ~AttachedPictureFrame();
+  ~AttachedPictureFrame() override;
 
   /*!
    * Returns a string containing the description and mime-type
    */
-  virtual String toString() const;
+  String toString() const override;
 
   /*!
    * Returns the text encoding used for the description.
@@ -198,24 +198,24 @@ class TAGLIB_EXPORT AttachedPictureFrame : public Frame {
   void setPicture(const ByteVector &p);
 
  protected:
-  virtual void parseFields(const ByteVector &data);
-  virtual ByteVector renderFields() const;
+  void parseFields(const ByteVector &data) override;
+  ByteVector renderFields() const override;
   class AttachedPictureFramePrivate;
   AttachedPictureFramePrivate *d;
 
  private:
-  AttachedPictureFrame(const AttachedPictureFrame &);
-  AttachedPictureFrame &operator=(const AttachedPictureFrame &);
-  AttachedPictureFrame(const ByteVector &data, Header *h);
+  AttachedPictureFrame(const AttachedPictureFrame&);
+  AttachedPictureFrame &operator=(const AttachedPictureFrame&);
+  explicit AttachedPictureFrame(const ByteVector &data, Header *h);
 };
 
 //! support for ID3v2.2 PIC frames
 class TAGLIB_EXPORT AttachedPictureFrameV22 : public AttachedPictureFrame {
  protected:
-  virtual void parseFields(const ByteVector &data);
+  void parseFields(const ByteVector &data) override;
 
  private:
-  AttachedPictureFrameV22(const ByteVector &data, Header *h);
+  explicit AttachedPictureFrameV22(const ByteVector &data, Header *h);
   friend class FrameFactory;
 };
 

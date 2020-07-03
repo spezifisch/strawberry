@@ -86,8 +86,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, bool readProperties = true,
-    Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs a TrueAudio file from \a file.
@@ -97,7 +96,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, ID3v2::FrameFactory *frameFactory, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, ID3v2::FrameFactory *frameFactory, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs a TrueAudio file from \a stream.
@@ -107,7 +106,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs a TrueAudio file from \a stream.
@@ -119,41 +118,34 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, ID3v2::FrameFactory *frameFactory, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, ID3v2::FrameFactory *frameFactory, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns the Tag for this file.
    */
-  virtual Strawberry_TagLib::TagLib::Tag *tag() const;
-
-  /*!
-   * Implements the unified property interface -- export function.
-   * If the file contains both ID3v1 and v2 tags, only ID3v2 will be converted to the PropertyMap.
-   */
-  PropertyMap properties() const;
+  Strawberry_TagLib::TagLib::Tag *tag() const override;
 
   /*!
    * Implements the unified property interface -- import function.
    * Creates in ID3v2 tag if necessary. If an ID3v1 tag exists, it will be updated as well, within the limitations of ID3v1.
    */
-  PropertyMap setProperties(const PropertyMap &);
-
-  void removeUnsupportedProperties(const StringList &properties);
+  PropertyMap setProperties(const PropertyMap &) override;
 
   /*!
-   * Returns the TrueAudio::Properties for this file.
+   * Returns the TrueAudio::AudioProperties for this file.
    * If no audio properties were read then this will return a null pointer.
    */
-  virtual Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
+
   /*!
    * Saves the file.
    */
-  virtual bool save();
+  bool save() override;
 
   /*!
    * Returns a pointer to the ID3v1 tag of the file.
@@ -218,8 +210,8 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
   static bool isSupported(IOStream *stream);
 
  private:
-  File(const File &);
-  File &operator=(const File &);
+  File(const File&);
+  File &operator=(const File&);
 
   void read(bool readProperties);
 

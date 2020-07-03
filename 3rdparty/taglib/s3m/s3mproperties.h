@@ -33,7 +33,7 @@ namespace Strawberry_TagLib {
 namespace TagLib {
 namespace S3M {
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
   friend class File;
 
  public:
@@ -48,15 +48,14 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
     CustomData = 128
   };
 
-  Properties(AudioProperties::ReadStyle propertiesStyle);
-  virtual ~Properties();
+  explicit AudioProperties(AudioProperties::ReadStyle);
+  ~AudioProperties() override;
 
-  int length() const;
-  int lengthInSeconds() const;
-  int lengthInMilliseconds() const;
-  int bitrate() const;
-  int sampleRate() const;
-  int channels() const;
+  int lengthInSeconds() const override;
+  int lengthInMilliseconds() const override;
+  int bitrate() const override;
+  int sampleRate() const override;
+  int channels() const override;
 
   unsigned short lengthInPatterns() const;
   bool stereo() const;
@@ -70,6 +69,7 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   unsigned char tempo() const;
   unsigned char bpmSpeed() const;
 
+ private:
   void setChannels(int channels);
 
   void setLengthInPatterns(unsigned short lengthInPatterns);
@@ -85,11 +85,8 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   void setBpmSpeed(unsigned char bpmSpeed);
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
-
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace S3M

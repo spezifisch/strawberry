@@ -37,13 +37,13 @@ namespace FLAC {
 
 class TAGLIB_EXPORT UnknownMetadataBlock : public MetadataBlock {
  public:
-  UnknownMetadataBlock(int code, const ByteVector &data);
-  ~UnknownMetadataBlock();
+  explicit UnknownMetadataBlock(int code, const ByteVector &data);
+  ~UnknownMetadataBlock() override;
 
   /*!
    * Returns the FLAC metadata block type.
    */
-  int code() const;
+  int code() const override;
 
   /*!
    * Sets the FLAC metadata block type.
@@ -63,10 +63,10 @@ class TAGLIB_EXPORT UnknownMetadataBlock : public MetadataBlock {
   /*!
    * Render the content of the block.
    */
-  ByteVector render() const;
+  ByteVector render() const override;
 
  private:
-  UnknownMetadataBlock(const MetadataBlock &item);
+  explicit UnknownMetadataBlock(const MetadataBlock &item);
   UnknownMetadataBlock &operator=(const MetadataBlock &item);
 
   class UnknownMetadataBlockPrivate;

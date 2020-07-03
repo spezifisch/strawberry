@@ -36,32 +36,23 @@ namespace MPC {
 
 class File;
 
-static const unsigned int HeaderSize = 8 * 7;
-
 //! An implementation of audio property reading for MPC
 
 /*!
  * This reads the data from an MPC stream found in the AudioProperties API.
  */
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
   /*!
-   * Create an instance of MPC::Properties with the data read from the ByteVector \a data.
-   *
-   * This constructor is deprecated. It only works for MPC version up to 7.
+   * Create an instance of MPC::AudioProperties with the data read directly from a MPC::File.
    */
-  Properties(const ByteVector &data, long streamLength, ReadStyle style = Average);
+  explicit AudioProperties(File *file, long long streamLength, ReadStyle style = Average);
 
   /*!
-   * Create an instance of MPC::Properties with the data read directly from a MPC::File.
+   * Destroys this MPC::AudioProperties instance.
    */
-  Properties(File *file, long streamLength, ReadStyle style = Average);
-
-  /*!
-   * Destroys this MPC::Properties instance.
-   */
-  virtual ~Properties();
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.
@@ -69,31 +60,29 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz.
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * Returns the version of the bitstream (SV4-SV8)
@@ -130,14 +119,11 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   int albumPeak() const;
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
+  void readSV7(const ByteVector &data, long long streamLength);
+  void readSV8(File *file, long long streamLength);
 
-  void readSV7(const ByteVector &data, long streamLength);
-  void readSV8(File *file, long streamLength);
-
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 }  // namespace MPC
 }  // namespace TagLib

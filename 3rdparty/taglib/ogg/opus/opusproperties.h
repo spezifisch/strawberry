@@ -47,51 +47,49 @@ class File;
  * This reads the data from an Ogg Opus stream found in the AudioProperties API.
  */
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
   /*!
-   * Create an instance of Opus::Properties with the data read from the
+   * Create an instance of Opus::AudioProperties with the data read from the
    * Opus::File \a file.
    */
-  Properties(File *file, ReadStyle style = Average);
+  explicit AudioProperties(File *file, ReadStyle style = Average);
 
   /*!
-   * Destroys this Opus::Properties instance.
+   * Destroys this Opus::AudioProperties instance.
    */
-  virtual ~Properties();
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz.
    *
    * \note Always returns 48000, because Opus can decode any stream at a sample rate of 8, 12, 16, 24, or 48 kHz,
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * The Opus codec supports decoding at multiple sample rates, there is no single sample rate of the encoded stream.
@@ -105,13 +103,10 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   int opusVersion() const;
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
-
   void read(File *file);
 
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace Opus

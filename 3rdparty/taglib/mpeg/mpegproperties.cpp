@@ -23,9 +23,12 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <tdebug.h>
-#include <tstring.h>
+#include <memory>
 
+#include "tdebug.h"
+#include "tstring.h"
+
+#include "audioproperties.h"
 #include "mpegproperties.h"
 #include "mpegfile.h"
 #include "xingheader.h"
@@ -34,25 +37,20 @@
 
 using namespace Strawberry_TagLib::TagLib;
 
-class MPEG::Properties::PropertiesPrivate {
+class MPEG::AudioProperties::AudioPropertiesPrivate {
  public:
-  PropertiesPrivate() : xingHeader(nullptr),
-                        length(0),
-                        bitrate(0),
-                        sampleRate(0),
-                        channels(0),
-                        layer(0),
-                        version(Header::Version1),
-                        channelMode(Header::Stereo),
-                        protectionEnabled(false),
-                        isCopyrighted(false),
-                        isOriginal(false) {}
+  explicit AudioPropertiesPrivate() : length(0),
+                                      bitrate(0),
+                                      sampleRate(0),
+                                      channels(0),
+                                      layer(0),
+                                      version(Header::Version1),
+                                      channelMode(Header::Stereo),
+                                      protectionEnabled(false),
+                                      isCopyrighted(false),
+                                      isOriginal(false) {}
 
-  ~PropertiesPrivate() {
-    delete xingHeader;
-  }
-
-  XingHeader *xingHeader;
+  std::unique_ptr<XingHeader> xingHeader;
   int length;
   int bitrate;
   int sampleRate;
@@ -69,63 +67,59 @@ class MPEG::Properties::PropertiesPrivate {
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-MPEG::Properties::Properties(File *file, ReadStyle style) : AudioProperties(style), d(new PropertiesPrivate()) {
+MPEG::AudioProperties::AudioProperties(File *file, ReadStyle) : Strawberry_TagLib::TagLib::AudioProperties(), d(new AudioPropertiesPrivate()) {
   read(file);
 }
 
-MPEG::Properties::~Properties() {
+MPEG::AudioProperties::~AudioProperties() {
   delete d;
 }
 
-int MPEG::Properties::length() const {
-  return lengthInSeconds();
-}
-
-int MPEG::Properties::lengthInSeconds() const {
+int MPEG::AudioProperties::lengthInSeconds() const {
   return d->length / 1000;
 }
 
-int MPEG::Properties::lengthInMilliseconds() const {
+int MPEG::AudioProperties::lengthInMilliseconds() const {
   return d->length;
 }
 
-int MPEG::Properties::bitrate() const {
+int MPEG::AudioProperties::bitrate() const {
   return d->bitrate;
 }
 
-int MPEG::Properties::sampleRate() const {
+int MPEG::AudioProperties::sampleRate() const {
   return d->sampleRate;
 }
 
-int MPEG::Properties::channels() const {
+int MPEG::AudioProperties::channels() const {
   return d->channels;
 }
 
-const MPEG::XingHeader *MPEG::Properties::xingHeader() const {
-  return d->xingHeader;
+const MPEG::XingHeader *MPEG::AudioProperties::xingHeader() const {
+  return d->xingHeader.get();
 }
 
-MPEG::Header::Version MPEG::Properties::version() const {
+MPEG::Header::Version MPEG::AudioProperties::version() const {
   return d->version;
 }
 
-int MPEG::Properties::layer() const {
+int MPEG::AudioProperties::layer() const {
   return d->layer;
 }
 
-bool MPEG::Properties::protectionEnabled() const {
+bool MPEG::AudioProperties::protectionEnabled() const {
   return d->protectionEnabled;
 }
 
-MPEG::Header::ChannelMode MPEG::Properties::channelMode() const {
+MPEG::Header::ChannelMode MPEG::AudioProperties::channelMode() const {
   return d->channelMode;
 }
 
-bool MPEG::Properties::isCopyrighted() const {
+bool MPEG::AudioProperties::isCopyrighted() const {
   return d->isCopyrighted;
 }
 
-bool MPEG::Properties::isOriginal() const {
+bool MPEG::AudioProperties::isOriginal() const {
   return d->isOriginal;
 }
 
@@ -133,13 +127,13 @@ bool MPEG::Properties::isOriginal() const {
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void MPEG::Properties::read(File *file) {
+void MPEG::AudioProperties::read(File *file) {
 
   // Only the first valid frame is required if we have a VBR header.
 
-  const long firstFrameOffset = file->firstFrameOffset();
+  const long long firstFrameOffset = file->firstFrameOffset();
   if (firstFrameOffset < 0) {
-    debug("MPEG::Properties::read() -- Could not find an MPEG frame in the stream.");
+    debug("MPEG::AudioProperties::read() -- Could not find an MPEG frame in the stream.");
     return;
   }
 
@@ -149,11 +143,9 @@ void MPEG::Properties::read(File *file) {
   // VBR stream.
 
   file->seek(firstFrameOffset);
-  d->xingHeader = new XingHeader(file->readBlock(firstHeader.frameLength()));
-  if (!d->xingHeader->isValid()) {
-    delete d->xingHeader;
-    d->xingHeader = nullptr;
-  }
+  d->xingHeader.reset(new XingHeader(file->readBlock(firstHeader.frameLength())));
+  if (!d->xingHeader->isValid())
+    d->xingHeader.reset();
 
   if (d->xingHeader && firstHeader.samplesPerFrame() > 0 && firstHeader.sampleRate() > 0) {
 
@@ -177,14 +169,14 @@ void MPEG::Properties::read(File *file) {
 
     // Look for the last MPEG audio frame to calculate the stream length.
 
-    const long lastFrameOffset = file->lastFrameOffset();
+    const long long lastFrameOffset = file->lastFrameOffset();
     if (lastFrameOffset < 0) {
-      debug("MPEG::Properties::read() -- Could not find an MPEG frame in the stream.");
+      debug("MPEG::AudioProperties::read() -- Could not find an MPEG frame in the stream.");
       return;
     }
 
     const Header lastHeader(file, lastFrameOffset, false);
-    const long streamLength = lastFrameOffset - firstFrameOffset + lastHeader.frameLength();
+    const long long streamLength = lastFrameOffset - firstFrameOffset + lastHeader.frameLength();
     if (streamLength > 0)
       d->length = static_cast<int>(streamLength * 8.0 / d->bitrate + 0.5);
   }

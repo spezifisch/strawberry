@@ -32,7 +32,7 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 namespace IT {
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
   friend class File;
 
  public:
@@ -54,15 +54,14 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
     MidiConfEmbedded = 8
   };
 
-  Properties(AudioProperties::ReadStyle propertiesStyle);
-  virtual ~Properties();
+  explicit AudioProperties(AudioProperties::ReadStyle);
+  ~AudioProperties() override;
 
-  int length() const;
-  int lengthInSeconds() const;
-  int lengthInMilliseconds() const;
-  int bitrate() const;
-  int sampleRate() const;
-  int channels() const;
+  int lengthInSeconds() const override;
+  int lengthInMilliseconds() const override;
+  int bitrate() const override;
+  int sampleRate() const override;
+  int channels() const override;
 
   unsigned short lengthInPatterns() const;
   bool stereo() const;
@@ -80,6 +79,7 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   unsigned char panningSeparation() const;
   unsigned char pitchWheelDepth() const;
 
+ private:
   void setChannels(int channels);
   void setLengthInPatterns(unsigned short lengthInPatterns);
   void setInstrumentCount(unsigned short instrumentCount);
@@ -97,11 +97,8 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   void setPitchWheelDepth(unsigned char pitchWheelDepth);
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
-
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 }  // namespace IT
 }  // namespace TagLib

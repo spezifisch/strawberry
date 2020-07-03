@@ -34,16 +34,7 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
-
-/*
- * This is just to make this appear to be in the Ogg namespace in the documentation.
- * The typedef below will make this work with the current code.
- * In the next BIC version of TagLib this will be really moved into the Ogg namespace.
- */
-
-#ifdef DOXYGEN
 namespace Ogg {
-#endif
 
 //! A namespace containing classes for Vorbis metadata
 
@@ -64,7 +55,7 @@ class TAGLIB_EXPORT File : public Ogg::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, Strawberry_TagLib::TagLib::AudioProperties::ReadStyle propertiesStyle = Strawberry_TagLib::TagLib::AudioProperties::Average);
 
   /*!
    * Constructs a Vorbis file from \a stream.
@@ -74,43 +65,30 @@ class TAGLIB_EXPORT File : public Ogg::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, Strawberry_TagLib::TagLib::AudioProperties::ReadStyle propertiesStyle = Strawberry_TagLib::TagLib::AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns the XiphComment for this file.
    * XiphComment implements the tag interface, so this serves as the reimplementation of TagLib::File::tag().
    */
-  virtual Ogg::XiphComment *tag() const;
-
-
-  /*!
-   * Implements the unified property interface -- export function.
-   * This forwards directly to XiphComment::properties().
-   */
-  PropertyMap properties() const;
+  Ogg::XiphComment *tag() const override;
 
   /*!
-   * Implements the unified tag dictionary interface -- import function.
-   * Like properties(), this is a forwarder to the file's XiphComment.
+   * Returns the Vorbis::AudioProperties for this file.  If no audio properties were read then this will return a null pointer.
    */
-  PropertyMap setProperties(const PropertyMap &);
-
-  /*!
-   * Returns the Vorbis::Properties for this file.  If no audio properties were read then this will return a null pointer.
-   */
-  virtual Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
 
   /*!
    * Save the file.
    *
    * This returns true if the save was successful.
    */
-  virtual bool save();
+  bool save() override;
 
   /*!
    * Check if the given \a stream can be opened as an Ogg Vorbis file.
@@ -120,31 +98,17 @@ class TAGLIB_EXPORT File : public Ogg::File {
   static bool isSupported(IOStream *stream);
 
  private:
-  File(const File &);
-  File &operator=(const File &);
+  File(const File&);
+  File &operator=(const File&);
 
   void read(bool readProperties);
 
   class FilePrivate;
   FilePrivate *d;
 };
+
 }  // namespace Vorbis
-
-/*
- * To keep compatibility with the current version put Vorbis in the Ogg namespace only in the docs and provide a typedef to make it work.
- * In the next BIC version this will be removed and it will only exist in the Ogg namespace.
- */
-
-#ifdef DOXYGEN
-}
-#else
-namespace Ogg {
-namespace Vorbis {
-typedef Strawberry_TagLib::TagLib::Vorbis::File File;
-}
 }  // namespace Ogg
-#endif
-
 }  // namespace TagLib
 }  // namespace Strawberry_TagLib
 

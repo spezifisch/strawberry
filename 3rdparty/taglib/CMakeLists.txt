@@ -8,70 +8,24 @@ math(EXPR TAGLIB_SOVERSION_MAJOR "${TAGLIB_SOVERSION_CURRENT} - ${TAGLIB_SOVERSI
 math(EXPR TAGLIB_SOVERSION_MINOR "${TAGLIB_SOVERSION_AGE}")
 math(EXPR TAGLIB_SOVERSION_PATCH "${TAGLIB_SOVERSION_REVISION}")
 
-include(TestBigEndian)
-test_big_endian(IS_BIG_ENDIAN)
-
-if(NOT IS_BIG_ENDIAN)
-  add_definitions(-DSYSTEM_BYTEORDER=1)
-else()
-  add_definitions(-DSYSTEM_BYTEORDER=2)
-endif()
-
 include(ConfigureChecks.cmake)
-configure_file(config.h.cmake "${CMAKE_CURRENT_BINARY_DIR}/config.h")
-configure_file(taglib_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/taglib_config.h)
+set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/taglib/")
+configure_file(taglib-config.h.cmake "${CMAKE_CURRENT_BINARY_DIR}/taglib-config.h")
 
 add_definitions(-DHAVE_CONFIG_H)
 add_definitions(-DTAGLIB_STATIC)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/toolkit
-  ${CMAKE_CURRENT_SOURCE_DIR}/asf
-  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogg
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/flac
-  ${CMAKE_CURRENT_SOURCE_DIR}/flac
-  ${CMAKE_CURRENT_SOURCE_DIR}/mpc
-  ${CMAKE_CURRENT_SOURCE_DIR}/mp4
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/vorbis
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/speex
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/opus
-  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v2
-  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v2/frames
-  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v1
-  ${CMAKE_CURRENT_SOURCE_DIR}/ape
-  ${CMAKE_CURRENT_SOURCE_DIR}/wavpack
-  ${CMAKE_CURRENT_SOURCE_DIR}/trueaudio
-  ${CMAKE_CURRENT_SOURCE_DIR}/riff
-  ${CMAKE_CURRENT_SOURCE_DIR}/riff/aiff
-  ${CMAKE_CURRENT_SOURCE_DIR}/riff/wav
-  ${CMAKE_CURRENT_SOURCE_DIR}/mod
-  ${CMAKE_CURRENT_SOURCE_DIR}/s3m
-  ${CMAKE_CURRENT_SOURCE_DIR}/it
-  ${CMAKE_CURRENT_SOURCE_DIR}/xm
-  ${CMAKE_CURRENT_SOURCE_DIR}/dsf
-  ${CMAKE_CURRENT_SOURCE_DIR}/dsdiff
-  ${CMAKE_SOURCE_DIR}/3rdparty
-)
-
-if(ZLIB_FOUND)
-  include_directories(${ZLIB_INCLUDE_DIR})
-elseif(HAVE_ZLIB_SOURCE)
-  include_directories(${ZLIB_SOURCE})
-endif()
 
 set(tag_HDRS
   tag.h
   fileref.h
   audioproperties.h
   taglib_export.h
-  ${CMAKE_CURRENT_BINARY_DIR}/taglib_config.h
   toolkit/taglib.h
   toolkit/tstring.h
   toolkit/tlist.h
   toolkit/tlist.tcc
   toolkit/tstringlist.h
+  toolkit/tstringhandler.h
   toolkit/tbytevector.h
   toolkit/tbytevectorlist.h
   toolkit/tbytevectorstream.h
@@ -80,6 +34,8 @@ set(tag_HDRS
   toolkit/tfilestream.h
   toolkit/tmap.h
   toolkit/tmap.tcc
+  toolkit/tpicture.h
+  toolkit/tpicturemap.h
   toolkit/tpropertymap.h
   toolkit/trefcounter.h
   toolkit/tdebuglistener.h
@@ -339,8 +295,10 @@ set(dsdiff_SRCS
 )
 
 set(toolkit_SRCS
+  toolkit/taglib.cpp
   toolkit/tstring.cpp
   toolkit/tstringlist.cpp
+  toolkit/tstringhandler.cpp
   toolkit/tbytevector.cpp
   toolkit/tbytevectorlist.cpp
   toolkit/tbytevectorstream.cpp
@@ -348,28 +306,40 @@ set(toolkit_SRCS
   toolkit/tfile.cpp
   toolkit/tfilestream.cpp
   toolkit/tdebug.cpp
+  toolkit/tpicture.cpp
+  toolkit/tpicturemap.cpp
   toolkit/tpropertymap.cpp
   toolkit/trefcounter.cpp
   toolkit/tdebuglistener.cpp
   toolkit/tzlib.cpp
 )
 
-if(HAVE_ZLIB_SOURCE)
-  set(zlib_SRCS
-    ${ZLIB_SOURCE}/adler32.c
-    ${ZLIB_SOURCE}/crc32.c
-    ${ZLIB_SOURCE}/inffast.c
-    ${ZLIB_SOURCE}/inflate.c
-    ${ZLIB_SOURCE}/inftrees.c
-    ${ZLIB_SOURCE}/zutil.c
-  )
-endif()
-
 set(tag_LIB_SRCS
-  ${mpeg_SRCS} ${id3v1_SRCS} ${id3v2_SRCS} ${frames_SRCS} ${ogg_SRCS}
-  ${vorbis_SRCS} ${oggflacs_SRCS} ${mpc_SRCS} ${ape_SRCS} ${toolkit_SRCS} ${flacs_SRCS}
-  ${wavpack_SRCS} ${speex_SRCS} ${trueaudio_SRCS} ${riff_SRCS} ${aiff_SRCS} ${wav_SRCS}
-  ${asf_SRCS} ${mp4_SRCS} ${mod_SRCS} ${s3m_SRCS} ${it_SRCS} ${xm_SRCS} ${opus_SRCS} ${dsf_SRCS} ${dsdiff_SRCS}
+  ${mpeg_SRCS}
+  ${id3v1_SRCS}
+  ${id3v2_SRCS}
+  ${frames_SRCS}
+  ${ogg_SRCS}
+  ${vorbis_SRCS}
+  ${oggflacs_SRCS}
+  ${mpc_SRCS}
+  ${ape_SRCS}
+  ${toolkit_SRCS}
+  ${flacs_SRCS}
+  ${wavpack_SRCS}
+  ${speex_SRCS}
+  ${trueaudio_SRCS}
+  ${riff_SRCS}
+  ${aiff_SRCS} ${wav_SRCS}
+  ${asf_SRCS}
+  ${mp4_SRCS}
+  ${mod_SRCS}
+  ${s3m_SRCS}
+  ${it_SRCS}
+  ${xm_SRCS}
+  ${opus_SRCS}
+  ${dsf_SRCS}
+  ${dsdiff_SRCS}
   ${zlib_SRCS}
   tag.cpp
   tagunion.cpp
@@ -380,9 +350,40 @@ set(tag_LIB_SRCS
 
 add_library(tag STATIC ${tag_LIB_SRCS} ${tag_HDRS})
 
-if(HAVE_ZLIB AND NOT HAVE_ZLIB_SOURCE)
-  target_link_libraries(tag ${ZLIB_LIBRARIES})
-endif()
+target_include_directories(tag PRIVATE
+  ${ZLIB_INCLUDE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/toolkit
+  ${CMAKE_CURRENT_SOURCE_DIR}/asf
+  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogg
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/flac
+  ${CMAKE_CURRENT_SOURCE_DIR}/flac
+  ${CMAKE_CURRENT_SOURCE_DIR}/mpc
+  ${CMAKE_CURRENT_SOURCE_DIR}/mp4
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/vorbis
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/speex
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogg/opus
+  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v2
+  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v2/frames
+  ${CMAKE_CURRENT_SOURCE_DIR}/mpeg/id3v1
+  ${CMAKE_CURRENT_SOURCE_DIR}/ape
+  ${CMAKE_CURRENT_SOURCE_DIR}/wavpack
+  ${CMAKE_CURRENT_SOURCE_DIR}/trueaudio
+  ${CMAKE_CURRENT_SOURCE_DIR}/riff
+  ${CMAKE_CURRENT_SOURCE_DIR}/riff/aiff
+  ${CMAKE_CURRENT_SOURCE_DIR}/riff/wav
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod
+  ${CMAKE_CURRENT_SOURCE_DIR}/s3m
+  ${CMAKE_CURRENT_SOURCE_DIR}/it
+  ${CMAKE_CURRENT_SOURCE_DIR}/xm
+  ${CMAKE_CURRENT_SOURCE_DIR}/dsf
+  ${CMAKE_CURRENT_SOURCE_DIR}/dsdiff
+  ${CMAKE_SOURCE_DIR}/3rdparty
+)
+
+target_link_libraries(tag PRIVATE ${ZLIB_LIBRARIES})
 
 set_target_properties(tag PROPERTIES
   VERSION ${TAGLIB_SOVERSION_MAJOR}.${TAGLIB_SOVERSION_MINOR}.${TAGLIB_SOVERSION_PATCH}
@@ -399,4 +400,3 @@ foreach(header ${tag_HDRS})
     COPYONLY
   )
 endforeach()
-

@@ -54,7 +54,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, bool readProperties = true, Properties::ReadStyle audioPropertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle audioPropertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs an MP4 file from \a stream.
@@ -65,13 +65,12 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, bool readProperties = true,
-    Properties::ReadStyle audioPropertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle audioPropertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns a pointer to the MP4 tag of the file.
@@ -81,34 +80,19 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    * \note The Tag <b>is still</b> owned by the MP4::File and should not be deleted by the user.
    * It will be deleted when the file (object) is destroyed.
    */
-  Tag *tag() const;
-
-  /*!
-   * Implements the unified property interface -- export function.
-   */
-  PropertyMap properties() const;
-
-  /*!
-   * Removes unsupported properties. Forwards to the actual Tag's removeUnsupportedProperties() function.
-   */
-  void removeUnsupportedProperties(const StringList &properties);
-
-  /*!
-   * Implements the unified property interface -- import function.
-   */
-  PropertyMap setProperties(const PropertyMap &);
+  Tag *tag() const override;
 
   /*!
    * Returns the MP4 audio properties for this file.
    */
-  Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
 
   /*!
    * Save the file.
    *
    * This returns true if the save was successful.
    */
-  bool save();
+  bool save() override;
 
   /*!
    * Returns whether or not the file on disk actually has an MP4 tag, or the file has a Metadata Item List (ilst) atom.

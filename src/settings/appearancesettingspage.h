@@ -68,6 +68,12 @@ class AppearanceSettingsPage : public SettingsPage {
   static const char *kTabBarGradient;
   static const char *kTabBarColor;
 
+  static const char *kIconSizeTabbarLargeMode;
+  static const char *kIconSizePlayControlButtons;
+  static const char *kIconSizePlaylistButtons;
+  static const char *kIconSizeLeftPanelButtons;
+  static const char *kIconSizeConfigureButtons;
+
   enum BackgroundImageType {
     BackgroundImageType_Default,
     BackgroundImageType_None,

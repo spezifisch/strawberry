@@ -49,7 +49,7 @@ class PageHeader;
 
 class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
  public:
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns the packet contents for the i-th packet (starting from zero) in the Ogg bitstream.
@@ -73,7 +73,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    */
   const PageHeader *lastPageHeader();
 
-  virtual bool save();
+  bool save() override;
 
  protected:
   /*!
@@ -81,7 +81,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note This constructor is protected since Ogg::File shouldn't be instantiated directly but rather should be used through the codec specific subclasses.
    */
-  File(FileName file);
+  explicit File(FileName file);
 
   /*!
    * Constructs an Ogg file from \a stream.
@@ -90,7 +90,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    *
    * \note TagLib will *not* take ownership of the stream, the caller is responsible for deleting it after the File object.
    */
-  File(IOStream *stream);
+  explicit File(IOStream *stream);
 
  private:
   File(const File &);

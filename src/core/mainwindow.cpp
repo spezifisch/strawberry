@@ -253,8 +253,9 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
       collection_sort_model_(new QSortFilterProxyModel(this)),
       track_position_timer_(new QTimer(this)),
       track_slider_timer_(new QTimer(this)),
-      initialised_(false),
+      initialized_(false),
       was_maximized_(true),
+      was_minimized_(false),
       playing_widget_(true),
       doubleclick_addmode_(BehaviourSettingsPage::AddBehaviour_Append),
       doubleclick_playmode_(BehaviourSettingsPage::PlayBehaviour_Never),
@@ -803,8 +804,6 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   if (settings_.contains("geometry")) {
     restoreGeometry(settings_.value("geometry").toByteArray());
   }
-  was_maximized_ = settings_.value("maximized", true).toBool();
-  if (was_maximized_) setWindowState(windowState() | Qt::WindowMaximized);
 
   if (!ui_->splitter->restoreState(settings_.value("splitter_state").toByteArray())) {
     ui_->splitter->setSizes(QList<int>() << 250 << width() - 250);
@@ -837,7 +836,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #else
   QSettings s;
   s.beginGroup(BehaviourSettingsPage::kSettingsGroup);
-  StartupBehaviour behaviour = StartupBehaviour(s.value("startupbehaviour", Startup_Remember).toInt());
+  BehaviourSettingsPage::StartupBehaviour behaviour = BehaviourSettingsPage::StartupBehaviour(s.value("startupbehaviour", BehaviourSettingsPage::Startup_Remember).toInt());
   s.endGroup();
   bool hidden = settings_.value("hidden", false).toBool();
   if (hidden && (!QSystemTrayIcon::isSystemTrayAvailable() || !tray_icon_ || !tray_icon_->IsVisible())) {
@@ -847,14 +846,26 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   }
   else {
     switch (behaviour) {
-      case Startup_AlwaysHide:
-        hide();
+      case BehaviourSettingsPage::Startup_Remember:
+        was_maximized_ = settings_.value("maximized", true).toBool();
+        if (was_maximized_) setWindowState(windowState() | Qt::WindowMaximized);
+        was_minimized_ = settings_.value("minimized", false).toBool();
+        if (was_minimized_) setWindowState(windowState() | Qt::WindowMinimized);
+        setVisible(!hidden);
         break;
-      case Startup_AlwaysShow:
+      case BehaviourSettingsPage::Startup_Show:
         show();
         break;
-      case Startup_Remember:
-        setVisible(!hidden);
+      case BehaviourSettingsPage::Startup_Hide:
+        hide();
+        break;
+      case BehaviourSettingsPage::Startup_ShowMaximized:
+        setWindowState(windowState() | Qt::WindowMaximized);
+        show();
+        break;
+      case BehaviourSettingsPage::Startup_ShowMinimized:
+        setWindowState(windowState() | Qt::WindowMinimized);
+        show();
         break;
     }
   }
@@ -875,10 +886,12 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   if (!options.contains_play_options()) {
     LoadPlaybackStatus();
   }
-  if (app_->scrobbler()->IsEnabled() && !app_->scrobbler()->IsOffline()) app_->scrobbler()->Submit();
+  if (app_->scrobbler()->IsEnabled() && !app_->scrobbler()->IsOffline()) {
+    app_->scrobbler()->Submit();
+  }
 
   qLog(Debug) << "Started" << QThread::currentThread();
-  initialised_ = true;
+  initialized_ = true;
 
 }
 
@@ -906,6 +919,16 @@ void MainWindow::ReloadSettings() {
   doubleclick_playlist_addmode_ = BehaviourSettingsPage::PlaylistAddBehaviour(s.value("doubleclick_playlist_addmode", BehaviourSettingsPage::PlaylistAddBehaviour_Play).toInt());
   menu_playmode_ = BehaviourSettingsPage::PlayBehaviour(s.value("menu_playmode", BehaviourSettingsPage::PlayBehaviour_IfStopped).toInt());
   s.endGroup();
+
+  s.beginGroup(AppearanceSettingsPage::kSettingsGroup);
+  int iconsize = s.value(AppearanceSettingsPage::kIconSizePlayControlButtons, 32).toInt();
+  s.endGroup();
+
+  ui_->back_button->setIconSize(QSize(iconsize, iconsize));
+  ui_->pause_play_button->setIconSize(QSize(iconsize, iconsize));
+  ui_->stop_button->setIconSize(QSize(iconsize, iconsize));
+  ui_->forward_button->setIconSize(QSize(iconsize, iconsize));
+  ui_->button_love->setIconSize(QSize(iconsize, iconsize));
 
   s.beginGroup(BackendSettingsPage::kSettingsGroup);
   bool volume_control = s.value("volume_control", true).toBool();
@@ -964,6 +987,9 @@ void MainWindow::ReloadAllSettings() {
   album_cover_choice_controller_->ReloadSettings();
   if (cover_manager_.get()) cover_manager_->ReloadSettings();
   context_view_->ReloadSettings();
+  file_view_->ReloadSettings();
+  queue_view_->ReloadSettings();
+  playlist_list_->ReloadSettings();
   app_->cover_providers()->ReloadSettings();
   app_->lyrics_providers()->ReloadSettings();
 #ifdef HAVE_SUBSONIC
@@ -1173,7 +1199,7 @@ void MainWindow::TrackSkipped(PlaylistItemPtr item) {
 
 void MainWindow::TabSwitched() {
 
-  if (playing_widget_ && ui_->sidebar_layout->isVisible() && (ui_->tabs->tabBar()->tabData(ui_->tabs->currentIndex()).toString().toLower() != "context" || !context_view_->album_enabled())) {
+  if (playing_widget_ && ui_->action_toggle_show_sidebar->isChecked() && (ui_->tabs->tabBar()->tabData(ui_->tabs->currentIndex()).toString().toLower() != "context" || !context_view_->album_enabled())) {
     ui_->widget_playing->SetEnabled();
   }
   else {
@@ -1196,9 +1222,10 @@ void MainWindow::ToggleSearchCoverAuto(const bool checked) {
 
 void MainWindow::SaveGeometry() {
 
-  if (!initialised_) return;
+  if (!initialized_) return;
 
   settings_.setValue("maximized", isMaximized());
+  settings_.setValue("minimized", isMinimized());
   settings_.setValue("geometry", saveGeometry());
   settings_.setValue("splitter_state", ui_->splitter->saveState());
 
@@ -1384,10 +1411,12 @@ void MainWindow::SetHiddenInTray(const bool hidden) {
   // Some window managers don't remember maximized state between calls to hide() and show(), so we have to remember it ourself.
   if (hidden) {
     was_maximized_ = isMaximized();
+    was_minimized_ = isMinimized();
     hide();
   }
   else {
-    if (was_maximized_) showMaximized();
+    if (was_minimized_) { showMinimized(); }
+    else if (was_maximized_) showMaximized();
     else show();
   }
 
@@ -1593,6 +1622,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   int not_in_queue = 0;
   int in_skipped = 0;
   int not_in_skipped = 0;
+  int local_songs = 0;
 
   for (const QModelIndex &idx : selection) {
 
@@ -1602,18 +1632,20 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(src_idx.row());
     if (!item) continue;
 
+    if (item->Metadata().url().isLocalFile()) ++local_songs;
+
     if (item->Metadata().has_cue()) {
       cue_selected = true;
     }
     else if (item->Metadata().IsEditable()) {
-      editable++;
+      ++editable;
     }
 
-    if (src_idx.data(Playlist::Role_QueuePosition).toInt() == -1) not_in_queue++;
-    else in_queue++;
+    if (src_idx.data(Playlist::Role_QueuePosition).toInt() == -1) ++not_in_queue;
+    else ++in_queue;
 
-    if (item->GetShouldSkip()) in_skipped++;
-    else not_in_skipped++;
+    if (item->GetShouldSkip()) ++in_skipped;
+    else ++not_in_skipped;
 
   }
 
@@ -1634,7 +1666,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   // the rest of the read / write actions work only when there are no CUEs involved
   if (cue_selected) editable = 0;
 
-  if (selected > 0) playlist_open_in_browser_->setVisible(true);
+  playlist_open_in_browser_->setVisible(local_songs == selected);
 
   bool track_column = (index.column() == Playlist::Column_Track);
   ui_->action_renumber_tracks->setVisible(editable >= 2 && track_column);
@@ -1649,7 +1681,6 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   playlist_copy_to_device_->setVisible(false);
 #endif
   playlist_organise_->setVisible(false);
-  playlist_open_in_browser_->setVisible(false);
 
   if (selected < 1) {
     playlist_queue_->setVisible(false);

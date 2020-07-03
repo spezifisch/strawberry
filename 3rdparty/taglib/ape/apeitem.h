@@ -55,24 +55,23 @@ class TAGLIB_EXPORT Item {
   /*!
    * Constructs an empty item.
    */
-  Item();
-
-  /*!
-   * Constructs a text item with \a key and \a value.
-   */
-  // BIC: Remove this, StringList has a constructor from a single string
-  Item(const String &key, const String &value);
+  explicit Item();
 
   /*!
    * Constructs a text item with \a key and \a values.
    */
-  Item(const String &key, const StringList &values);
+  explicit Item(const String &key, const String &values);
+
+  /*!
+   * Constructs a text item with \a key and \a values.
+   */
+  explicit Item(const String &key, const StringList &values);
 
   /*!
    * Constructs an item with \a key and \a value.
    * If \a binary is true a Binary item will be created, otherwise \a value will be interpreted as text
    */
-  Item(const String &key, const ByteVector &value, bool binary);
+  explicit Item(const String &key, const ByteVector &value, bool binary);
 
   /*!
    * Construct an item as a copy of \a item.
@@ -110,11 +109,6 @@ class TAGLIB_EXPORT Item {
    * The item's type will also be set to \a Binary
    */
   void setBinaryData(const ByteVector &value);
-
-#ifndef DO_NOT_DOCUMENT
-  /* Remove in next binary incompatible release */
-  ByteVector value() const;
-#endif
 
   /*!
    * Sets the key for the item to \a key.
@@ -159,7 +153,6 @@ class TAGLIB_EXPORT Item {
    * If the data type is not \a Text, always returns an empty String.
    */
   String toString() const;
-  StringList toStringList() const;
 
   /*!
    * Returns the list of text values.  If the data type is not \a Text, always returns an empty StringList.

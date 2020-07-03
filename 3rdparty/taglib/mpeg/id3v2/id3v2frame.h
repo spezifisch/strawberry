@@ -86,7 +86,7 @@ class TAGLIB_EXPORT Frame {
    * Please use the call below which accepts an ID3v2 version number.
    * In the next non-binary compatible release this will be made into a non-static member that checks the internal ID3v2 version.
    */
-  static unsigned int headerSize();  // BIC: make non-static
+  unsigned int headerSize();
 
   /*!
    * Returns the size of the frame header for the given ID3v2 version.
@@ -167,7 +167,7 @@ class TAGLIB_EXPORT Frame {
    *
    * The ownership of this header will be assigned to the frame and the header will be deleted when the frame is destroyed.
    */
-  Frame(Header *h);
+  explicit Frame(Header *h);
 
   /*!
    * Returns a pointer to the frame header.
@@ -208,7 +208,7 @@ class TAGLIB_EXPORT Frame {
    * If \a position is passed in it is used both as the starting point and is updated to return the position just after the string that has been read.
    * This is useful for reading strings sequentially.
    */
-  String readStringField(const ByteVector &data, String::Type encoding, int *position = 0);
+  String readStringField(const ByteVector &data, String::Type encoding, size_t &position);
 
   /*!
    * Checks a the list of string values to see if they can be used with the specified encoding and returns the recommended encoding.
@@ -271,8 +271,8 @@ class TAGLIB_EXPORT Frame {
   static void splitProperties(const PropertyMap &original, PropertyMap &singleFrameProperties, PropertyMap &tiplProperties, PropertyMap &tmclProperties);
 
  private:
-  Frame(const Frame &);
-  Frame &operator=(const Frame &);
+  Frame(const Frame&);
+  Frame &operator=(const Frame&);
 
   class FramePrivate;
   friend class FramePrivate;
@@ -455,8 +455,8 @@ class TAGLIB_EXPORT Frame::Header {
   ByteVector render() const;
 
  private:
-  Header(const Header &);
-  Header &operator=(const Header &);
+  Header(const Header&);
+  Header &operator=(const Header&);
 
   class HeaderPrivate;
   HeaderPrivate *d;

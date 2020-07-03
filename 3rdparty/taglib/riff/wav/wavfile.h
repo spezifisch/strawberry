@@ -75,7 +75,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::RIFF::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(FileName file, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs a WAV file from \a stream.
@@ -85,19 +85,19 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::RIFF::File {
    *
    * \note In the current implementation, \a propertiesStyle is ignored.
    */
-  File(IOStream *stream, bool readProperties = true, Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns the ID3v2 Tag for this file.
    *
    * \note This method does not return all the tags for this file for backward compatibility.  Will be fixed in TagLib 2.0.
    */
-  ID3v2::Tag *tag() const;
+  Strawberry_TagLib::TagLib::Tag *tag() const override;
 
   /*!
    * Returns the ID3v2 Tag for this file.
@@ -128,29 +128,21 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::RIFF::File {
   void strip(TagTypes tags = AllTags);
 
   /*!
-   * Implements the unified property interface -- export function.
-   * This method forwards to ID3v2::Tag::properties().
-   */
-  PropertyMap properties() const;
-
-  void removeUnsupportedProperties(const StringList &properties);
-
-  /*!
    * Implements the unified property interface -- import function.
    * This method forwards to ID3v2::Tag::setProperties().
    */
-  PropertyMap setProperties(const PropertyMap &);
+  PropertyMap setProperties(const PropertyMap &) override;
 
   /*!
-   * Returns the WAV::Properties for this file.  If no audio properties
+   * Returns the WAV::AudioProperties for this file.  If no audio properties
    * were read then this will return a null pointer.
    */
-  virtual Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
 
   /*!
    * Saves the file.
    */
-  virtual bool save();
+  bool save() override;
 
   /*!
    * Save the file.
@@ -181,13 +173,13 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::RIFF::File {
   static bool isSupported(IOStream *stream);
 
  private:
-  File(const File &);
-  File &operator=(const File &);
+  File(const File&);
+  File &operator=(const File&);
 
   void read(bool readProperties);
   void removeTagChunks(TagTypes tags);
 
-  friend class Properties;
+  friend class AudioProperties;
 
   class FilePrivate;
   FilePrivate *d;

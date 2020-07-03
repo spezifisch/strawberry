@@ -27,12 +27,12 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <tbytevector.h>
-#include <tstring.h>
-#include <tdebug.h>
-#include <tagunion.h>
-#include <tpropertymap.h>
-#include <tagutils.h>
+#include "tbytevector.h"
+#include "tstring.h"
+#include "tdebug.h"
+#include "tagunion.h"
+#include "tpropertymap.h"
+#include "tagutils.h"
 
 #include "wavpackfile.h"
 #include "id3v1tag.h"
@@ -51,23 +51,23 @@ enum {
 
 class WavPack::File::FilePrivate {
  public:
-  FilePrivate() : APELocation(-1),
-                  APESize(0),
-                  ID3v1Location(-1),
-                  properties(nullptr) {}
+  explicit FilePrivate() : APELocation(-1),
+                           APESize(0),
+                           ID3v1Location(-1),
+                           properties(nullptr) {}
 
   ~FilePrivate() {
     delete properties;
   }
 
-  long APELocation;
-  long APESize;
+  long long APELocation;
+  long long APESize;
 
-  long ID3v1Location;
+  long long ID3v1Location;
 
-  TagUnion tag;
+  DoubleTagUnion tag;
 
-  Properties *properties;
+  AudioProperties *properties;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,14 +87,14 @@ bool WavPack::File::isSupported(IOStream *stream) {
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-WavPack::File::File(FileName file, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate()) {
+WavPack::File::File(FileName file, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties);
 
 }
 
-WavPack::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate()) {
+WavPack::File::File(IOStream *stream, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties);
@@ -109,14 +109,6 @@ Strawberry_TagLib::TagLib::Tag *WavPack::File::tag() const {
   return &d->tag;
 }
 
-PropertyMap WavPack::File::properties() const {
-  return d->tag.properties();
-}
-
-void WavPack::File::removeUnsupportedProperties(const StringList &properties) {
-  d->tag.removeUnsupportedProperties(properties);
-}
-
 PropertyMap WavPack::File::setProperties(const PropertyMap &properties) {
 
   if (ID3v1Tag())
@@ -126,7 +118,7 @@ PropertyMap WavPack::File::setProperties(const PropertyMap &properties) {
 
 }
 
-WavPack::Properties *WavPack::File::audioProperties() const {
+WavPack::AudioProperties *WavPack::File::audioProperties() const {
   return d->properties;
 }
 
@@ -262,7 +254,7 @@ void WavPack::File::read(bool readProperties) {
 
   if (readProperties) {
 
-    long streamLength;
+    long long streamLength;
 
     if (d->APELocation >= 0)
       streamLength = d->APELocation;
@@ -271,7 +263,7 @@ void WavPack::File::read(bool readProperties) {
     else
       streamLength = length();
 
-    d->properties = new Properties(this, streamLength);
+    d->properties = new AudioProperties(this, streamLength);
   }
 
 }

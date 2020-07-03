@@ -17,6 +17,13 @@ Resources:
   * PPA: https://launchpad.net/~jonaski/+archive/ubuntu/strawberry
   * Translations: https://translate.zanata.org/iteration/view/strawberry/master
 
+### :bangbang: Opening an issue:
+
+* Search for the issue to see if it is already solved, or if there is an open issue for it already. If there is an open issue already, you can comment on it if you have additional information that could be useful to us.
+* For technical problems, questions and feature requests please use our forum on https://forum.strawberrymusicplayer.org/ that is better suited for discussion. It also better allows answers from the community instead of just the developers on GitHub.
+
+### :moneybag:	Sponsoring:
+
 The program is free software, released under GPL. If you like this program and can make use of it, consider sponsoring or donating to help fund the project.
 To sponsor, visit [my GitHub sponsors profile](https://github.com/sponsors/jonaski).
 Funding developers through GitHub Sponsors is one more way to contribute to open source projects you appreciate, it helps developers get the resources they need, and recognize contributors working behind the scenes to make open source better for everyone.
@@ -25,7 +32,7 @@ You can also make a one-time payment through [paypal.me/jonaskvinge](https://pay
 ### :heavy_check_mark: Features:
 
   * Play and organize music
-  * Supports WAV, FLAC, WavPack, DSF, DSDIFF, Ogg FLAC, Ogg Vorbis, Ogg Opus, Ogg Speex, MPC, TrueAudio, AIFF, MP4, MP3, ASF and Monkey's Audio.
+  * Supports WAV, FLAC, WavPack, Ogg FLAC, Ogg Vorbis, Ogg Opus, Ogg Speex, MPC, TrueAudio, AIFF, MP4, MP3, ASF and Monkey's Audio.
   * Audio CD playback
   * Native desktop notifications
   * Playlists in multiple formats

@@ -27,13 +27,13 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <tbytevector.h>
-#include <tstring.h>
-#include <tdebug.h>
-#include <tagunion.h>
-#include <tstringlist.h>
-#include <tpropertymap.h>
-#include <tagutils.h>
+#include "tbytevector.h"
+#include "tstring.h"
+#include "tdebug.h"
+#include "tagunion.h"
+#include "tstringlist.h"
+#include "tpropertymap.h"
+#include "tagutils.h"
 
 #include "trueaudiofile.h"
 #include "id3v1tag.h"
@@ -47,7 +47,8 @@ enum {
   TrueAudioID3v2Index = 0,
   TrueAudioID3v1Index = 1
 };
-}
+const unsigned int HeaderSize = 18;
+}  // namespace
 
 class TrueAudio::File::FilePrivate {
  public:
@@ -62,14 +63,14 @@ class TrueAudio::File::FilePrivate {
   }
 
   const ID3v2::FrameFactory *ID3v2FrameFactory;
-  long ID3v2Location;
-  long ID3v2OriginalSize;
+  long long ID3v2Location;
+  long long ID3v2OriginalSize;
 
-  long ID3v1Location;
+  long long ID3v1Location;
 
-  TagUnion tag;
+  DoubleTagUnion tag;
 
-  Properties *properties;
+  AudioProperties *properties;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,28 +90,28 @@ bool TrueAudio::File::isSupported(IOStream *stream) {
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-TrueAudio::File::File(FileName file, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate()) {
+TrueAudio::File::File(FileName file, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties);
 
 }
 
-TrueAudio::File::File(FileName file, ID3v2::FrameFactory *frameFactory, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate(frameFactory)) {
+TrueAudio::File::File(FileName file, ID3v2::FrameFactory *frameFactory, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(file), d(new FilePrivate(frameFactory)) {
 
   if (isOpen())
     read(readProperties);
 
 }
 
-TrueAudio::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate()) {
+TrueAudio::File::File(IOStream *stream, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties);
 
 }
 
-TrueAudio::File::File(IOStream *stream, ID3v2::FrameFactory *frameFactory, bool readProperties, Properties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate(frameFactory)) {
+TrueAudio::File::File(IOStream *stream, ID3v2::FrameFactory *frameFactory, bool readProperties, AudioProperties::ReadStyle) : Strawberry_TagLib::TagLib::File(stream), d(new FilePrivate(frameFactory)) {
 
   if (isOpen())
     read(readProperties);
@@ -125,14 +126,6 @@ Strawberry_TagLib::TagLib::Tag *TrueAudio::File::tag() const {
   return &d->tag;
 }
 
-PropertyMap TrueAudio::File::properties() const {
-  return d->tag.properties();
-}
-
-void TrueAudio::File::removeUnsupportedProperties(const StringList &properties) {
-  d->tag.removeUnsupportedProperties(properties);
-}
-
 PropertyMap TrueAudio::File::setProperties(const PropertyMap &properties) {
 
   if (ID3v1Tag())
@@ -142,7 +135,7 @@ PropertyMap TrueAudio::File::setProperties(const PropertyMap &properties) {
 
 }
 
-TrueAudio::Properties *TrueAudio::File::audioProperties() const {
+TrueAudio::AudioProperties *TrueAudio::File::audioProperties() const {
   return d->properties;
 }
 
@@ -273,7 +266,7 @@ void TrueAudio::File::read(bool readProperties) {
 
   if (readProperties) {
 
-    long streamLength;
+    long long streamLength;
 
     if (d->ID3v1Location >= 0)
       streamLength = d->ID3v1Location;
@@ -288,7 +281,7 @@ void TrueAudio::File::read(bool readProperties) {
       seek(0);
     }
 
-    d->properties = new Properties(readBlock(TrueAudio::HeaderSize), streamLength);
+    d->properties = new AudioProperties(readBlock(HeaderSize), streamLength);
   }
 
 }

@@ -34,6 +34,7 @@
 namespace Strawberry_TagLib {
 namespace TagLib {
 namespace ASF {
+class Attribute;
 
 //! An ASF attached picture interface implementation
 
@@ -97,7 +98,7 @@ class TAGLIB_EXPORT Picture {
   /*!
    * Constructs an empty picture.
    */
-  Picture();
+  explicit Picture();
 
   /*!
    * Construct an picture as a copy of \a other.
@@ -200,11 +201,11 @@ class TAGLIB_EXPORT Picture {
    */
   int dataSize() const;
 
-#ifndef DO_NOT_DOCUMENT
-  /* THIS IS PRIVATE, DON'T TOUCH IT! */
+ private:
+  friend class Attribute;
+
   void parse(const ByteVector&);
   static Picture fromInvalid();
-#endif
 
  private:
   class PicturePrivate;

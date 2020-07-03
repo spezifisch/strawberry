@@ -38,19 +38,17 @@ class IT::File::FilePrivate {
   explicit FilePrivate(AudioProperties::ReadStyle propertiesStyle) : properties(propertiesStyle) {}
 
   Mod::Tag tag;
-  IT::Properties properties;
+  IT::AudioProperties properties;
 };
 
-IT::File::File(FileName file, bool readProperties,
-  AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(file), d(new FilePrivate(propertiesStyle)) {
+IT::File::File(FileName file, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(file), d(new FilePrivate(propertiesStyle)) {
 
   if (isOpen())
     read(readProperties);
 
 }
 
-IT::File::File(IOStream *stream, bool readProperties,
-  AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(stream), d(new FilePrivate(propertiesStyle)) {
+IT::File::File(IOStream *stream, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Mod::FileBase(stream), d(new FilePrivate(propertiesStyle)) {
 
   if (isOpen())
     read(readProperties);
@@ -65,15 +63,7 @@ Mod::Tag *IT::File::tag() const {
   return &d->tag;
 }
 
-PropertyMap IT::File::properties() const {
-  return d->tag.properties();
-}
-
-PropertyMap IT::File::setProperties(const PropertyMap &properties) {
-  return d->tag.setProperties(properties);
-}
-
-IT::Properties *IT::File::audioProperties() const {
+IT::AudioProperties *IT::File::audioProperties() const {
   return &d->properties;
 }
 
@@ -102,7 +92,7 @@ bool IT::File::save() {
   StringList lines = d->tag.comment().split("\n");
   for (unsigned short i = 0; i < instrumentCount; ++i) {
     seek(192L + length + (static_cast<long>(i) << 2));
-    unsigned long instrumentOffset = 0;
+    unsigned int instrumentOffset = 0;
     if (!readU32L(instrumentOffset))
       return false;
 
@@ -117,7 +107,7 @@ bool IT::File::save() {
 
   for (unsigned short i = 0; i < sampleCount; ++i) {
     seek(192L + length + (static_cast<long>(instrumentCount) << 2) + (static_cast<long>(i) << 2));
-    unsigned long sampleOffset = 0;
+    unsigned int sampleOffset = 0;
     if (!readU32L(sampleOffset))
       return false;
 
@@ -144,14 +134,14 @@ bool IT::File::save() {
 
   unsigned short special = 0;
   unsigned short messageLength = 0;
-  unsigned long messageOffset = 0;
+  unsigned int messageOffset = 0;
 
   seek(46);
   if (!readU16L(special))
     return false;
 
-  unsigned long fileSize = File::length();
-  if (special & Properties::MessageAttached) {
+  unsigned int fileSize = File::length();
+  if (special & AudioProperties::MessageAttached) {
     seek(54);
     if (!readU16L(messageLength) || !readU32L(messageOffset))
       return false;
@@ -219,14 +209,14 @@ void IT::File::read(bool) {
   // sample/instrument names are abused as comments so
   // I just add all together.
   String message;
-  if (special & Properties::MessageAttached) {
+  if (special & AudioProperties::MessageAttached) {
     READ_U16L_AS(messageLength);
     READ_U32L_AS(messageOffset);
     seek(messageOffset);
     ByteVector messageBytes = readBlock(messageLength);
     READ_ASSERT(messageBytes.size() == messageLength);
-    int index = messageBytes.find(static_cast<char>(0));
-    if (index > -1)
+    const size_t index = messageBytes.find(static_cast<char>(0));
+    if (index != ByteVector::npos())
       messageBytes.resize(index, 0);
     messageBytes.replace('\r', '\n');
     message = messageBytes;

@@ -37,7 +37,6 @@
 
 namespace Strawberry_TagLib {
 namespace TagLib {
-
 namespace Ogg {
 
 /*!
@@ -66,35 +65,38 @@ class TAGLIB_EXPORT XiphComment : public Strawberry_TagLib::TagLib::Tag {
   /*!
    * Constructs an empty Vorbis comment.
    */
-  XiphComment();
+  explicit XiphComment();
 
   /*!
    * Constructs a Vorbis comment from \a data.
    */
-  XiphComment(const ByteVector &data);
+  explicit XiphComment(const ByteVector &data);
 
   /*!
    * Destroys this instance of the XiphComment.
    */
-  virtual ~XiphComment();
+  ~XiphComment() override;
 
-  virtual String title() const;
-  virtual String artist() const;
-  virtual String album() const;
-  virtual String comment() const;
-  virtual String genre() const;
-  virtual unsigned int year() const;
-  virtual unsigned int track() const;
+  String title() const override;
+  String artist() const override;
+  String album() const override;
+  String comment() const override;
+  String genre() const override;
+  unsigned int year() const override;
+  unsigned int track() const override;
+  PictureMap pictures() const override;
 
-  virtual void setTitle(const String &s);
-  virtual void setArtist(const String &s);
-  virtual void setAlbum(const String &s);
-  virtual void setComment(const String &s);
-  virtual void setGenre(const String &s);
-  virtual void setYear(unsigned int i);
-  virtual void setTrack(unsigned int i);
+  void setTitle(const String &s) override;
+  void setArtist(const String &s) override;
+  void setAlbum(const String &s) override;
+  void setComment(const String &s) override;
+  void setGenre(const String &s) override;
+  void setYear(unsigned int i) override;
+  void setTrack(unsigned int i) override;
+  void setPictures(const PictureMap&) override;
 
-  virtual bool isEmpty() const;
+  bool isEmpty() const override;
+  String toString() const override;
 
   /*!
    * Returns the number of fields present in the comment.
@@ -142,7 +144,7 @@ class TAGLIB_EXPORT XiphComment : public Strawberry_TagLib::TagLib::Tag {
    * since it is completely compatible with the property interface
    * (in fact, a Xiph comment is nothing more than a map from tag names to list of values, as is the dict interface).
    */
-  PropertyMap properties() const;
+  PropertyMap properties() const override;
 
   /*!
    * Implements the unified property interface -- import function.
@@ -150,7 +152,7 @@ class TAGLIB_EXPORT XiphComment : public Strawberry_TagLib::TagLib::Tag {
    * except for invalid keys (less than one character, non-ASCII,
    * or containing '=' or '~') in which case the according values will be contained in the returned PropertyMap.
    */
-  PropertyMap setProperties(const PropertyMap &);
+  PropertyMap setProperties(const PropertyMap&) override;
 
   /*!
    * Check if the given String is a valid Xiph comment key.
@@ -201,17 +203,12 @@ class TAGLIB_EXPORT XiphComment : public Strawberry_TagLib::TagLib::Tag {
 
   /*!
    * Renders the comment to a ByteVector suitable for inserting into a file.
-   */
-  ByteVector render() const;  // BIC: remove and merge with below
-
-  /*!
-   * Renders the comment to a ByteVector suitable for inserting into a file.
    *
    * If \a addFramingBit is true the standard Vorbis comment framing bit will
    * be appended.  However some formats (notably FLAC) do not work with this
    * in place.
    */
-  ByteVector render(bool addFramingBit) const;
+  ByteVector render(bool addFramingBit = true) const;
 
 
   /*!
@@ -243,8 +240,8 @@ class TAGLIB_EXPORT XiphComment : public Strawberry_TagLib::TagLib::Tag {
   void parse(const ByteVector &data);
 
  private:
-  XiphComment(const XiphComment &);
-  XiphComment &operator=(const XiphComment &);
+  XiphComment(const XiphComment&);
+  XiphComment &operator=(const XiphComment&);
 
   class XiphCommentPrivate;
   XiphCommentPrivate *d;

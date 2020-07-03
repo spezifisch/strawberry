@@ -49,7 +49,7 @@ class TAGLIB_EXPORT ChapterFrame : public ID3v2::Frame {
    * Creates a chapter frame based on \a data.
    * \a tagHeader is required as the internal frames are parsed based on the tag version.
    */
-  ChapterFrame(const ID3v2::Header *tagHeader, const ByteVector &data);
+  explicit ChapterFrame(const ID3v2::Header *tagHeader, const ByteVector &data);
 
   /*!
    * Creates a chapter frame with the element ID \a elementID,
@@ -59,15 +59,12 @@ class TAGLIB_EXPORT ChapterFrame : public ID3v2::Frame {
    *
    * All times are in milliseconds.
    */
-  ChapterFrame(const ByteVector &elementID,
-    unsigned int startTime, unsigned int endTime,
-    unsigned int startOffset, unsigned int endOffset,
-    const FrameList &embeddedFrames = FrameList());
+  explicit ChapterFrame(const ByteVector &elementID, unsigned int startTime, unsigned int endTime, unsigned int startOffset, unsigned int endOffset, const FrameList &embeddedFrames = FrameList());
 
   /*!
    * Destroys the frame.
    */
-  virtual ~ChapterFrame();
+  ~ChapterFrame() override;
 
   /*!
    * Returns the element ID of the frame.
@@ -204,7 +201,7 @@ class TAGLIB_EXPORT ChapterFrame : public ID3v2::Frame {
    */
   void removeEmbeddedFrames(const ByteVector &id);
 
-  virtual String toString() const;
+  String toString() const override;
 
   PropertyMap asProperties() const;
 
@@ -217,13 +214,13 @@ class TAGLIB_EXPORT ChapterFrame : public ID3v2::Frame {
   static ChapterFrame *findByElementID(const Tag *tag, const ByteVector &eID);
 
  protected:
-  virtual void parseFields(const ByteVector &data);
-  virtual ByteVector renderFields() const;
+  void parseFields(const ByteVector &data) override;
+  ByteVector renderFields() const override;
 
  private:
-  ChapterFrame(const ID3v2::Header *tagHeader, const ByteVector &data, Header *h);
-  ChapterFrame(const ChapterFrame &);
-  ChapterFrame &operator=(const ChapterFrame &);
+  explicit ChapterFrame(const ID3v2::Header *tagHeader, const ByteVector &data, Header *h);
+  ChapterFrame(const ChapterFrame&);
+  ChapterFrame &operator=(const ChapterFrame&);
 
   class ChapterFramePrivate;
   ChapterFramePrivate *d;

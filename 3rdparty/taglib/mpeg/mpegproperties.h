@@ -44,58 +44,46 @@ class XingHeader;
  * This reads the data from an MPEG Layer III stream found in the AudioProperties API.
  */
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
   /*!
-   * Create an instance of MPEG::Properties with the data read from the MPEG::File \a file.
+   * Create an instance of MPEG::AudioProperties with the data read from the MPEG::File \a file.
    */
-  Properties(File *file, ReadStyle style = Average);
+  explicit AudioProperties(File *file, ReadStyle style = Average);
 
   /*!
-   * Destroys this MPEG Properties instance.
+   * Destroys this MPEG AudioProperties instance.
    */
-  virtual ~Properties();
-
-  /*!
-   * Returns the length of the file in seconds.
-   * The length is rounded down to the nearest whole second.
-   *
-   * \note This method is just an alias of lengthInSeconds().
-   *
-   * \deprecated
-   */
-  virtual int length() const;
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz.
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * Returns a pointer to the Xing/VBRI header if one exists or null if no Xing/VBRI header was found.
@@ -133,13 +121,10 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   bool isOriginal() const;
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
-
   void read(File *file);
 
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace MPEG

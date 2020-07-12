@@ -50,20 +50,18 @@ class TAGLIB_EXPORT TableOfContentsFrame : public ID3v2::Frame {
    * Creates a table of contents frame based on \a data.
    * \a tagHeader is required as the internal frames are parsed based on the tag version.
    */
-  TableOfContentsFrame(const ID3v2::Header *tagHeader, const ByteVector &data);
+  explicit TableOfContentsFrame(const ID3v2::Header *tagHeader, const ByteVector &data);
 
   /*!
    * Creates a table of contents frame with the element ID \a elementID,
    * the child elements \a children and embedded frames, which become owned by this frame, in \a embeddedFrames.
    */
-  TableOfContentsFrame(const ByteVector &elementID,
-    const ByteVectorList &children = ByteVectorList(),
-    const FrameList &embeddedFrames = FrameList());
+  explicit TableOfContentsFrame(const ByteVector &elementID, const ByteVectorList &children = ByteVectorList(), const FrameList &embeddedFrames = FrameList());
 
   /*!
    * Destroys the frame.
    */
-  ~TableOfContentsFrame();
+  ~TableOfContentsFrame() override;
 
   /*!
    * Returns the elementID of the frame.
@@ -202,7 +200,7 @@ class TAGLIB_EXPORT TableOfContentsFrame : public ID3v2::Frame {
    */
   void removeEmbeddedFrames(const ByteVector &id);
 
-  virtual String toString() const;
+  String toString() const override;
 
   PropertyMap asProperties() const;
 
@@ -225,13 +223,13 @@ class TAGLIB_EXPORT TableOfContentsFrame : public ID3v2::Frame {
   static TableOfContentsFrame *findTopLevel(const Tag *tag);
 
  protected:
-  virtual void parseFields(const ByteVector &data);
-  virtual ByteVector renderFields() const;
+  void parseFields(const ByteVector &data) override;
+  ByteVector renderFields() const override;
 
  private:
-  TableOfContentsFrame(const ID3v2::Header *tagHeader, const ByteVector &data, Header *h);
-  TableOfContentsFrame(const TableOfContentsFrame &);
-  TableOfContentsFrame &operator=(const TableOfContentsFrame &);
+  explicit TableOfContentsFrame(const ID3v2::Header *tagHeader, const ByteVector &data, Header *h);
+  TableOfContentsFrame(const TableOfContentsFrame&);
+  TableOfContentsFrame &operator=(const TableOfContentsFrame&);
 
   class TableOfContentsFramePrivate;
   TableOfContentsFramePrivate *d;

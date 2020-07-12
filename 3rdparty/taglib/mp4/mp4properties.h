@@ -37,7 +37,7 @@ class Atoms;
 class File;
 
 //! An implementation of MP4 audio properties
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
   enum Codec {
     Unknown = 0,
@@ -45,39 +45,37 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
     ALAC
   };
 
-  Properties(File *file, Atoms *atoms, ReadStyle style = Average);
-  virtual ~Properties();
+  explicit AudioProperties(File *file, Atoms *atoms, ReadStyle style = Average);
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz.
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * Returns the number of bits per audio sample.
@@ -94,11 +92,13 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
    */
   Codec codec() const;
 
+  String toString() const override;
+
  private:
   void read(File *file, Atoms *atoms);
 
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace MP4

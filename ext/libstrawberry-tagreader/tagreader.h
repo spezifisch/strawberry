@@ -37,6 +37,7 @@
 
 class QTextCodec;
 
+
 #ifndef USE_SYSTEM_TAGLIB
 using namespace Strawberry_TagLib;
 #endif
@@ -49,7 +50,7 @@ class FileRefFactory;
  */
 class TagReader {
  public:
-  TagReader();
+  explicit TagReader();
   ~TagReader();
 
   pb::tagreader::SongMetadata_FileType GuessFileType(TagLib::FileRef *fileref) const;
@@ -79,7 +80,6 @@ class TagReader {
   void SetUnsyncLyricsFrame(const std::string& value, TagLib::ID3v2::Tag* tag) const;
 
  private:
-
   FileRefFactory *factory_;
 
   const std::string kEmbeddedCover;

@@ -68,16 +68,11 @@ SystemTrayIcon::SystemTrayIcon(QObject *parent)
 
 #ifndef Q_OS_WIN
   de_ = Utilities::DesktopEnvironment().toLower();
-  QFile pattern_file;
-  if (de_ == "kde") {
-    pattern_file.setFileName(":/html/playing-tooltip-plain.html");
+  QFile pattern_file(":/html/playing-tooltip.html");
+  if (pattern_file.open(QIODevice::ReadOnly)) {
+    pattern_ = QString::fromLatin1(pattern_file.readAll());
+    pattern_file.close();
   }
-  else {
-    pattern_file.setFileName(":/html/playing-tooltip-table.html");
-  }
-  pattern_file.open(QIODevice::ReadOnly);
-  pattern_ = QString::fromLatin1(pattern_file.readAll());
-  pattern_file.close();
 
 #endif
 
@@ -247,6 +242,11 @@ void SystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
   setToolTip(song.PrettyTitleWithArtist());
 #else
 
+  if (de_ == "kde") {
+    tray_->setToolTip(song.PrettyTitleWithArtist());
+    return;
+  }
+
   int columns = cover_url.isEmpty() ? 1 : 2;
 
   QString tooltip(pattern_);
@@ -266,12 +266,7 @@ void SystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
 
   if (columns == 2) {
     QString final_path = cover_url.isLocalFile() ? cover_url.path() : cover_url.toString();
-    if (de_ == "kde") {
-      tooltip.replace("%image", "<img src=\"" % final_path % "\" />");
-    }
-    else {
-      tooltip.replace("%image", "    <td>      <img src=\"" % final_path % "\" />   </td>");
-    }
+    tooltip.replace("%image", "    <td>      <img src=\"" % final_path % "\" />   </td>");
   }
   else {
     tooltip.replace("<td>%image</td>", "");

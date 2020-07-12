@@ -111,13 +111,6 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   static const char *kSettingsGroup;
   static const char *kAllFilesFilterSpec;
 
-  // Don't change the values
-  enum StartupBehaviour {
-    Startup_Remember = 1,
-    Startup_AlwaysShow = 2,
-    Startup_AlwaysHide = 3,
-  };
-
   void SetHiddenInTray(const bool hidden);
   void CommandlineOptionsReceived(const CommandlineOptions& options);
 
@@ -363,8 +356,9 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   QTimer *track_slider_timer_;
   QSettings settings_;
 
-  bool initialised_;
+  bool initialized_;
   bool was_maximized_;
+  bool was_minimized_;
   bool playing_widget_;
   BehaviourSettingsPage::AddBehaviour doubleclick_addmode_;
   BehaviourSettingsPage::PlayBehaviour doubleclick_playmode_;

@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 
 #include <taglib/taglib.h>
-#include <taglib/taglib_config.h>
 #include <taglib/fileref.h>
 #include <taglib/tbytevector.h>
 #include <taglib/tfile.h>
@@ -71,6 +70,8 @@
 #include <taglib/apefile.h>
 #ifdef HAVE_TAGLIB_DSFFILE
 #  include <taglib/dsffile.h>
+#endif
+#ifdef HAVE_TAGLIB_DSDIFFFILE
 #  include <taglib/dsdifffile.h>
 #endif
 
@@ -120,14 +121,14 @@ TagLib::String QStringToTaglibString(const QString &s) {
   return TagLib::String(s.toUtf8().constData(), TagLib::String::UTF8);
 }
 
-}
+}  // namespace
 
 namespace {
 // Tags containing the year the album was originally released (in contrast to other tags that contain the release year of the current edition)
 const char *kMP4_OriginalYear_ID = "----:com.apple.iTunes:ORIGINAL YEAR";
 const char *kASF_OriginalDate_ID = "WM/OriginalReleaseTime";
 const char *kASF_OriginalYear_ID = "WM/OriginalReleaseYear";
-}
+}  // namespace
 
 
 TagReader::TagReader() :
@@ -157,6 +158,8 @@ pb::tagreader::SongMetadata_FileType TagReader::GuessFileType(TagLib::FileRef *f
   if (dynamic_cast<TagLib::APE::File*>(fileref->file())) return pb::tagreader::SongMetadata_FileType_APE;
 #ifdef HAVE_TAGLIB_DSFFILE
   if (dynamic_cast<TagLib::DSF::File*>(fileref->file())) return pb::tagreader::SongMetadata_FileType_DSF;
+#endif
+#ifdef HAVE_TAGLIB_DSDIFFFILE
   if (dynamic_cast<TagLib::DSDIFF::File*>(fileref->file())) return pb::tagreader::SongMetadata_FileType_DSDIFF;
 #endif
 
@@ -473,7 +476,7 @@ void TagReader::ParseAPETag(const TagLib::APE::ItemListMap &map, const QTextCode
 
   TagLib::APE::ItemListMap::ConstIterator it = map.find("ALBUM ARTIST");
   if (it != map.end()) {
-    TagLib::StringList album_artists = it->second.toStringList();
+    TagLib::StringList album_artists = it->second.values();
     if (!album_artists.isEmpty()) {
       Decode(album_artists.front(), nullptr, song->mutable_albumartist());
     }
@@ -489,15 +492,15 @@ void TagReader::ParseAPETag(const TagLib::APE::ItemListMap &map, const QTextCode
   }
 
   if (map.contains("PERFORMER")) {
-    Decode(map["PERFORMER"].toStringList().toString(", "), nullptr, song->mutable_performer());
+    Decode(map["PERFORMER"].values().toString(", "), nullptr, song->mutable_performer());
   }
 
   if (map.contains("COMPOSER")) {
-    Decode(map["COMPOSER"].toStringList().toString(", "), nullptr, song->mutable_composer());
+    Decode(map["COMPOSER"].values().toString(", "), nullptr, song->mutable_composer());
   }
 
   if (map.contains("GROUPING")) {
-    Decode(map["GROUPING"].toStringList().toString(" "), nullptr, song->mutable_grouping());
+    Decode(map["GROUPING"].values().toString(" "), nullptr, song->mutable_grouping());
   }
 
   if (map.contains("LYRICS")) {

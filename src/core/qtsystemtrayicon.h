@@ -42,8 +42,8 @@ class SystemTrayIcon : public QSystemTrayIcon {
   Q_OBJECT
 
  public:
-  SystemTrayIcon(QObject *parent = nullptr);
-  ~SystemTrayIcon();
+  explicit QtSystemTrayIcon(QObject *parent = nullptr);
+  ~QtSystemTrayIcon() override;
 
   bool IsAvailable() const { return isSystemTrayAvailable(); }
 

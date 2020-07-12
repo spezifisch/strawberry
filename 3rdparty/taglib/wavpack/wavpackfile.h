@@ -89,8 +89,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    * If \a readProperties is true the file's audio properties will also be read using \a propertiesStyle.
    * If false, \a propertiesStyle is ignored
    */
-  File(FileName file, bool readProperties = true,
-    Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs an WavPack file from \a file.
@@ -100,48 +99,38 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
    * \note TagLib will *not* take ownership of the stream, the caller is
    * responsible for deleting it after the File object.
    */
-  File(IOStream *stream, bool readProperties = true,
-    Properties::ReadStyle propertiesStyle = Properties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
   /*!
    * Returns the Tag for this file.
    * This will be an APE tag, an ID3v1 tag or a combination of the two.
    */
-  virtual Strawberry_TagLib::TagLib::Tag *tag() const;
-
-  /*!
-   * Implements the unified property interface -- export function.
-   * If the file contains both an APE and an ID3v1 tag,
-   * only APE will be converted to the PropertyMap.
-   */
-  PropertyMap properties() const;
-
-  void removeUnsupportedProperties(const StringList &properties);
+  Strawberry_TagLib::TagLib::Tag *tag() const override;
 
   /*!
    * Implements the unified property interface -- import function.
    * Creates an APE tag if it does not exists and calls setProperties() on that.
    * Any existing ID3v1 tag will be updated as well.
    */
-  PropertyMap setProperties(const PropertyMap &);
+  PropertyMap setProperties(const PropertyMap&) override;
 
   /*!
-   * Returns the MPC::Properties for this file.
+   * Returns the MPC::AudioProperties for this file.
    * If no audio properties were read then this will return a null pointer.
    */
-  virtual Properties *audioProperties() const;
+  AudioProperties *audioProperties() const override;
 
   /*!
    * Saves the file.
    *
    * This returns true if the save was successful.
    */
-  virtual bool save();
+  bool save() override;
 
   /*!
    * Returns a pointer to the ID3v1 tag of the file.
@@ -207,8 +196,8 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::File {
   static bool isSupported(IOStream *stream);
 
  private:
-  File(const File &);
-  File &operator=(const File &);
+  File(const File&);
+  File &operator=(const File&);
 
   void read(bool readProperties);
 

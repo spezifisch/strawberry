@@ -41,6 +41,7 @@ namespace TagLib {
    */
 
 class PropertyMap;
+class PictureMap;
 
 class TAGLIB_EXPORT Tag {
  public:
@@ -53,22 +54,20 @@ class TAGLIB_EXPORT Tag {
    * Exports the tags of the file as dictionary mapping (human readable) tag names (Strings) to StringLists of tag values.
    * The default implementation in this class considers only the usual built-in tags (artist, album, ...) and only one value per key.
    */
-  PropertyMap properties() const;
+  virtual PropertyMap properties() const;
 
   /*!
    * Removes unsupported properties, or a subset of them, from the tag.
    * The parameter \a properties must contain only entries from properties().unsupportedData().
-   * BIC: Will become virtual in future releases. Currently the non-virtual
-   * standard implementation of TagLib::Tag does nothing, since there are no unsupported elements.
    */
-  void removeUnsupportedProperties(const StringList &properties);
+  virtual void removeUnsupportedProperties(const StringList &properties);
 
   /*!
    * Sets the tags of this File to those specified in \a properties.
    * This default implementation sets only the tags for which setter methods exist in this class
    * (artist, album, ...), and only one value per key; the rest will be contained in the returned PropertyMap.
    */
-  PropertyMap setProperties(const PropertyMap &origProps);
+  virtual PropertyMap setProperties(const PropertyMap &origProps);
 
   /*!
    * Returns the track name; if no track name is present in the tag String::null will be returned.
@@ -105,6 +104,12 @@ class TAGLIB_EXPORT Tag {
    * return 0.
    */
   virtual unsigned int track() const = 0;
+
+  /*!
+   * Returns a list of pictures available; if there is no picture, the list
+   * will be empty
+   */
+  virtual PictureMap pictures() const = 0;
 
   /*!
    * Sets the title to \a s.  If \a s is String::null then this value will be cleared.
@@ -144,6 +149,11 @@ class TAGLIB_EXPORT Tag {
   virtual void setTrack(unsigned int i) = 0;
 
   /*!
+     *  Sets the list of pictures
+     */
+  virtual void setPictures(const PictureMap &l) = 0;
+
+  /*!
    * Returns true if the tag does not contain any data.
    * This should be reimplemented in subclasses that provide more than the basic tagging abilities in this class.
    */
@@ -162,15 +172,20 @@ class TAGLIB_EXPORT Tag {
    */
   static void duplicate(const Tag *source, Tag *target, bool overwrite = true);
 
+  /*!
+     * Returns description of the tag.
+     */
+  virtual String toString() const;
+
  protected:
   /*!
    * Construct a Tag.  This is protected since tags should only be instantiated through subclasses.
    */
-  Tag();
+  explicit Tag();
 
  private:
-  Tag(const Tag &);
-  Tag &operator=(const Tag &);
+  Tag(const Tag&);
+  Tag &operator=(const Tag&);
 
   class TagPrivate;
   TagPrivate *d;

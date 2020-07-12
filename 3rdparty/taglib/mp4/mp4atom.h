@@ -65,7 +65,7 @@ enum AtomDataType {
 };
 
 struct AtomData {
-  AtomData(AtomDataType _type, ByteVector _data) : type(_type), locale(0), data(_data) {}
+  explicit AtomData(AtomDataType _type, ByteVector _data) : type(_type), locale(0), data(_data) {}
   AtomDataType type;
   int locale;
   ByteVector data;
@@ -75,14 +75,14 @@ typedef Strawberry_TagLib::TagLib::List<AtomData> AtomDataList;
 
 class Atom {
  public:
-  Atom(File *file);
+  explicit Atom(File *file);
   ~Atom();
 
-  Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
-  bool path(AtomList &path, const char *name1, const char *name2 = 0, const char *name3 = 0);
+  Atom *find(const char *name1, const char *name2 = nullptr, const char *name3 = nullptr, const char *name4 = nullptr);
+  bool path(AtomList &path, const char *name1, const char *name2 = nullptr, const char *name3 = nullptr);
   AtomList findall(const char *name, bool recursive = false);
-  long offset;
-  long length;
+  long long offset;
+  long long length;
   Strawberry_TagLib::TagLib::ByteVector name;
   AtomList children;
 
@@ -94,11 +94,11 @@ class Atom {
 //! Root-level atoms
 class Atoms {
  public:
-  Atoms(File *file);
+  explicit Atoms(File *file);
   ~Atoms();
 
-  Atom *find(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
-  AtomList path(const char *name1, const char *name2 = 0, const char *name3 = 0, const char *name4 = 0);
+  Atom *find(const char *name1, const char *name2 = nullptr, const char *name3 = nullptr, const char *name4 = nullptr);
+  AtomList path(const char *name1, const char *name2 = nullptr, const char *name3 = nullptr, const char *name4 = nullptr);
   AtomList atoms;
 };
 

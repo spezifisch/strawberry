@@ -62,13 +62,13 @@ Q_DECLARE_METATYPE(QModelIndex)
 
 class TemporaryResource : public QTemporaryFile {
 public:
-  TemporaryResource(const QString& filename);
+  explicit TemporaryResource(const QString& filename);
 };
 
 class TestQObject : public QObject {
   Q_OBJECT
  public:
-  TestQObject(QObject* parent = 0);
+  explicit TestQObject(QObject* parent = nullptr);
 
   void Emit();
 

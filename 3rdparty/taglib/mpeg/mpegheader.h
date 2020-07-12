@@ -54,7 +54,7 @@ class TAGLIB_EXPORT Header {
    * check if the frame length is parsed and calculated correctly.
    * So it's suitable for seeking for the first valid frame.
    */
-  Header(File *file, long offset, bool checkLength = true);
+  explicit Header(File *file, long long offset, bool checkLength = true);
 
   /*!
    * Does a shallow copy of \a h.
@@ -159,7 +159,7 @@ class TAGLIB_EXPORT Header {
   Header &operator=(const Header &h);
 
  private:
-  void parse(File *file, long offset, bool checkLength);
+  void parse(File *file, long long offset, bool checkLength);
 
   class HeaderPrivate;
   HeaderPrivate *d;

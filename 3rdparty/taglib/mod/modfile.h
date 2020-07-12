@@ -45,7 +45,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::Mod::FileBase {
    * \note In the current implementation, both \a readProperties and \a propertiesStyle are ignored.
    * The audio properties are always read.
    */
-  File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
+  explicit File(FileName file, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Constructs a Protracker file from \a stream.
@@ -56,30 +56,19 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::Mod::FileBase {
    * \note TagLib will *not* take ownership of the stream, the caller is
    * responsible for deleting it after the File object.
    */
-  File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
+  explicit File(IOStream *stream, bool readProperties = true, AudioProperties::ReadStyle propertiesStyle = AudioProperties::Average);
 
   /*!
    * Destroys this instance of the File.
    */
-  virtual ~File();
+  ~File() override;
 
-  Mod::Tag *tag() const;
-
-  /*!
-   * Implements the unified property interface -- export function.
-   * Forwards to Mod::Tag::properties().
-   */
-  PropertyMap properties() const;
+  Mod::Tag *tag() const override;
 
   /*!
-   * Implements the unified property interface -- import function.
-   * Forwards to Mod::Tag::setProperties().
+   * Returns the Mod::AudioProperties for this file. If no audio properties were read then this will return a null pointer.
    */
-  PropertyMap setProperties(const PropertyMap &);
-  /*!
-   * Returns the Mod::Properties for this file. If no audio properties were read then this will return a null pointer.
-   */
-  Mod::Properties *audioProperties() const;
+  Mod::AudioProperties *audioProperties() const override;
 
   /*!
    * Save the file.
@@ -87,7 +76,7 @@ class TAGLIB_EXPORT File : public Strawberry_TagLib::TagLib::Mod::FileBase {
    *
    * \note Saving Protracker tags is not supported.
    */
-  bool save();
+  bool save() override;
 
  private:
   File(const File &);

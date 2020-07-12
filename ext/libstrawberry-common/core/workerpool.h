@@ -46,7 +46,7 @@ class _WorkerPoolBase : public QObject {
   Q_OBJECT
 
  public:
-  _WorkerPoolBase(QObject *parent = nullptr);
+  explicit _WorkerPoolBase(QObject *parent = nullptr);
 
 signals:
   // Emitted when a worker failed to start.  This usually happens when the worker wasn't found, or couldn't be executed.
@@ -67,8 +67,8 @@ protected slots:
 template <typename HandlerType>
 class WorkerPool : public _WorkerPoolBase {
  public:
-  WorkerPool(QObject *parent = nullptr);
-  ~WorkerPool();
+  explicit WorkerPool(QObject *parent = nullptr);
+  ~WorkerPool() override;
 
   typedef typename HandlerType::MessageType MessageType;
   typedef typename HandlerType::ReplyType ReplyType;
@@ -95,10 +95,10 @@ class WorkerPool : public _WorkerPoolBase {
 
 protected:
   // These are all reimplemented slots, they are called on the WorkerPool's thread.
-  void DoStart();
-  void NewConnection();
-  void ProcessError(QProcess::ProcessError error);
-  void SendQueuedMessages();
+  void DoStart() override;
+  void NewConnection() override;
+  void ProcessError(QProcess::ProcessError error) override;
+  void SendQueuedMessages() override;
 
 private:
   struct Worker {

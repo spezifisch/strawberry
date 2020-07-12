@@ -23,27 +23,27 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <tbytevector.h>
-#include <tstring.h>
-#include <tdebug.h>
-#include <tpropertymap.h>
-#include <tagutils.h>
+#include "tbytevector.h"
+#include "tstring.h"
+#include "tdebug.h"
+#include "tpropertymap.h"
+#include "tagutils.h"
 
-#include <xiphcomment.h>
+#include "xiphcomment.h"
 #include "oggflacfile.h"
 
 using namespace Strawberry_TagLib::TagLib;
-using Strawberry_TagLib::TagLib::FLAC::Properties;
+using Strawberry_TagLib::TagLib::FLAC::AudioProperties;
 
 class Ogg::FLAC::File::FilePrivate {
  public:
-  FilePrivate() : comment(nullptr),
-                  properties(nullptr),
-                  streamStart(0),
-                  streamLength(0),
-                  scanned(false),
-                  hasXiphComment(false),
-                  commentPacket(0) {}
+  explicit FilePrivate() : comment(nullptr),
+                           properties(nullptr),
+                           streamStart(0),
+                           streamLength(0),
+                           scanned(false),
+                           hasXiphComment(false),
+                           commentPacket(0) {}
 
   ~FilePrivate() {
     delete comment;
@@ -52,11 +52,11 @@ class Ogg::FLAC::File::FilePrivate {
 
   Ogg::XiphComment *comment;
 
-  Properties *properties;
+  AudioProperties *properties;
   ByteVector streamInfoData;
   ByteVector xiphCommentData;
-  long streamStart;
-  long streamLength;
+  long long streamStart;
+  long long streamLength;
   bool scanned;
 
   bool hasXiphComment;
@@ -71,21 +71,21 @@ bool Ogg::FLAC::File::isSupported(IOStream *stream) {
   // An Ogg FLAC file has IDs "OggS" and "fLaC" somewhere.
 
   const ByteVector buffer = Utils::readHeader(stream, bufferSize(), false);
-  return (buffer.find("OggS") >= 0 && buffer.find("fLaC") >= 0);
+  return (buffer.find("OggS") != ByteVector::npos() && buffer.find("fLaC") != ByteVector::npos());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Ogg::FLAC::File::File(FileName file, bool readProperties, Properties::ReadStyle propertiesStyle) : Ogg::File(file), d(new FilePrivate()) {
+Ogg::FLAC::File::File(FileName file, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Ogg::File(file), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties, propertiesStyle);
 
 }
 
-Ogg::FLAC::File::File(IOStream *stream, bool readProperties, Properties::ReadStyle propertiesStyle) : Ogg::File(stream), d(new FilePrivate()) {
+Ogg::FLAC::File::File(IOStream *stream, bool readProperties, AudioProperties::ReadStyle propertiesStyle) : Ogg::File(stream), d(new FilePrivate()) {
 
   if (isOpen())
     read(readProperties, propertiesStyle);
@@ -100,15 +100,7 @@ Ogg::XiphComment *Ogg::FLAC::File::tag() const {
   return d->comment;
 }
 
-PropertyMap Ogg::FLAC::File::properties() const {
-  return d->comment->properties();
-}
-
-PropertyMap Ogg::FLAC::File::setProperties(const PropertyMap &properties) {
-  return d->comment->setProperties(properties);
-}
-
-Properties *Ogg::FLAC::File::audioProperties() const {
+FLAC::AudioProperties *Ogg::FLAC::File::audioProperties() const {
   return d->properties;
 }
 
@@ -121,7 +113,7 @@ bool Ogg::FLAC::File::save() {
 
   // Put the size in the first 32 bit (I assume no more than 24 bit are used)
 
-  ByteVector v = ByteVector::fromUInt(d->xiphCommentData.size());
+  ByteVector v = ByteVector::fromUInt32BE(d->xiphCommentData.size());
 
   // Set the type of the metadata-block to be a Xiph / Vorbis comment
 
@@ -148,7 +140,7 @@ bool Ogg::FLAC::File::hasXiphComment() const {
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
-void Ogg::FLAC::File::read(bool readProperties, Properties::ReadStyle propertiesStyle) {
+void Ogg::FLAC::File::read(bool readProperties, AudioProperties::ReadStyle propertiesStyle) {
 
   // Sanity: Check if we really have an Ogg/FLAC file
 
@@ -178,7 +170,7 @@ void Ogg::FLAC::File::read(bool readProperties, Properties::ReadStyle properties
 
 
   if (readProperties)
-    d->properties = new Properties(streamInfoData(), streamLength(), propertiesStyle);
+    d->properties = new AudioProperties(streamInfoData(), streamLength(), propertiesStyle);
 
 }
 
@@ -192,7 +184,7 @@ ByteVector Ogg::FLAC::File::xiphCommentData() {
   return d->xiphCommentData;
 }
 
-long Ogg::FLAC::File::streamLength() {
+long long Ogg::FLAC::File::streamLength() {
   scan();
   return d->streamLength;
 }
@@ -208,7 +200,7 @@ void Ogg::FLAC::File::scan() {
     return;
 
   int ipacket = 0;
-  long overhead = 0;
+  long long overhead = 0;
 
   ByteVector metadataHeader = packet(ipacket);
   if (metadataHeader.isEmpty())
@@ -257,7 +249,7 @@ void Ogg::FLAC::File::scan() {
 
   char blockType = header[0] & 0x7f;
   bool lastBlock = (header[0] & 0x80) != 0;
-  unsigned int length = header.toUInt(1, 3, true);
+  unsigned int length = header.toUInt24BE(1);
   overhead += length;
 
   // Sanity: First block should be the stream_info metadata
@@ -281,7 +273,7 @@ void Ogg::FLAC::File::scan() {
 
     blockType = header[0] & 0x7f;
     lastBlock = (header[0] & 0x80) != 0;
-    length = header.toUInt(1, 3, true);
+    length = header.toUInt24BE(1);
     overhead += length;
 
     if (blockType == 1) {

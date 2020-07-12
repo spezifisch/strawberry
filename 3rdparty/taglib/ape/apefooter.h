@@ -49,12 +49,12 @@ class TAGLIB_EXPORT Footer {
   /*!
    * Constructs an empty APE footer.
    */
-  Footer();
+  explicit Footer();
 
   /*!
    * Constructs an APE footer based on \a data.  parse() is called immediately.
    */
-  Footer(const ByteVector &data);
+  explicit Footer(const ByteVector &data);
 
   /*!
    * Destroys the footer.

@@ -48,18 +48,18 @@ static const unsigned int HeaderSize = 32;
  * API.
  */
 
-class TAGLIB_EXPORT Properties : public AudioProperties {
+class TAGLIB_EXPORT AudioProperties : public Strawberry_TagLib::TagLib::AudioProperties {
  public:
 
   /*!
    * Create an instance of WavPack::Properties.
    */
-  Properties(File *file, long streamLength, ReadStyle style = Average);
+  explicit AudioProperties(File *file, long long streamLength, ReadStyle style = Average);
 
   /*!
-   * Destroys this WavPack::Properties instance.
+   * Destroys this WavPack::AudioProperties instance.
    */
-  virtual ~Properties();
+  ~AudioProperties() override;
 
   /*!
    * Returns the length of the file in seconds.
@@ -67,31 +67,29 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  int lengthInSeconds() const override;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  int lengthInMilliseconds() const override;
 
   /*!
    * Returns the average bit rate of the file in kb/s.
    */
-  virtual int bitrate() const;
+  int bitrate() const override;
 
   /*!
    * Returns the sample rate in Hz. 0 means unknown or custom.
    */
-  virtual int sampleRate() const;
+  int sampleRate() const override;
 
   /*!
    * Returns the number of audio channels.
    */
-  virtual int channels() const;
+  int channels() const override;
 
   /*!
    * Returns the number of bits per audio sample.
@@ -114,14 +112,11 @@ class TAGLIB_EXPORT Properties : public AudioProperties {
   int version() const;
 
  private:
-  Properties(const Properties &);
-  Properties &operator=(const Properties &);
+  void read(File *file, long long streamLength);
+  unsigned int seekFinalIndex(File *file, long long streamLength);
 
-  void read(File *file, long streamLength);
-  unsigned int seekFinalIndex(File *file, long streamLength);
-
-  class PropertiesPrivate;
-  PropertiesPrivate *d;
+  class AudioPropertiesPrivate;
+  AudioPropertiesPrivate *d;
 };
 
 }  // namespace WavPack

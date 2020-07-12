@@ -75,6 +75,13 @@ const char *AppearanceSettingsPage::kTabBarSystemColor= "tab_system_color";
 const char *AppearanceSettingsPage::kTabBarGradient = "tab_gradient";
 const char *AppearanceSettingsPage::kTabBarColor = "tab_color";
 
+const char *AppearanceSettingsPage::kIconSizeTabbarSmallMode = "icon_size_tabbar_small_mode";
+const char *AppearanceSettingsPage::kIconSizeTabbarLargeMode = "icon_size_tabbar_large_mode";
+const char *AppearanceSettingsPage::kIconSizePlayControlButtons = "icon_size_play_control_buttons";
+const char *AppearanceSettingsPage::kIconSizePlaylistButtons = "icon_size_playlist_buttons";
+const char *AppearanceSettingsPage::kIconSizeLeftPanelButtons = "icon_size_left_panel_buttons";
+const char *AppearanceSettingsPage::kIconSizeConfigureButtons = "icon_size_configure_buttons";
+
 AppearanceSettingsPage::AppearanceSettingsPage(SettingsDialog *dialog)
     : SettingsPage(dialog),
       ui_(new Ui_AppearanceSettingsPage),
@@ -99,8 +106,9 @@ AppearanceSettingsPage::AppearanceSettingsPage(SettingsDialog *dialog)
 
   connect(ui_->use_default_background, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setDisabled(bool)));
   connect(ui_->use_no_background, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setDisabled(bool)));
-  connect(ui_->use_custom_background_image, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setEnabled(bool)));
   connect(ui_->use_album_cover_background, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setEnabled(bool)));
+  connect(ui_->use_strawbs_background, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setDisabled(bool)));
+  connect(ui_->use_custom_background_image, SIGNAL(toggled(bool)), ui_->widget_custom_background_image_options, SLOT(setEnabled(bool)));
 
   connect(ui_->select_background_image_filename_button, SIGNAL(pressed()), SLOT(SelectBackgroundImage()));
   connect(ui_->use_custom_background_image, SIGNAL(toggled(bool)), ui_->background_image_filename, SLOT(setEnabled(bool)));
@@ -159,18 +167,21 @@ void AppearanceSettingsPage::Load() {
   ui_->use_a_custom_color_set->setChecked(original_use_a_custom_color_set_);
 
   switch (background_image_type_) {
+    case BackgroundImageType_Default:
+      ui_->use_default_background->setChecked(true);
+      break;
     case BackgroundImageType_None:
       ui_->use_no_background->setChecked(true);
       break;
     case BackgroundImageType_Album:
       ui_->use_album_cover_background->setChecked(true);
       break;
+    case BackgroundImageType_Strawbs:
+      ui_->use_strawbs_background->setChecked(true);
+      break;
     case BackgroundImageType_Custom:
       ui_->use_custom_background_image->setChecked(true);
       break;
-    case BackgroundImageType_Default:
-    default:
-      ui_->use_default_background->setChecked(true);
   }
   ui_->background_image_filename->setText(background_image_filename_);
 
@@ -185,6 +196,13 @@ void AppearanceSettingsPage::Load() {
 
   ui_->checkbox_background_image_keep_aspect_ratio->setEnabled(ui_->checkbox_background_image_stretch->isChecked());
   ui_->checkbox_background_image_do_not_cut->setEnabled(ui_->checkbox_background_image_stretch->isChecked() && ui_->checkbox_background_image_keep_aspect_ratio->isChecked());
+
+  ui_->spinbox_icon_size_tabbar_small_mode->setValue(s.value(kIconSizeTabbarSmallMode, 32).toInt());
+  ui_->spinbox_icon_size_tabbar_large_mode->setValue(s.value(kIconSizeTabbarLargeMode, 40).toInt());
+  ui_->spinbox_icon_size_play_control_buttons->setValue(s.value(kIconSizePlayControlButtons, 32).toInt());
+  ui_->spinbox_icon_size_playlist_buttons->setValue(s.value(kIconSizePlaylistButtons, 20).toInt());
+  ui_->spinbox_icon_size_left_panel_buttons->setValue(s.value(kIconSizeLeftPanelButtons, 22).toInt());
+  ui_->spinbox_icon_size_configure_buttons->setValue(s.value(kIconSizeConfigureButtons, 16).toInt());
 
   s.endGroup();
 
@@ -210,14 +228,17 @@ void AppearanceSettingsPage::Save() {
   }
 
   background_image_filename_ = ui_->background_image_filename->text();
-  if (ui_->use_no_background->isChecked()) {
+  if (ui_->use_default_background->isChecked()) {
+    background_image_type_ = BackgroundImageType_Default;
+  }
+  else if (ui_->use_no_background->isChecked()) {
     background_image_type_ = BackgroundImageType_None;
   }
   else if (ui_->use_album_cover_background->isChecked()) {
     background_image_type_ = BackgroundImageType_Album;
   }
-  else if (ui_->use_default_background->isChecked()) {
-    background_image_type_ = BackgroundImageType_Default;
+  else if (ui_->use_strawbs_background->isChecked()) {
+    background_image_type_ = BackgroundImageType_Strawbs;
   }
   else if (ui_->use_custom_background_image->isChecked()) {
     background_image_type_ = BackgroundImageType_Custom;
@@ -244,6 +265,13 @@ void AppearanceSettingsPage::Save() {
   s.setValue(kTabBarSystemColor, ui_->tabbar_system_color->isChecked());
   s.setValue(kTabBarGradient, ui_->tabbar_gradient->isChecked());
   s.setValue(kTabBarColor, current_tabbar_bg_color_);
+
+  s.setValue(kIconSizeTabbarSmallMode, ui_->spinbox_icon_size_tabbar_small_mode->value());
+  s.setValue(kIconSizeTabbarLargeMode, ui_->spinbox_icon_size_tabbar_large_mode->value());
+  s.setValue(kIconSizePlayControlButtons, ui_->spinbox_icon_size_play_control_buttons->value());
+  s.setValue(kIconSizePlaylistButtons, ui_->spinbox_icon_size_playlist_buttons->value());
+  s.setValue(kIconSizeLeftPanelButtons, ui_->spinbox_icon_size_left_panel_buttons->value());
+  s.setValue(kIconSizeConfigureButtons, ui_->spinbox_icon_size_configure_buttons->value());
 
   s.endGroup();
 

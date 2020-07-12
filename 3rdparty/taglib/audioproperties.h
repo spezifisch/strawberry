@@ -27,6 +27,7 @@
 #define TAGLIB_AUDIOPROPERTIES_H
 
 #include "taglib_export.h"
+#include "tstring.h"
 
 namespace Strawberry_TagLib {
 namespace TagLib {
@@ -63,25 +64,18 @@ class TAGLIB_EXPORT AudioProperties {
   virtual ~AudioProperties();
 
   /*!
-   * Returns the length of the file in seconds.
-   */
-  //virtual int length() const = 0;
-
-  /*!
    * Returns the length of the file in seconds.  The length is rounded down to the nearest whole second.
    *
    * \see lengthInMilliseconds()
    */
-  // BIC: make virtual
-  int lengthInSeconds() const;
+  virtual int lengthInSeconds() const = 0;
 
   /*!
    * Returns the length of the file in milliseconds.
    *
    * \see lengthInSeconds()
    */
-  // BIC: make virtual
-  int lengthInMilliseconds() const;
+  virtual int lengthInMilliseconds() const = 0;
 
   /*!
    * Returns the most appropriate bit rate for the file in kb/s.  For constant bitrate formats this is simply the bitrate of the file.
@@ -99,19 +93,22 @@ class TAGLIB_EXPORT AudioProperties {
    */
   virtual int channels() const = 0;
 
+  /*!
+   * Returns description of the audio file.
+   */
+  virtual String toString() const;
+
  protected:
   /*!
    * Construct an audio properties instance.
    * This is protected as this class should not be instantiated directly,
    * but should be instantiated via its subclasses and can be fetched from the FileRef or File APIs.
-   *
-   * \see ReadStyle
    */
-  AudioProperties(ReadStyle style);
+  explicit AudioProperties();
 
  private:
-  AudioProperties(const AudioProperties &);
-  AudioProperties &operator=(const AudioProperties &);
+  AudioProperties(const AudioProperties&);
+  AudioProperties &operator=(const AudioProperties&);
 
   class AudioPropertiesPrivate;
   AudioPropertiesPrivate *d;

@@ -474,18 +474,6 @@ jobs:
       - build_source
       - build_rpm
 
-  build_fedora_33:
-    docker:
-      - image: fedora:33
-    environment:
-      RPM_BUILD_NCPUS: "2"
-    steps:
-      - install_fedora_dependencies
-      - checkout
-      - cmake
-      - build_source
-      - build_rpm
-
 
   build_centos_8:
     docker:
@@ -544,16 +532,6 @@ jobs:
   build_ubuntu_bionic:
     docker:
       - image: ubuntu:bionic
-
-    steps:
-      - install_ubuntu_dependencies
-      - checkout
-      - cmake
-      - build_deb
-
-  build_ubuntu_eoan:
-    docker:
-      - image: ubuntu:eoan
     steps:
       - install_ubuntu_dependencies
       - checkout
@@ -611,10 +589,6 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build_fedora_33:
-          filters:
-            tags:
-              only: /.*/
 
 
       - build_mageia_7:
@@ -643,10 +617,6 @@ workflows:
               only: /.*/
 
 
-      - build_ubuntu_eoan:
-          filters:
-            tags:
-              only: /.*/
       - build_ubuntu_bionic:
           filters:
             tags:

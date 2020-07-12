@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>674</width>
-    <height>865</height>
+    <height>1071</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,6 +166,13 @@
         </property>
         <property name="text">
          <string>Albu&amp;m cover</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="use_strawbs_background">
+        <property name="text">
+         <string>A Taste of Strawbs</string>
         </property>
        </widget>
       </item>
@@ -435,7 +442,7 @@
      <layout class="QHBoxLayout" name="layout_groupbox_icon_sizes">
       <item>
        <layout class="QGridLayout" name="layout_icon_sizes">
-        <item row="2" column="0">
+        <item row="3" column="0">
          <widget class="QLabel" name="label_icon_size_playlist_buttons">
           <property name="text">
            <string>Playlist buttons</string>
@@ -443,23 +450,20 @@
          </widget>
         </item>
         <item row="1" column="0">
+         <widget class="QLabel" name="label_icon_size_tabbar_large_mode">
+          <property name="text">
+           <string>Tabbar large mode</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
          <widget class="QLabel" name="label_icon_size_play_control_buttons">
           <property name="text">
            <string>Play control buttons</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
-         <widget class="QSpinBox" name="spinbox_icon_size_configure_buttons">
-          <property name="minimum">
-           <number>16</number>
-          </property>
-          <property name="maximum">
-           <number>64</number>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
+        <item row="2" column="1">
          <widget class="QSpinBox" name="spinbox_icon_size_play_control_buttons">
           <property name="minimum">
            <number>16</number>
@@ -469,7 +473,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
+        <item row="4" column="1">
          <widget class="QSpinBox" name="spinbox_icon_size_left_panel_buttons">
           <property name="minimum">
            <number>16</number>
@@ -479,7 +483,14 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_icon_size_configure_buttons">
+          <property name="text">
+           <string>Configure buttons</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
          <widget class="QSpinBox" name="spinbox_icon_size_playlist_buttons">
           <property name="minimum">
            <number>16</number>
@@ -489,29 +500,42 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_icon_size_configure_buttons">
-          <property name="text">
-           <string>Configure buttons</string>
+        <item row="5" column="1">
+         <widget class="QSpinBox" name="spinbox_icon_size_configure_buttons">
+          <property name="minimum">
+           <number>16</number>
+          </property>
+          <property name="maximum">
+           <number>64</number>
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="QLabel" name="label_icon_size_left_panel_buttons">
           <property name="text">
            <string>Files, playlists and queue buttons</string>
           </property>
          </widget>
         </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="spinbox_icon_size_tabbar_large_mode">
+          <property name="minimum">
+           <number>16</number>
+          </property>
+          <property name="maximum">
+           <number>64</number>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
-         <widget class="QLabel" name="label_icon_size_tabbar_large_mode">
+         <widget class="QLabel" name="label_icon_size_tabbar_small_mode">
           <property name="text">
-           <string>Tabbar large mode</string>
+           <string>Tabbar small mode</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QSpinBox" name="spinbox_icon_size_tabbar_large_mode">
+         <widget class="QSpinBox" name="spinbox_icon_size_tabbar_small_mode">
           <property name="minimum">
            <number>16</number>
           </property>
@@ -572,6 +596,7 @@
   <tabstop>use_default_background</tabstop>
   <tabstop>use_no_background</tabstop>
   <tabstop>use_album_cover_background</tabstop>
+  <tabstop>use_strawbs_background</tabstop>
   <tabstop>use_custom_background_image</tabstop>
   <tabstop>background_image_filename</tabstop>
   <tabstop>select_background_image_filename_button</tabstop>
@@ -582,6 +607,7 @@
   <tabstop>checkbox_background_image_do_not_cut</tabstop>
   <tabstop>blur_slider</tabstop>
   <tabstop>opacity_slider</tabstop>
+  <tabstop>spinbox_icon_size_tabbar_small_mode</tabstop>
   <tabstop>spinbox_icon_size_tabbar_large_mode</tabstop>
   <tabstop>spinbox_icon_size_play_control_buttons</tabstop>
   <tabstop>spinbox_icon_size_playlist_buttons</tabstop>

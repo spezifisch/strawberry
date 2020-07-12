@@ -1010,7 +1010,8 @@ void Playlist::InsertItems(const PlaylistItemList &itemsIn, int pos, bool play_n
     // Too big to keep in the undo stack. Also clear the stack because it might have been invalidated.
     InsertItemsWithoutUndo(items, pos, enqueue, enqueue_next);
     undo_stack_->clear();
-  } else {
+  }
+  else {
     undo_stack_->push(new PlaylistUndoCommands::InsertItems(this, items, pos, enqueue, enqueue_next));
   }
 
@@ -1483,6 +1484,8 @@ void Playlist::RemoveItemsWithoutUndo(const QList<int> &indicesIn) {
 
 bool Playlist::removeRows(int row, int count, const QModelIndex &parent) {
 
+  Q_UNUSED(parent);
+
   if (row < 0 || row >= items_.size() || row + count > items_.size()) {
     return false;
   }
@@ -1491,9 +1494,6 @@ bool Playlist::removeRows(int row, int count, const QModelIndex &parent) {
     // Too big to keep in the undo stack. Also clear the stack because it might have been invalidated.
     RemoveItemsWithoutUndo(row, count);
     undo_stack_->clear();
-  }
-  else if (parent == QModelIndex()) {
-    RemoveItemsWithoutUndo(row, count);
   }
   else {
     undo_stack_->push(new PlaylistUndoCommands::RemoveItems(this, row, count));
@@ -1772,6 +1772,11 @@ void Playlist::Shuffle() {
   PlaylistItemList new_items(items_);
 
   int begin = 0;
+  if (current_item_index_.isValid()) {
+    if (new_items[0] != new_items[current_item_index_.row()])
+      std::swap(new_items[0], new_items[current_item_index_.row()]);
+    begin = 1;
+  }
 
   if (dynamic_playlist_ && current_item_index_.isValid())
     begin += current_item_index_.row() + 1;

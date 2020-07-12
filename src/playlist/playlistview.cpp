@@ -223,6 +223,9 @@ void PlaylistView::SetApplication(Application *app) {
 
   Q_ASSERT(app);
   app_ = app;
+
+  SetItemDelegates();
+
   connect(app_->playlist_manager(), SIGNAL(CurrentSongChanged(Song)), this, SLOT(SongChanged(Song)));
   connect(app_->current_albumcover_loader(), SIGNAL(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)), SLOT(AlbumCoverLoaded(Song, AlbumCoverLoaderResult)));
   connect(app_->player(), SIGNAL(Playing()), SLOT(StartGlowing()));
@@ -231,18 +234,18 @@ void PlaylistView::SetApplication(Application *app) {
 
 }
 
-void PlaylistView::SetItemDelegates(CollectionBackend *backend) {
+void PlaylistView::SetItemDelegates() {
 
   setItemDelegate(new PlaylistDelegateBase(this));
 
   setItemDelegateForColumn(Playlist::Column_Title, new TextItemDelegate(this));
-  setItemDelegateForColumn(Playlist::Column_Album, new TagCompletionItemDelegate(this, backend, Playlist::Column_Album));
-  setItemDelegateForColumn(Playlist::Column_Artist, new TagCompletionItemDelegate(this, backend, Playlist::Column_Artist));
-  setItemDelegateForColumn(Playlist::Column_AlbumArtist, new TagCompletionItemDelegate(this, backend, Playlist::Column_AlbumArtist));
-  setItemDelegateForColumn(Playlist::Column_Genre, new TagCompletionItemDelegate(this, backend, Playlist::Column_Genre));
-  setItemDelegateForColumn(Playlist::Column_Composer, new TagCompletionItemDelegate(this, backend, Playlist::Column_Composer));
-  setItemDelegateForColumn(Playlist::Column_Performer, new TagCompletionItemDelegate(this, backend, Playlist::Column_Performer));
-  setItemDelegateForColumn(Playlist::Column_Grouping, new TagCompletionItemDelegate(this, backend, Playlist::Column_Grouping));
+  setItemDelegateForColumn(Playlist::Column_Album, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Album));
+  setItemDelegateForColumn(Playlist::Column_Artist, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Artist));
+  setItemDelegateForColumn(Playlist::Column_AlbumArtist, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_AlbumArtist));
+  setItemDelegateForColumn(Playlist::Column_Genre, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Genre));
+  setItemDelegateForColumn(Playlist::Column_Composer, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Composer));
+  setItemDelegateForColumn(Playlist::Column_Performer, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Performer));
+  setItemDelegateForColumn(Playlist::Column_Grouping, new TagCompletionItemDelegate(this, app_->collection_backend(), Playlist::Column_Grouping));
   setItemDelegateForColumn(Playlist::Column_Length, new LengthItemDelegate(this));
   setItemDelegateForColumn(Playlist::Column_Filesize, new SizeItemDelegate(this));
   setItemDelegateForColumn(Playlist::Column_Filetype, new FileTypeItemDelegate(this));
@@ -558,12 +561,12 @@ void PlaylistView::keyPressEvent(QKeyEvent *event) {
     QTreeView::keyPressEvent(event);
   }
   else if (event == QKeySequence::Delete) {
-    RemoveSelected(false);
+    RemoveSelected();
     event->accept();
 #ifdef Q_OS_MACOS
   }
   else if (event->key() == Qt::Key_Backspace) {
-    RemoveSelected(false);
+    RemoveSelected();
     event->accept();
 #endif
   }
@@ -601,7 +604,7 @@ void PlaylistView::contextMenuEvent(QContextMenuEvent *e) {
   e->accept();
 }
 
-void PlaylistView::RemoveSelected(bool deleting_from_disk) {
+void PlaylistView::RemoveSelected() {
 
   int rows_removed = 0;
   QItemSelection selection(selectionModel()->selection());
@@ -618,13 +621,7 @@ void PlaylistView::RemoveSelected(bool deleting_from_disk) {
 
   for (const QItemSelectionRange &range : selection) {
     if (range.top() < last_row) rows_removed += range.height();
-
-    if (!deleting_from_disk) {
-      model()->removeRows(range.top(), range.height(), range.topLeft());
-    }
-    else {
-      model()->removeRows(range.top(), range.height(), QModelIndex());
-    }
+    model()->removeRows(range.top(), range.height(), range.parent());
   }
 
   int new_row = last_row - rows_removed;
@@ -1143,6 +1140,7 @@ void PlaylistView::ReloadSettings() {
       previous_background_image_ = QPixmap();
     }
     setProperty("default_background_enabled", background_image_type_ == AppearanceSettingsPage::BackgroundImageType_Default);
+    setProperty("strawbs_background_enabled", background_image_type_ == AppearanceSettingsPage::BackgroundImageType_Strawbs);
     emit BackgroundPropertyChanged();
     force_background_redraw_ = true;
   }

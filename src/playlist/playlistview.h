@@ -100,9 +100,9 @@ class PlaylistView : public QTreeView {
   static ColumnAlignmentMap DefaultColumnAlignment();
 
   void SetApplication(Application *app);
-  void SetItemDelegates(CollectionBackend *backend);
+  void SetItemDelegates();
   void SetPlaylist(Playlist *playlist);
-  void RemoveSelected(bool deleting_from_disk);
+  void RemoveSelected();
 
   void SetReadOnlySettings(bool read_only) { read_only_settings_ = read_only; }
 

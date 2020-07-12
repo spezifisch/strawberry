@@ -1003,6 +1003,7 @@ void MainWindow::ReloadAllSettings() {
 
 void MainWindow::RefreshStyleSheet() {
   QString contents(styleSheet());
+  setStyleSheet("");
   setStyleSheet(contents);
 }
 
@@ -2034,7 +2035,7 @@ void MainWindow::ShowInCollection() {
 }
 
 void MainWindow::PlaylistRemoveCurrent() {
-  ui_->playlist->view()->RemoveSelected(false);
+  ui_->playlist->view()->RemoveSelected();
 }
 
 void MainWindow::PlaylistClearCurrent() {

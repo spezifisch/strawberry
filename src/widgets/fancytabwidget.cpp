@@ -57,10 +57,12 @@
 #include "core/stylehelper.h"
 #include "settings/appearancesettingspage.h"
 
-const int FancyTabWidget::IconSize_LargeSidebar = 32;
-const int FancyTabWidget::IconSize_SmallSidebar = 22;
+const int FancyTabWidget::IconSize_LargeSidebar = 40;
+const int FancyTabWidget::IconSize_SmallSidebar = 32;
+const int FancyTabWidget::IconSize_PlainSidebar = 22;
+const int FancyTabWidget::IconSize_TabsSidebar = 22;
+const int FancyTabWidget::IconSize_IconsSidebar = 22;
 const int FancyTabWidget::TabSize_LargeSidebarWidth = 70;
-
 
 class FancyTabBar: public QTabBar {
 
@@ -83,20 +85,26 @@ class FancyTabBar: public QTabBar {
 
     QSize tabSize(tabSizeHint(0));
     size.setWidth(tabSize.width());
-    int guessHeight = tabSize.height()*count();
+    int guessHeight = tabSize.height() * count();
     if (guessHeight > size.height())
       size.setHeight(guessHeight);
+
     return size;
 
   }
 
-  int width() {
+  int width() const {
     FancyTabWidget *tabWidget = qobject_cast<FancyTabWidget*>(parentWidget());
-    int width = std::max(FancyTabWidget::TabSize_LargeSidebarWidth, tabWidget->iconsize_largesidebar() + 22);
-    for (int i = 0 ; i < count() ; ++i) {
-      if (tabSizeHint(i).width() > width) width = tabSizeHint(i).width();
+    if (tabWidget->mode() == FancyTabWidget::Mode_LargeSidebar) {
+      int width = std::max(FancyTabWidget::TabSize_LargeSidebarWidth, tabWidget->iconsize_largesidebar() + 22);
+      for (int i = 0 ; i < count() ; ++i) {
+        if (tabSizeHint(i).width() > width) width = tabSizeHint(i).width();
+      }
+      return width;
     }
-    return width;
+    else {
+      return QTabBar::tabSizeHint(0).width();
+    }
   }
 
  protected:
@@ -123,8 +131,31 @@ class FancyTabBar: public QTabBar {
       size = QSize(width, tabWidget->iconsize_largesidebar() + rect.height() + 10);
     }
     else {
-      size = QTabBar::tabSizeHint(index);
-      size.setWidth(std::max(size.width(), 37));
+      if (tabWidget->mode() == FancyTabWidget::Mode_IconOnlyTabs) {
+        size = QSize(FancyTabWidget::IconSize_IconsSidebar + 10, FancyTabWidget::IconSize_IconsSidebar + 10);
+      }
+      else {
+        QFont bold_font(font());
+        bold_font.setBold(true);
+        QFontMetrics fm(bold_font);
+        QRect rect = fm.boundingRect(QRect(0, 0, 100, tabWidget->height()), Qt::AlignHCenter, QTabBar::tabText(index));
+        size = QTabBar::tabSizeHint(index);
+        int w = 0;
+        int h = 0;
+        if (tabWidget->mode() == FancyTabWidget::Mode_Tabs) {
+          w = FancyTabWidget::IconSize_TabsSidebar + rect.width() + 10;
+          h = std::max(FancyTabWidget::IconSize_TabsSidebar, rect.height()) + 15;
+        }
+        else if (tabWidget->mode() == FancyTabWidget::Mode_SmallSidebar) {
+          w = std::max(tabWidget->iconsize_smallsidebar(), rect.height()) + 15;
+          h = tabWidget->iconsize_smallsidebar() + rect.width() + 20;
+        }
+        else if (tabWidget->mode() == FancyTabWidget::Mode_PlainSidebar) {
+          w = std::max(FancyTabWidget::IconSize_PlainSidebar, rect.height()) + 15;
+          h = FancyTabWidget::IconSize_PlainSidebar + rect.width() + 20;
+        }
+        size = QSize(w, h);
+      }
     }
 
     return size;
@@ -167,7 +198,7 @@ class FancyTabBar: public QTabBar {
     }
     else if (tabWidget->mode() != FancyTabWidget::Mode_LargeSidebar) {
       // traverse in the opposite order to save indices of spacers
-      for (int i = count() - 1; i >= 0; --i) {
+      for (int i = count() - 1 ; i >= 0 ; --i) {
         // spacers are disabled tabs
         if (!isTabEnabled(i) && !spacers.contains(i)) {
           spacers[i] = tabWidget->widget(i);
@@ -179,7 +210,7 @@ class FancyTabBar: public QTabBar {
 
     // Restore any label text that was hidden/cached for the IconOnlyTabs mode
     if (labelCache.count() > 0 && tabWidget->mode() != FancyTabWidget::Mode_IconOnlyTabs) {
-      for (int i =0; i < count(); i++) {
+      for (int i = 0 ; i < count() ; ++i) {
         setTabText(i, labelCache[tabWidget->widget(i)]);
       }
       labelCache.clear();
@@ -187,7 +218,7 @@ class FancyTabBar: public QTabBar {
     if (tabWidget->mode() != FancyTabWidget::Mode_LargeSidebar && tabWidget->mode() != FancyTabWidget::Mode_SmallSidebar) {
       // Cache and hide label text for IconOnlyTabs mode
       if (tabWidget->mode() == FancyTabWidget::Mode_IconOnlyTabs && labelCache.count() == 0) {
-        for(int i =0; i < count(); i++) {
+        for(int i = 0 ; i < count() ; ++i) {
           labelCache[tabWidget->widget(i)] = tabText(i);
           setTabText(i, "");
         }
@@ -198,7 +229,7 @@ class FancyTabBar: public QTabBar {
 
     QStylePainter p(this);
 
-    for (int index = 0; index < count(); index++) {
+    for (int index = 0; index < count(); ++index) {
       const bool selected = tabWidget->currentIndex() == index;
       QRect tabrect = tabRect(index);
       QRect selectionRect = tabrect;
@@ -256,13 +287,13 @@ class FancyTabBar: public QTabBar {
         if (verticalTextTabs) {
           m = QTransform::fromTranslate(tabrect.left(), tabrect.bottom());
           m.rotate(-90);
-          textFlags = Qt::AlignLeft | Qt::AlignVCenter;
-          iconFlags = Qt::AlignLeft | Qt::AlignVCenter;
+          textFlags = Qt::AlignVCenter;
+          iconFlags = Qt::AlignVCenter;
 
           tabrectLabel = QRect(QPoint(0, 0), m.mapRect(tabrect).size());
 
           tabrectText = tabrectLabel;
-          tabrectText.translate(30, 0);
+          tabrectText.translate(tabWidget->iconsize_smallsidebar() + 8, 0);
         }
         else {
           m = QTransform::fromTranslate(tabrect.left(), tabrect.top());
@@ -273,7 +304,6 @@ class FancyTabBar: public QTabBar {
 
           tabrectText = tabrectLabel;
           tabrectText.translate(0, -5);
-
         }
 
         p.setTransform(m);
@@ -295,18 +325,19 @@ class FancyTabBar: public QTabBar {
 
         // Draw the icon
         QRect tabrectIcon;
-        const int PADDING = 5;
         if (verticalTextTabs) {
           tabrectIcon = tabrectLabel;
-          tabrectIcon.setSize(QSize(FancyTabWidget::IconSize_SmallSidebar, FancyTabWidget::IconSize_SmallSidebar));
-          tabrectIcon.translate(PADDING, PADDING);
+          tabrectIcon.setSize(QSize(tabWidget->iconsize_smallsidebar(), tabWidget->iconsize_smallsidebar()));
+          // Center the icon
+          const int moveRight = (QTabBar::width() - tabWidget->iconsize_smallsidebar()) / 2;
+          tabrectIcon.translate(5, moveRight);
         }
         else {
           tabrectIcon = tabrectLabel;
           tabrectIcon.setSize(QSize(tabWidget->iconsize_largesidebar(), tabWidget->iconsize_largesidebar()));
           // Center the icon
           const int moveRight = (QTabBar::width() - tabWidget->iconsize_largesidebar() -1) / 2;
-          tabrectIcon.translate(moveRight, PADDING);
+          tabrectIcon.translate(moveRight, 5);
         }
         tabIcon(index).paint(&p, tabrectIcon, iconFlags);
         p.restore();
@@ -332,9 +363,6 @@ class TabData : public QObject {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(widget_view_);
     page_->setLayout(layout);
-  }
-  ~TabData() override {
-    //delete page_;
   }
 
   QWidget *widget_view() { return widget_view_; }
@@ -398,6 +426,7 @@ FancyTabWidget::FancyTabWidget(QWidget* parent) : QTabWidget(parent),
       bottom_widget_(nullptr),
       bg_color_system_(true),
       bg_gradient_(true),
+      iconsize_smallsidebar_(FancyTabWidget::IconSize_SmallSidebar),
       iconsize_largesidebar_(FancyTabWidget::IconSize_LargeSidebar)
   {
 
@@ -465,7 +494,8 @@ void FancyTabWidget::ReloadSettings() {
   bg_color_system_ = s.value(AppearanceSettingsPage::kTabBarSystemColor, false).toBool();
   bg_gradient_ = s.value(AppearanceSettingsPage::kTabBarGradient, true).toBool();
   bg_color_ = s.value(AppearanceSettingsPage::kTabBarColor, StyleHelper::highlightColor()).value<QColor>();
-  iconsize_largesidebar_ = s.value(AppearanceSettingsPage::kIconSizeTabbarLargeMode, FancyTabWidget::IconSize_LargeSidebar).toInt();;
+  iconsize_smallsidebar_ = s.value(AppearanceSettingsPage::kIconSizeTabbarSmallMode, FancyTabWidget::IconSize_SmallSidebar).toInt();
+  iconsize_largesidebar_ = s.value(AppearanceSettingsPage::kIconSizeTabbarLargeMode, FancyTabWidget::IconSize_LargeSidebar).toInt();
   s.endGroup();
 
   update();

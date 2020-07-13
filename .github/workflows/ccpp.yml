@@ -623,7 +623,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -683,7 +683,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -743,7 +743,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -808,7 +808,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -873,7 +873,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -938,7 +938,7 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
-            ibtag1-dev
+            libtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build

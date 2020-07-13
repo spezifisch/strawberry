@@ -40,6 +40,7 @@ jobs:
             gstreamer-plugins-base-devel
             libxine-devel
             vlc-devel
+            libtag-devel
             libQt5Core-devel
             libQt5Gui-devel
             libQt5Widgets-devel
@@ -68,7 +69,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -111,6 +112,7 @@ jobs:
             gstreamer-plugins-base-devel
             libxine-devel
             vlc-devel
+            libtag-devel
             libQt5Core-devel
             libQt5Gui-devel
             libQt5Widgets-devel
@@ -139,7 +141,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -190,6 +192,7 @@ jobs:
             gstreamer-plugins-base-devel
             libxine-devel
             vlc-devel
+            libtag-devel
             libQt5Core-devel
             libQt5Gui-devel
             libQt5Widgets-devel
@@ -218,7 +221,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -271,6 +274,7 @@ jobs:
             gstreamer-plugins-base-devel
             libxine-devel
             vlc-devel
+            libtag-devel
             libQt5Core-devel
             libQt5Gui-devel
             libQt5Widgets-devel
@@ -299,7 +303,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -378,7 +382,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -454,6 +458,7 @@ jobs:
             libjpeg-devel
             cairo-devel
             dbus-x11
+            taglib-devel
             xorg-x11-server-Xvfb
             xorg-x11-xauth
             vim-common
@@ -470,7 +475,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -542,6 +547,7 @@ jobs:
             lib64mtp-devel
             lib64raw1394-devel
             lib64chromaprint-devel
+            lib64taglib-devel
             libfftw-devel
             desktop-file-utils
             appstream-util
@@ -555,7 +561,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Create source tarball
         working-directory: build
         run: ../dist/scripts/maketarball.sh
@@ -617,13 +623,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -676,13 +683,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -735,13 +743,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -799,13 +808,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -863,13 +873,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -927,13 +938,14 @@ jobs:
             libimobiledevice-dev
             libplist-dev
             libusbmuxd-dev
+            ibtag1-dev
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
       - name: Configure CMake
         shell: bash
         working-directory: build
-        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        run: cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: make deb
         shell: bash
         run: dpkg-buildpackage -b -d -uc -us -nc -j2
@@ -994,7 +1006,7 @@ jobs:
       - name: Build
         working-directory: build
         shell: bash
-        run: cmake --build . --config $BUILD_TYPE
+        run: cmake --build . --config $BUILD_TYPE -DUSE_SYSTEM_TAGLIB=ON
       - name: Install
         working-directory: build
         shell: bash
@@ -1037,6 +1049,7 @@ jobs:
           -DENABLE_IMOBILEDEVICE=OFF
           -DENABLE_LIBMTP=OFF
           -DENABLE_XINE=OFF
+          -DUSE_SYSTEM_TAGLIB=ON
           -DProtobuf_PROTOC_EXECUTABLE=/usr/src/strawberry-mxe/usr/x86_64-pc-linux-gnu/bin/protoc
 
       - name: Run Make

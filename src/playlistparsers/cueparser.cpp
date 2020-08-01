@@ -27,7 +27,8 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
-#include <QRegExp>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 #include <QTextCodec>
 #include <QTextStream>
 #include <QtDebug>
@@ -62,7 +63,9 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
   SongList ret;
 
   QTextStream text_stream(device);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   text_stream.setCodec(QTextCodec::codecForUtfText(device->peek(1024), QTextCodec::codecForName("UTF-8")));
+#endif
 
   QString dir_path = dir.absolutePath();
   // read the first line already
@@ -234,7 +237,7 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
 
     // Cue song has mtime equal to qMax(media_file_mtime, cue_sheet_mtime)
     if (cue_mtime.isValid()) {
-      song.set_mtime(qMax(cue_mtime.toTime_t(), song.mtime()));
+      song.set_mtime(qMax(static_cast<quint64>(cue_mtime.toSecsSinceEpoch()), song.mtime()));
     }
     song.set_cue_path(playlist_path);
 
@@ -269,13 +272,14 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
 // line into logical parts and getting rid of all the unnecessary whitespaces and quoting.
 QStringList CueParser::SplitCueLine(const QString &line) const {
 
-  QRegExp line_regexp(kFileLineRegExp);
-  if (!line_regexp.exactMatch(line.trimmed())) {
+  QRegularExpression line_regexp(kFileLineRegExp);
+  QRegularExpressionMatch re_match = line_regexp.match(line.trimmed());
+  if (!re_match.hasMatch()) {
     return QStringList();
   }
 
   // Let's remove the empty entries while we're at it
-  return line_regexp.capturedTexts().filter(QRegExp(".+")).mid(1, -1);
+  return re_match.capturedTexts().filter(QRegularExpression(".+")).mid(1, -1);
 
 }
 
@@ -333,12 +337,13 @@ bool CueParser::UpdateLastSong(const CueEntry &entry, Song *song) const {
 
 qint64 CueParser::IndexToMarker(const QString &index) const {
 
-  QRegExp index_regexp(kIndexRegExp);
-  if (!index_regexp.exactMatch(index)) {
+  QRegularExpression index_regexp(kIndexRegExp);
+  QRegularExpressionMatch re_match = index_regexp.match(index);
+  if (!re_match.hasMatch()) {
     return -1;
   }
 
-  QStringList splitted = index_regexp.capturedTexts().mid(1, -1);
+  QStringList splitted = re_match.capturedTexts().mid(1, -1);
   qlonglong frames = splitted.at(0).toLongLong() * 60 * 75 + splitted.at(1).toLongLong() * 75 + splitted.at(2).toLongLong();
   return (frames * kNsecPerSec) / 75;
 

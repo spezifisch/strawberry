@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "version.h"
 
 #include <memory>
 #include <functional>
@@ -70,6 +71,7 @@
 
 #include "core/logging.h"
 #include "core/closure.h"
+#include "core/network.h"
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -183,6 +185,14 @@
 #ifdef Q_OS_WIN
 #  include "windows7thumbbar.h"
 #endif
+
+#ifdef HAVE_QTSPARKLE
+#  if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#    include <qtsparkle-qt6/Updater>
+#  else
+#    include <qtsparkle-qt5/Updater>
+#  endif
+#endif  // HAVE_QTSPARKLE
 
 const char *MainWindow::kSettingsGroup = "MainWindow";
 const char *MainWindow::kAllFilesFilterSpec = QT_TR_NOOP("All Files (*)");
@@ -686,8 +696,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   thumbbar_->SetActions(QList<QAction*>() << ui_->action_previous_track << ui_->action_play_pause << ui_->action_stop << ui_->action_next_track << nullptr << ui_->action_love);
 #endif
 
-#if (defined(Q_OS_MACOS) && defined(HAVE_SPARKLE))
-  // Add check for updates item to application menu.
+#if defined(HAVE_SPARKLE) || defined(HAVE_QTSPARKLE)
   QAction *check_updates = ui_->menu_tools->addAction(tr("Check for updates..."));
   check_updates->setMenuRole(QAction::ApplicationSpecificRole);
   connect(check_updates, SIGNAL(triggered(bool)), SLOT(CheckForUpdates()));
@@ -831,42 +840,48 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   // Reload playlist settings, for BG and glowing
   ui_->playlist->view()->ReloadSettings();
 
-#ifdef Q_OS_MACOS // Always show mainwindow on startup if on macos
+#ifdef Q_OS_MACOS // Always show the mainwindow on startup for macOS
   show();
 #else
   QSettings s;
   s.beginGroup(BehaviourSettingsPage::kSettingsGroup);
   BehaviourSettingsPage::StartupBehaviour behaviour = BehaviourSettingsPage::StartupBehaviour(s.value("startupbehaviour", BehaviourSettingsPage::Startup_Remember).toInt());
   s.endGroup();
-  bool hidden = settings_.value("hidden", false).toBool();
-  if (hidden && (!QSystemTrayIcon::isSystemTrayAvailable() || !tray_icon_ || !tray_icon_->IsVisible())) {
-    hidden = false;
-    settings_.setValue("hidden", false);
-    show();
-  }
-  else {
-    switch (behaviour) {
-      case BehaviourSettingsPage::Startup_Remember:
-        was_maximized_ = settings_.value("maximized", true).toBool();
-        if (was_maximized_) setWindowState(windowState() | Qt::WindowMaximized);
-        was_minimized_ = settings_.value("minimized", false).toBool();
-        if (was_minimized_) setWindowState(windowState() | Qt::WindowMinimized);
-        setVisible(!hidden);
-        break;
-      case BehaviourSettingsPage::Startup_Show:
-        show();
-        break;
-      case BehaviourSettingsPage::Startup_Hide:
+  switch (behaviour) {
+    case BehaviourSettingsPage::Startup_Show:
+      show();
+      break;
+    case BehaviourSettingsPage::Startup_ShowMaximized:
+      setWindowState(windowState() | Qt::WindowMaximized);
+      show();
+      break;
+    case BehaviourSettingsPage::Startup_ShowMinimized:
+      setWindowState(windowState() | Qt::WindowMinimized);
+      show();
+      break;
+    case BehaviourSettingsPage::Startup_Hide:
+      if (QSystemTrayIcon::isSystemTrayAvailable() && tray_icon_ && tray_icon_->IsVisible()) {
         hide();
         break;
-      case BehaviourSettingsPage::Startup_ShowMaximized:
-        setWindowState(windowState() | Qt::WindowMaximized);
+      }
+      // fallthrough
+    case BehaviourSettingsPage::Startup_Remember:
+    default: {
+
+      was_maximized_ = settings_.value("maximized", true).toBool();
+      if (was_maximized_) setWindowState(windowState() | Qt::WindowMaximized);
+
+      was_minimized_ = settings_.value("minimized", false).toBool();
+      if (was_minimized_) setWindowState(windowState() | Qt::WindowMinimized);
+
+      if (!QSystemTrayIcon::isSystemTrayAvailable() || !tray_icon_ || !tray_icon_->IsVisible()) {
+        settings_.setValue("hidden", false);
         show();
-        break;
-      case BehaviourSettingsPage::Startup_ShowMinimized:
-        setWindowState(windowState() | Qt::WindowMinimized);
-        show();
-        break;
+      }
+      else {
+        setVisible(!settings_.value("hidden", false).toBool());
+      }
+      break;
     }
   }
 #endif
@@ -889,6 +904,22 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   if (app_->scrobbler()->IsEnabled() && !app_->scrobbler()->IsOffline()) {
     app_->scrobbler()->Submit();
   }
+
+#ifdef HAVE_QTSPARKLE
+  QUrl sparkle_url;
+#if defined(Q_OS_MACOS)
+  sparkle_url.setUrl("https://www.strawberrymusicplayer.org/sparkle-macos");
+#elif defined(Q_OS_WIN)
+  sparkle_url.setUrl("https://www.strawberrymusicplayer.org/sparkle-windows");
+#endif
+  if (!sparkle_url.isEmpty()) {
+    qLog(Debug) << "Creating Qt Sparkle updater";
+    qtsparkle::Updater *updater = new qtsparkle::Updater(sparkle_url, this);
+    updater->SetNetworkAccessManager(new NetworkAccessManager(this));
+    updater->SetVersion(STRAWBERRY_VERSION_PACKAGE);
+    connect(check_updates, SIGNAL(triggered()), updater, SLOT(CheckNow()));
+  }
+#endif
 
   qLog(Debug) << "Started" << QThread::currentThread();
   initialized_ = true;
@@ -1061,7 +1092,7 @@ void MainWindow::ExitFinished() {
 
 void MainWindow::EngineChanged(Engine::EngineType enginetype) {
 
-  ui_->action_equalizer->setEnabled(enginetype == Engine::EngineType::GStreamer || enginetype == Engine::EngineType::Xine);
+  ui_->action_equalizer->setEnabled(enginetype == Engine::EngineType::GStreamer);
 #ifdef Q_OS_WIN
   ui_->action_open_cd->setEnabled(false);
   ui_->action_open_cd->setVisible(false);
@@ -1200,7 +1231,7 @@ void MainWindow::TrackSkipped(PlaylistItemPtr item) {
 
 void MainWindow::TabSwitched() {
 
-  if (playing_widget_ && ui_->action_toggle_show_sidebar->isChecked() && (ui_->tabs->tabBar()->tabData(ui_->tabs->currentIndex()).toString().toLower() != "context" || !context_view_->album_enabled())) {
+  if (playing_widget_ && ui_->action_toggle_show_sidebar->isChecked() && (ui_->tabs->currentIndex() != ui_->tabs->IndexOfTab(context_view_) || !context_view_->album_enabled())) {
     ui_->widget_playing->SetEnabled();
   }
   else {
@@ -2540,7 +2571,11 @@ void MainWindow::Raise() {
   activateWindow();
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result) {
+#else
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
+#endif
 
   Q_UNUSED(eventType);
   Q_UNUSED(result);

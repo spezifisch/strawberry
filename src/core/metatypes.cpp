@@ -32,12 +32,14 @@
 #include <QMetaType>
 #include <QFileInfo>
 #include <QList>
+#include <QVector>
 #include <QMap>
 #include <QByteArray>
 #include <QUrl>
 #include <QImage>
 #include <QNetworkCookie>
 #include <QNetworkReply>
+#include <QItemSelection>
 #ifdef HAVE_DBUS
 #  include <QDBusMetaType>
 #endif
@@ -71,6 +73,7 @@ void RegisterMetaTypes() {
   qRegisterMetaType<const char*>("const char*");
   qRegisterMetaType<QList<int>>("QList<int>");
   qRegisterMetaType<QList<QUrl>>("QList<QUrl>");
+  qRegisterMetaType<QVector<int>>("QVector<int>");
   qRegisterMetaType<QFileInfo>("QFileInfo");
   qRegisterMetaType<QAbstractSocket::SocketState>();
   qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
@@ -78,7 +81,9 @@ void RegisterMetaTypes() {
   qRegisterMetaType<QList<QNetworkCookie> >("QList<QNetworkCookie>");
   qRegisterMetaType<QNetworkReply*>("QNetworkReply*");
   qRegisterMetaType<QNetworkReply**>("QNetworkReply**");
-  qRegisterMetaTypeStreamOperators<QMap<int, int> >("ColumnAlignmentMap");
+  qRegisterMetaType<QItemSelection>("QItemSelection");
+  qRegisterMetaTypeStreamOperators<QMap<int, Qt::Alignment>>("ColumnAlignmentMap");
+  qRegisterMetaTypeStreamOperators<QMap<int, int>>("ColumnAlignmentIntMap");
   qRegisterMetaType<Directory>("Directory");
   qRegisterMetaType<DirectoryList>("DirectoryList");
   qRegisterMetaType<Subdirectory>("Subdirectory");

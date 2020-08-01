@@ -569,15 +569,6 @@ optional_source(HAVE_GSTREAMER
   HEADERS engine/gststartup.h engine/gstengine.h engine/gstenginepipeline.h engine/gstelementdeleter.h
 )
 
-# Xine
-optional_source(HAVE_XINE
-  SOURCES engine/xineengine.cpp
-  HEADERS engine/xineengine.h
-)
-optional_source(XINE_ANALYZER
-  SOURCES engine/xinescope.c
-)
-
 # VLC
 optional_source(HAVE_VLC
   SOURCES engine/vlcengine.cpp
@@ -597,31 +588,63 @@ if(UNIX AND HAVE_DBUS)
     HEADERS device/udisks2lister.h
   )
 
-  # MPRIS 2.0 DBUS interfaces
-  qt5_add_dbus_adaptor(SOURCES
-      dbus/org.mpris.MediaPlayer2.Player.xml
-      core/mpris2.h mpris::Mpris2 core/mpris2_player Mpris2Player)
-  qt5_add_dbus_adaptor(SOURCES
-      dbus/org.mpris.MediaPlayer2.xml
-      core/mpris2.h mpris::Mpris2 core/mpris2_root Mpris2Root)
-  qt5_add_dbus_adaptor(SOURCES
-      dbus/org.mpris.MediaPlayer2.TrackList.xml
-      core/mpris2.h mpris::Mpris2 core/mpris2_tracklist Mpris2TrackList)
+  if (WITH_QT6)
 
-  # MPRIS 2.1 DBUS interfaces
-  qt5_add_dbus_adaptor(SOURCES
-      dbus/org.mpris.MediaPlayer2.Playlists.xml
-      core/mpris2.h mpris::Mpris2 core/mpris2_playlists Mpris2Playlists)
+    # MPRIS 2.0 DBUS interfaces
+    qt6_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.Player.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_player Mpris2Player)
+    qt6_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_root Mpris2Root)
+    qt6_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.TrackList.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_tracklist Mpris2TrackList)
 
-  # org.freedesktop.Notifications DBUS interface
-  qt5_add_dbus_interface(SOURCES
-      dbus/org.freedesktop.Notifications.xml
-      dbus/notification)
+    # MPRIS 2.1 DBUS interfaces
+    qt6_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.Playlists.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_playlists Mpris2Playlists)
 
-  # org.gnome.SettingsDaemon interface
-  qt5_add_dbus_interface(SOURCES
-      dbus/org.gnome.SettingsDaemon.MediaKeys.xml
-      dbus/gnomesettingsdaemon)
+    # org.freedesktop.Notifications DBUS interface
+    qt6_add_dbus_interface(SOURCES
+        dbus/org.freedesktop.Notifications.xml
+        dbus/notification)
+
+    # org.gnome.SettingsDaemon interface
+    qt6_add_dbus_interface(SOURCES
+        dbus/org.gnome.SettingsDaemon.MediaKeys.xml
+        dbus/gnomesettingsdaemon)
+
+  else()
+
+    # MPRIS 2.0 DBUS interfaces
+    qt5_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.Player.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_player Mpris2Player)
+    qt5_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_root Mpris2Root)
+    qt5_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.TrackList.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_tracklist Mpris2TrackList)
+
+    # MPRIS 2.1 DBUS interfaces
+    qt5_add_dbus_adaptor(SOURCES
+        dbus/org.mpris.MediaPlayer2.Playlists.xml
+        core/mpris2.h mpris::Mpris2 core/mpris2_playlists Mpris2Playlists)
+
+    # org.freedesktop.Notifications DBUS interface
+    qt5_add_dbus_interface(SOURCES
+        dbus/org.freedesktop.Notifications.xml
+        dbus/notification)
+
+    # org.gnome.SettingsDaemon interface
+    qt5_add_dbus_interface(SOURCES
+        dbus/org.gnome.SettingsDaemon.MediaKeys.xml
+        dbus/gnomesettingsdaemon)
+
+  endif()
 
   # org.freedesktop.Avahi.Server interface
   add_custom_command(
@@ -662,21 +685,39 @@ if(UNIX AND HAVE_DBUS)
            PROPERTIES NO_NAMESPACE dbus/udisks2drive INCLUDE dbus/metatypes.h)
        set_source_files_properties(dbus/org.freedesktop.UDisks2.Job.xml
            PROPERTIES NO_NAMESPACE dbus/udisks2job INCLUDE dbus/metatypes.h)
-       qt5_add_dbus_interface(SOURCES
-           dbus/org.freedesktop.DBus.ObjectManager.xml
-           dbus/objectmanager)
-       qt5_add_dbus_interface(SOURCES
-           dbus/org.freedesktop.UDisks2.Filesystem.xml
-           dbus/udisks2filesystem)
-       qt5_add_dbus_interface(SOURCES
-           dbus/org.freedesktop.UDisks2.Block.xml
-           dbus/udisks2block)
-       qt5_add_dbus_interface(SOURCES
-           dbus/org.freedesktop.UDisks2.Drive.xml
-           dbus/udisks2drive)
-       qt5_add_dbus_interface(SOURCES
-           dbus/org.freedesktop.UDisks2.Job.xml
-           dbus/udisks2job)
+       if(WITH_QT6)
+         qt6_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.DBus.ObjectManager.xml
+             dbus/objectmanager)
+         qt6_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Filesystem.xml
+             dbus/udisks2filesystem)
+         qt6_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Block.xml
+             dbus/udisks2block)
+         qt6_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Drive.xml
+             dbus/udisks2drive)
+         qt6_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Job.xml
+             dbus/udisks2job)
+       else()
+         qt5_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.DBus.ObjectManager.xml
+             dbus/objectmanager)
+         qt5_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Filesystem.xml
+             dbus/udisks2filesystem)
+         qt5_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Block.xml
+             dbus/udisks2block)
+         qt5_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Drive.xml
+             dbus/udisks2drive)
+         qt5_add_dbus_interface(SOURCES
+             dbus/org.freedesktop.UDisks2.Job.xml
+             dbus/udisks2job)
+         endif()
    endif(HAVE_UDISKS2)
 
 endif(UNIX AND HAVE_DBUS)
@@ -917,9 +958,15 @@ optional_source(HAVE_MOODBAR
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 
-qt5_wrap_cpp(MOC ${HEADERS})
-qt5_wrap_ui(UIC ${UI})
-qt5_add_resources(QRC ${RESOURCES})
+if(WITH_QT6)
+  qt6_wrap_cpp(MOC ${HEADERS})
+  qt6_wrap_ui(UIC ${UI})
+  qt6_add_resources(QRC ${RESOURCES})
+else()
+  qt5_wrap_cpp(MOC ${HEADERS})
+  qt5_wrap_ui(UIC ${UI})
+  qt5_add_resources(QRC ${RESOURCES})
+endif()
 
 if(HAVE_TRANSLATIONS)
 
@@ -962,6 +1009,7 @@ link_directories(
   ${QT_LIBRARY_DIRS}
   ${SINGLEAPPLICATION_LIBRARY_DIRS}
   ${SINGLECOREAPPLICATION_LIBRARY_DIRS}
+  ${QTSPARKLE_LIBRARY_DIRS}
 )
 
 if(HAVE_ALSA)
@@ -982,10 +1030,6 @@ if(HAVE_GSTREAMER)
     ${GSTREAMER_PBUTILS_LIBRARY_DIRS}
   )
 endif(HAVE_GSTREAMER)
-
-if(HAVE_XINE)
-  link_directories(${LIBXINE_LIBRARY_DIRS})
-endif()
 
 if(HAVE_VLC)
   link_directories(${LIBVLC_LIBRARY_DIRS})
@@ -1069,6 +1113,7 @@ target_link_libraries(strawberry_lib PUBLIC
   ${QT_LIBRARIES}
   ${SINGLEAPPLICATION_LIBRARIES}
   ${SINGLECOREAPPLICATION_LIBRARIES}
+  ${QTSPARKLE_LIBRARIES}
   libstrawberry-common
   libstrawberry-tagreader
 )
@@ -1104,11 +1149,6 @@ endif(HAVE_GSTREAMER)
 
 if(HAVE_MOODBAR)
   target_link_libraries(strawberry_lib PRIVATE gstmoodbar)
-endif()
-
-if(HAVE_XINE)
-  target_include_directories(strawberry_lib SYSTEM PRIVATE ${LIBXINE_INCLUDE_DIRS})
-  target_link_libraries(strawberry_lib PRIVATE ${LIBXINE_LIBRARIES})
 endif()
 
 if(HAVE_VLC)

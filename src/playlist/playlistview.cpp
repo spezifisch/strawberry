@@ -989,7 +989,12 @@ void PlaylistView::dragMoveEvent(QDragMoveEvent *event) {
 
   QTreeView::dragMoveEvent(event);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  QModelIndex index(indexAt(event->position().toPoint()));
+#else
   QModelIndex index(indexAt(event->pos()));
+#endif
+
   drop_indicator_row_ = index.isValid() ? index.row() : 0;
 
 }
@@ -1159,7 +1164,7 @@ void PlaylistView::SaveSettings() {
   QSettings s;
   s.beginGroup(Playlist::kSettingsGroup);
   s.setValue("state", header_->SaveState());
-  s.setValue("column_alignments", QVariant::fromValue(column_alignment_));
+  s.setValue("column_alignments", QVariant::fromValue<ColumnAlignmentMap>(column_alignment_));
   s.endGroup();
 
 }

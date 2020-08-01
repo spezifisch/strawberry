@@ -52,6 +52,7 @@
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem*)menuItem {
+  Q_UNUSED(menuItem);
   // This is called when the menu is shown.
   return action_->isEnabled();
 }
@@ -206,5 +207,6 @@ void MacSystemTrayIcon::ClearNowPlaying() {
 }
 
 void MacSystemTrayIcon::SetNowPlaying(const Song& song, const QUrl& cover_url) {
+  Q_UNUSED(cover_url);
   p_->ShowNowPlaying(song.artist(), song.PrettyTitle());
 }

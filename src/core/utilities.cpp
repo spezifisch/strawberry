@@ -50,7 +50,8 @@
 #include <QString>
 #include <QStringList>
 #include <QUrl>
-#include <QRegExp>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 #include <QTcpServer>
 #include <QTemporaryFile>
 #include <QPoint>
@@ -157,7 +158,7 @@ QString WordyTimeNanosec(qint64 nanoseconds) {
 QString Ago(int seconds_since_epoch, const QLocale &locale) {
 
   const QDateTime now = QDateTime::currentDateTime();
-  const QDateTime then = QDateTime::fromTime_t(seconds_since_epoch);
+  const QDateTime then = QDateTime::fromSecsSinceEpoch(seconds_since_epoch);
   const int days_ago = then.date().daysTo(now.date());
   const QString time = then.time().toString(locale.timeFormat(QLocale::ShortFormat));
 
@@ -336,8 +337,10 @@ QString ColorToRgba(const QColor &c) {
 }
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
-void OpenInFileManager(const QString &path);
-void OpenInFileManager(const QString &path) {
+void OpenInFileManager(const QString path, const QUrl &url);
+void OpenInFileManager(const QString path, const QUrl &url) {
+
+  if (!url.isLocalFile()) return;
 
   QProcess proc;
   proc.start("xdg-mime", QStringList() << "query" << "default" << "inode/directory");
@@ -375,29 +378,22 @@ void OpenInFileManager(const QString &path) {
   }
 
   if (command.isEmpty() || command == "exo-open") {
-    QFileInfo info(path);
-    if (!info.exists()) return;
-    QString directory = info.dir().path();
-    if (directory.isEmpty()) return;
-    QDesktopServices::openUrl(QUrl::fromLocalFile(directory));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
   }
   else if (command.startsWith("nautilus")) {
-    proc.startDetached(command, QStringList() << command_params << "--select" << path);
+    proc.startDetached(command, QStringList() << command_params << "--select" << url.toLocalFile());
   }
   else if (command.startsWith("dolphin") || command.startsWith("konqueror") || command.startsWith("kfmclient")) {
-    proc.startDetached(command, QStringList() << command_params << "--select" << "--new-window" << path);
+    proc.startDetached(command, QStringList() << command_params << "--select" << "--new-window" << url.toLocalFile());
   }
   else if (command.startsWith("caja")) {
-    QFileInfo info(path);
-    if (!info.exists()) return;
-    QString directory = info.dir().path();
-    proc.startDetached(command, QStringList() << command_params << "--no-desktop" << directory);
+    proc.startDetached(command, QStringList() << command_params << "--no-desktop" << path);
   }
   else if (command.startsWith("pcmanfm")) {
-    proc.startDetached(command, QStringList() << command_params << QFileInfo(path).dir().path());
+    proc.startDetached(command, QStringList() << command_params << path);
   }
   else {
-    proc.startDetached(command, QStringList() << command_params << path);
+    proc.startDetached(command, QStringList() << command_params << url.toLocalFile());
   }
 
 }
@@ -405,28 +401,42 @@ void OpenInFileManager(const QString &path) {
 
 #ifdef Q_OS_MACOS
 // Better than openUrl(dirname(path)) - also highlights file at path
-void RevealFileInFinder(QString const &path) {
+void RevealFileInFinder(const QString &path) {
   QProcess::execute("/usr/bin/open", QStringList() << "-R" << path);
 }
 #endif  // Q_OS_MACOS
 
 #ifdef Q_OS_WIN
-void ShowFileInExplorer(QString const &path);
-void ShowFileInExplorer(QString const &path) {
+void ShowFileInExplorer(const QString &path);
+void ShowFileInExplorer(const QString &path) {
   QProcess::execute("explorer.exe", QStringList() << "/select," << QDir::toNativeSeparators(path));
 }
 #endif
 
 void OpenInFileBrowser(const QList<QUrl> &urls) {
 
-  if (urls.count() > 50) {
+  QMap<QString, QUrl> dirs;
+
+  for (const QUrl &url : urls) {
+    if (!url.isLocalFile()) {
+      continue;
+    }
+    QString path = url.toLocalFile();
+    if (!QFile::exists(path)) continue;
+
+    const QString directory = QFileInfo(path).dir().path();
+    if (dirs.contains(directory)) continue;
+    dirs.insert(directory, url);
+  }
+
+  if (dirs.count() > 50) {
     QMessageBox messagebox(QMessageBox::Critical, tr("Show in file browser"), tr("Too many songs selected."));
     messagebox.exec();
     return;
   }
 
-  if (urls.count() > 5) {
-    QMessageBox messagebox(QMessageBox::Information, tr("Show in file browser"), tr("%1 songs selected, are you sure you want to open them all?").arg(urls.count()), QMessageBox::Open|QMessageBox::Cancel);
+  if (dirs.count() > 5) {
+    QMessageBox messagebox(QMessageBox::Information, tr("Show in file browser"), tr("%1 songs in %2 different directories selected, are you sure you want to open them all?").arg(urls.count()).arg(dirs.count()), QMessageBox::Open|QMessageBox::Cancel);
     messagebox.setTextFormat(Qt::RichText);
     int result = messagebox.exec();
     switch (result) {
@@ -438,27 +448,15 @@ void OpenInFileBrowser(const QList<QUrl> &urls) {
     }
   }
 
-  QSet<QString> dirs;
-
-  for (const QUrl &url : urls) {
-    if (!url.isLocalFile()) {
-      continue;
-    }
-    QString path = url.toLocalFile();
-
-    if (!QFile::exists(path)) continue;
-
-    const QString directory = QFileInfo(path).dir().path();
-    if (dirs.contains(directory)) continue;
-    dirs.insert(directory);
-
+  QMap<QString, QUrl>::iterator i;
+  for (i = dirs.begin(); i != dirs.end(); ++i) {
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
-    OpenInFileManager(path);
+    OpenInFileManager(i.key(), i.value());
 #elif defined(Q_OS_MACOS)
     // Revealing multiple files in the finder only opens one window, so it also makes sense to reveal at most one per directory
-    RevealFileInFinder(path);
+    RevealFileInFinder(i.value().toLocalFile());
 #elif defined(Q_OS_WIN32)
-    ShowFileInExplorer(path);
+    ShowFileInExplorer(i.value().toLocalFile());
 #endif
   }
 
@@ -533,16 +531,6 @@ QString PrettySize(const QSize &size) {
   return QString::number(size.width()) + "x" + QString::number(size.height());
 }
 
-void ForwardMouseEvent(const QMouseEvent *e, QWidget *target) {
-  QMouseEvent c(e->type(), target->mapFromGlobal(e->globalPos()), e->globalPos(), e->button(), e->buttons(), e->modifiers());
-
-  QApplication::sendEvent(target, &c);
-}
-
-bool IsMouseEventInWidget(const QMouseEvent *e, const QWidget *widget) {
-  return widget->rect().contains(widget->mapFromGlobal(e->globalPos()));
-}
-
 quint16 PickUnusedPort() {
 
   forever {
@@ -613,8 +601,9 @@ bool ParseUntilElementCI(QXmlStreamReader *reader, const QString &name) {
 
 QDateTime ParseRFC822DateTime(const QString &text) {
 
-  QRegExp regexp("(\\d{1,2}) (\\w{3,12}) (\\d+) (\\d{1,2}):(\\d{1,2}):(\\d{1,2})");
-  if (regexp.indexIn(text) == -1) {
+  QRegularExpression regexp("(\\d{1,2}) (\\w{3,12}) (\\d+) (\\d{1,2}):(\\d{1,2}):(\\d{1,2})");
+  QRegularExpressionMatch re_match = regexp.match(text);
+  if (!re_match.hasMatch()) {
     return QDateTime();
   }
 
@@ -646,9 +635,9 @@ QDateTime ParseRFC822DateTime(const QString &text) {
   monthmap["November"] = 11;
   monthmap["December"] = 12;
 
-  const QDate date(regexp.cap(static_cast<int>(MatchNames::YEARS)).toInt(), monthmap[regexp.cap(static_cast<int>(MatchNames::MONTHS))], regexp.cap(static_cast<int>(MatchNames::DAYS)).toInt());
+  const QDate date(re_match.captured(static_cast<int>(MatchNames::YEARS)).toInt(), monthmap[re_match.captured(static_cast<int>(MatchNames::MONTHS))], re_match.captured(static_cast<int>(MatchNames::DAYS)).toInt());
 
-  const QTime time(regexp.cap(static_cast<int>(MatchNames::HOURS)).toInt(), regexp.cap(static_cast<int>(MatchNames::MINUTES)).toInt(), regexp.cap(static_cast<int>(MatchNames::SECONDS)).toInt());
+  const QTime time(re_match.captured(static_cast<int>(MatchNames::HOURS)).toInt(), re_match.captured(static_cast<int>(MatchNames::MINUTES)).toInt(), re_match.captured(static_cast<int>(MatchNames::SECONDS)).toInt());
 
   return QDateTime(date, time);
 
@@ -932,19 +921,20 @@ QString MacAddress() {
 
 QString ReplaceMessage(const QString &message, const Song &song, const QString &newline) {
 
-  QRegExp variable_replacer("[%][a-z]+[%]");
+  QRegularExpression variable_replacer("[%][a-z]+[%]");
   QString copy(message);
 
   // Replace the first line
   int pos = 0;
-  variable_replacer.indexIn(message);
-  while ((pos = variable_replacer.indexIn(message, pos)) != -1) {
-    QStringList captured = variable_replacer.capturedTexts();
+  QRegularExpressionMatch match;
+  for (match = variable_replacer.match(message, pos) ; match.hasMatch() ; match = variable_replacer.match(message, pos)) {
+    pos = match.capturedStart();
+    QStringList captured = match.capturedTexts();
     copy.replace(captured[0], ReplaceVariable(captured[0], song, newline));
-    pos += variable_replacer.matchedLength();
+    pos += match.capturedLength();
   }
 
-  int index_of = copy.indexOf(QRegExp(" - (>|$)"));
+  int index_of = copy.indexOf(QRegularExpression(" - (>|$)"));
   if (index_of >= 0) copy = copy.remove(index_of, 3);
 
   return copy;

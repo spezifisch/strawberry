@@ -20,12 +20,13 @@
 
 #include "config.h"
 
+#include <functional>
 #include <algorithm>
 #include <iterator>
 #include <limits>
 
 #include <QtGlobal>
-#include <QtConcurrentRun>
+#include <QtConcurrent>
 #include <QFuture>
 #include <QObject>
 #include <QWidget>
@@ -286,7 +287,7 @@ void EditTagDialog::SetSongs(const SongList &s, const PlaylistItemList &items) {
   ui_->song_list->clear();
 
   // Reload tags in the background
-  QFuture<QList<Data>> future = QtConcurrent::run(this, &EditTagDialog::LoadData, s);
+  QFuture<QList<Data>> future = QtConcurrent::run(std::bind(&EditTagDialog::LoadData, this, s));
   NewClosure(future, this, SLOT(SetSongsFinished(QFuture<QList<EditTagDialog::Data>>)), future);
 
 }
@@ -493,7 +494,7 @@ static void SetDate(QLabel *label, uint time) {
     label->setText(QObject::tr("Unknown"));
   }
   else {
-    label->setText(QDateTime::fromTime_t(time).toString(QLocale::system().dateTimeFormat(QLocale::LongFormat)));
+    label->setText(QDateTime::fromSecsSinceEpoch(time).toString(QLocale::system().dateTimeFormat(QLocale::LongFormat)));
   }
 
 }
@@ -560,7 +561,7 @@ void EditTagDialog::UpdateStatisticsTab(const Song &song) {
   ui_->playcount->setText(QString::number(qMax(0, song.playcount())));
   ui_->skipcount->setText(QString::number(qMax(0, song.skipcount())));
 
-  ui_->lastplayed->setText(song.lastplayed() <= 0 ? tr("Never") : QDateTime::fromTime_t(song.lastplayed()).toString(QLocale::system().dateTimeFormat(QLocale::LongFormat)));
+  ui_->lastplayed->setText(song.lastplayed() <= 0 ? tr("Never") : QDateTime::fromSecsSinceEpoch(song.lastplayed()).toString(QLocale::system().dateTimeFormat(QLocale::LongFormat)));
 
 }
 
@@ -768,7 +769,11 @@ bool EditTagDialog::eventFilter(QObject *o, QEvent *e) {
   if (o == ui_->art) {
     switch (e->type()) {
       case QEvent::MouseButtonRelease:
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+        cover_menu_->popup(static_cast<QMouseEvent*>(e)->globalPosition().toPoint());
+#else
         cover_menu_->popup(static_cast<QMouseEvent*>(e)->globalPos());
+#endif
         break;
 
       case QEvent::DragEnter: {

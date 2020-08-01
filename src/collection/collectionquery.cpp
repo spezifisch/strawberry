@@ -26,7 +26,7 @@
 #include <QString>
 #include <QStringList>
 #include <QStringBuilder>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 
@@ -46,9 +46,9 @@ CollectionQuery::CollectionQuery(const QueryOptions &options)
 
     // Split on whitespace
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-    QStringList tokens(options.filter().split(QRegExp("\\s+"), Qt::SkipEmptyParts));
+    QStringList tokens(options.filter().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts));
 #else
-    QStringList tokens(options.filter().split(QRegExp("\\s+"), QString::SkipEmptyParts));
+    QStringList tokens(options.filter().split(QRegularExpression("\\s+"), QString::SkipEmptyParts));
 #endif
     QString query;
     for (QString token : tokens) {
@@ -65,17 +65,21 @@ CollectionQuery::CollectionQuery(const QueryOptions &options)
           QString subtoken = token.section(':', 1, -1);
           subtoken.replace(":", " ");
           subtoken = subtoken.trimmed();
-          if (!subtoken.isEmpty())
-            query += "fts" + columntoken + subtoken + "* ";
+          if (!subtoken.isEmpty()) {
+            if (!query.isEmpty()) query.append(" ");
+            query += "fts" + columntoken + "\"" + subtoken + "\"*";
+          }
         }
         else {
           token.replace(":", " ");
           token = token.trimmed();
-          query += token + "* ";
+          if (!query.isEmpty()) query.append(" ");
+          query += "\"" + token + "\"*";
         }
       }
       else {
-        query += token + "* ";
+        if (!query.isEmpty()) query.append(" ");
+        query += "\"" + token + "\"*";
       }
     }
     if (!query.isEmpty()) {
@@ -86,7 +90,7 @@ CollectionQuery::CollectionQuery(const QueryOptions &options)
   }
 
   if (options.max_age() != -1) {
-    int cutoff = QDateTime::currentDateTime().toTime_t() - options.max_age();
+    int cutoff = QDateTime::currentDateTime().toSecsSinceEpoch() - options.max_age();
 
     where_clauses_ << "ctime > ?";
     bound_values_ << cutoff;
@@ -202,7 +206,7 @@ QVariant CollectionQuery::Value(int column) const { return query_.value(column);
 bool QueryOptions::Matches(const Song &song) const {
 
   if (max_age_ != -1) {
-    const uint cutoff = QDateTime::currentDateTime().toTime_t() - max_age_;
+    const uint cutoff = QDateTime::currentDateTime().toSecsSinceEpoch() - max_age_;
     if (song.ctime() <= cutoff) return false;
   }
 

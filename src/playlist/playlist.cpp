@@ -33,7 +33,7 @@
 #include <QtGlobal>
 #include <QObject>
 #include <QCoreApplication>
-#include <QtConcurrentRun>
+#include <QtConcurrent>
 #include <QFuture>
 #include <QIODevice>
 #include <QDataStream>
@@ -479,7 +479,7 @@ int Playlist::NextVirtualIndex(int i, bool ignore_repeat_track) const {
     }
     Song this_song = item_at(virtual_items_[j])->Metadata();
     if (((last_song.is_compilation() && this_song.is_compilation()) ||
-         last_song.artist() == this_song.artist()) &&
+         last_song.effective_albumartist() == this_song.effective_albumartist()) &&
         last_song.album() == this_song.album() &&
         FilterContainsVirtualIndex(j)) {
       return j;  // Found one
@@ -1314,7 +1314,7 @@ void Playlist::Restore() {
   collection_items_by_id_.clear();
 
   cancel_restore_ = false;
-  QFuture<QList<PlaylistItemPtr>> future = QtConcurrent::run(backend_, &PlaylistBackend::GetPlaylistItems, id_);
+  QFuture<QList<PlaylistItemPtr>> future = QtConcurrent::run(std::bind(&PlaylistBackend::GetPlaylistItems, backend_, id_));
   NewClosure(future, this, SLOT(ItemsLoaded(QFuture<PlaylistItemList>)), future);
 
 }
@@ -1353,7 +1353,7 @@ void Playlist::ItemsLoaded(QFuture<PlaylistItemList> future) {
 
   // Should we gray out deleted songs asynchronously on startup?
   if (greyout) {
-    QtConcurrent::run(this, &Playlist::InvalidateDeletedSongs);
+    (void)QtConcurrent::run(std::bind(&Playlist::InvalidateDeletedSongs, this));
   }
 
   emit PlaylistLoaded();

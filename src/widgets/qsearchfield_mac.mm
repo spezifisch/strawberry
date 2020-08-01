@@ -96,9 +96,9 @@ public:
     pimpl->returnPressed();
 }
 
--(BOOL)control: (NSControl *)control textView:
-(NSTextView *)textView doCommandBySelector:
-(SEL)commandSelector {
+-(BOOL)control: (NSControl*)control textView: (NSTextView*)textView doCommandBySelector: (SEL)commandSelector {
+  Q_UNUSED(control);
+  Q_UNUSED(textView);
   Q_ASSERT(pimpl);
   if (!pimpl) return NO;
   if (commandSelector == @selector(moveDown:)) {
@@ -123,7 +123,7 @@ public:
   // First, check if we have the focus.
   // If no, it probably means this event isn't for us.
   NSResponder* firstResponder = [[NSApp keyWindow] firstResponder];
-  if ([firstResponder isKindOfClass:[NSText class]] && [(NSText*)firstResponder delegate] == self) {
+  if ([firstResponder isKindOfClass:[NSText class]] && (NSSearchField*)([(NSText*)firstResponder delegate]) == self) {
 
     if ([event type] == NSEventTypeKeyDown && [event modifierFlags] & NSEventModifierFlagCommand) {
       QString keyString = toQString([event characters]);
@@ -159,7 +159,7 @@ QSearchField::QSearchField(QWidget *parent) : QWidget(parent) {
   NSSearchField *search = [[QocoaSearchField alloc] init];
   QSearchFieldDelegate *delegate = [[QSearchFieldDelegate alloc] init];
   pimpl = delegate->pimpl = new QSearchFieldPrivate(this, search);
-  [search setDelegate:delegate];
+  [search setDelegate:(id<NSSearchFieldDelegate>)delegate];
   setupLayout(search, this);
   setFixedHeight(24);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -167,7 +167,9 @@ QSearchField::QSearchField(QWidget *parent) : QWidget(parent) {
   [pool drain];
 }
 
-void QSearchField::setIconSize(const int iconsize) {}
+void QSearchField::setIconSize(const int iconsize) {
+  Q_UNUSED(iconsize);
+}
 
 void QSearchField::setText(const QString &text) {
   Q_ASSERT(pimpl);

@@ -36,7 +36,8 @@
 #include <QIcon>
 #include <QImage>
 #include <QPixmap>
-#include <QRegExp>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 #include <QStyle>
 #include <QHostAddress>
 #include <QSsl>
@@ -145,7 +146,7 @@ bool LocalRedirectServer::GenerateCertificate() {
     gnutls_global_deinit();
     return false;
   }
-  quint64 time = QDateTime::currentDateTime().toTime_t();
+  quint64 time = QDateTime::currentDateTime().toSecsSinceEpoch();
   gnutls_x509_crt_set_activation_time(crt, time);
   if (int result = gnutls_x509_crt_set_expiration_time(crt, time + 31536000L) != GNUTLS_E_SUCCESS) {
     error_ = QString("Failed to set the activation time of the certificate: %1").arg(gnutls_strerror(result));
@@ -344,16 +345,18 @@ void LocalRedirectServer::WriteTemplate() const {
   page_file.open(QIODevice::ReadOnly);
   QString page_data = QString::fromUtf8(page_file.readAll());
 
-  QRegExp tr_regexp("tr\\(\"([^\"]+)\"\\)");
+  QRegularExpression tr_regexp("tr\\(\"([^\"]+)\"\\)");
   int offset = 0;
   forever {
-    offset = tr_regexp.indexIn(page_data, offset);
+    QRegularExpressionMatch re_match = tr_regexp.match(page_data, offset);
+    if (!re_match.hasMatch()) break;
+    offset = re_match.capturedStart();
     if (offset == -1) {
       break;
     }
 
-    page_data.replace(offset, tr_regexp.matchedLength(), tr(tr_regexp.cap(1).toUtf8()));
-    offset += tr_regexp.matchedLength();
+    page_data.replace(offset, re_match.capturedLength(), tr(re_match.captured(1).toUtf8()));
+    offset += re_match.capturedLength();
   }
 
   QBuffer image_buffer;

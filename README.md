@@ -2,7 +2,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/jonaskvinge)
 =======================
 
-Strawberry is a music player and music collection organizer. It is a fork of Clementine released in 2018 aimed at music collectors and audiophiles. It's written in C++ using the Qt 5 framework.
+Strawberry is a music player and music collection organizer. It is a fork of Clementine released in 2018 aimed at music collectors and audiophiles. It's written in C++ using the Qt 5 or 6 toolkit.
 
 ![Browse](https://www.strawberrymusicplayer.org/pictures/screenshot-002-large.png)
 
@@ -63,14 +63,14 @@ To build Strawberry from source you need the following installed on your system 
 * [POSIX thread (pthread)](http://www.yolinux.com/TUTORIALS/LinuxTutorialPosixThreads.html)
 * [GLib](https://developer.gnome.org/glib/)
 * [Protobuf library and compiler](https://developers.google.com/protocol-buffers/)
-* [Qt 5.6 or higher with components Core, Gui, Widgets, Concurrent, Network and Sql](https://www.qt.io/)
-* [Qt 5 components X11Extras and DBus for Linux/BSD, MacExtras for macOS and WinExtras for Windows](https://www.qt.io/)
+* [Qt 5.8 or higher (or Qt 6) with components Core, Gui, Widgets, Concurrent, Network and Sql](https://www.qt.io/)
+* [Qt components X11Extras and DBus for Linux/BSD, MacExtras for macOS and WinExtras for Windows](https://www.qt.io/)
 * [SQLite 3.9 or newer with FTS5](https://www.sqlite.org)
 * [Chromaprint library](https://acoustid.org/chromaprint)
 * [ALSA library (linux)](https://www.alsa-project.org/)
 * [DBus (linux)](https://www.freedesktop.org/wiki/Software/dbus/)
 * [PulseAudio (linux optional)](https://www.freedesktop.org/wiki/Software/PulseAudio/?)
-* [GStreamer](https://gstreamer.freedesktop.org/), [Xine](https://www.xine-project.org) or [VLC](https://www.videolan.org)
+* [GStreamer](https://gstreamer.freedesktop.org/) or [VLC](https://www.videolan.org)
 * [GnuTLS](https://www.gnutls.org/)
 
 Optional dependencies:
@@ -81,7 +81,7 @@ Optional dependencies:
 * iPhone, iPod Touch, iPad and Apple TV devices: [libimobiledevice, libplist and libusbmuxd](https://www.libimobiledevice.org/)
 * Moodbar: [fftw3](http://www.fftw.org/)
 
-Either GStreamer, Xine or VLC engine is required, but only GStreamer is fully implemented so far.
+Either GStreamer or VLC engine is required, but only GStreamer is fully implemented so far.
 You should also install the gstreamer plugins base and good, and optionally bad and ugly.
 
 ### :wrench:	Compiling from source

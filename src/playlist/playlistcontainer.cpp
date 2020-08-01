@@ -30,7 +30,7 @@
 #include <QVariant>
 #include <QPoint>
 #include <QString>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSize>
 #include <QFont>
 #include <QIcon>
@@ -197,7 +197,11 @@ void PlaylistContainer::SetViewModel(Playlist *playlist) {
   emit ViewSelectionModelChanged();
 
   // Update filter
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  ui_->filter->setText(playlist->proxy()->filterRegularExpression().pattern());
+#else
   ui_->filter->setText(playlist->proxy()->filterRegExp().pattern());
+#endif
 
   // Update the no matches label
   connect(playlist_->proxy(), SIGNAL(modelReset()), SLOT(UpdateNoMatchesLabel()));

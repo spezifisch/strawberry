@@ -53,15 +53,10 @@ list(APPEND COMPILE_OPTIONS
   -Wunused-parameter
   -Wformat=2
   -Wdisabled-optimization
-  -Wno-sign-conversion
   $<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-old-style-cast>
   $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
 )
-
-if(APPLE)
-  list(APPEND COMPILE_OPTIONS -Wno-unused-parameter)
-endif()
 
 option(BUILD_WERROR "Build with -Werror" OFF)
 if(BUILD_WERROR)
@@ -121,7 +116,6 @@ pkg_check_modules(GSTREAMER_AUDIO gstreamer-audio-1.0)
 pkg_check_modules(GSTREAMER_APP gstreamer-app-1.0)
 pkg_check_modules(GSTREAMER_TAG gstreamer-tag-1.0)
 pkg_check_modules(GSTREAMER_PBUTILS gstreamer-pbutils-1.0)
-pkg_check_modules(LIBXINE libxine)
 pkg_check_modules(LIBVLC libvlc)
 pkg_check_modules(SQLITE REQUIRED sqlite3>=3.9)
 pkg_check_modules(LIBPULSE libpulse)
@@ -134,10 +128,8 @@ pkg_search_module(LIBPLIST libplist-2.0 libplist)
 find_package(Gettext)
 find_package(FFTW3)
 
-# QT
-set(QT_MIN_VERSION 5.6)
+option(WITH_QT6 "Use Qt 6" OFF)
 set(QT_COMPONENTS Core Concurrent Widgets Network Sql)
-
 if(X11_FOUND)
   list(APPEND QT_COMPONENTS X11Extras)
 endif()
@@ -151,32 +143,71 @@ if(WIN32)
   list(APPEND QT_COMPONENTS WinExtras)
 endif()
 
-find_package(Qt5 ${QT_MIN_VERSION} REQUIRED COMPONENTS ${QT_COMPONENTS})
-
-set(QT_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Concurrent_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5Network_LIBRARIES} ${Qt5Sql_LIBRARIES})
-set(QT_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS} ${Qt5Concurrent_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Sql_INCLUDE_DIRS})
-
-if(Qt5DBus_FOUND)
-  list(APPEND QT_LIBRARIES ${Qt5DBus_LIBRARIES})
-  list(APPEND QT_INCLUDE_DIRS ${Qt5DBus_INCLUDE_DIRS})
-  get_target_property(QT_DBUSXML2CPP_EXECUTABLE Qt5::qdbusxml2cpp LOCATION)
-endif()
-if(Qt5X11Extras_FOUND)
-  list(APPEND QT_LIBRARIES ${Qt5X11Extras_LIBRARIES})
-  list(APPEND QT_INCLUDE_DIRS ${Qt5X11Extras_INCLUDE_DIRS})
-endif()
-if(Qt5MacExtras_FOUND)
-  list(APPEND QT_LIBRARIES ${Qt5MacExtras_LIBRARIES})
-  list(APPEND QT_INCLUDE_DIRS ${Qt5MacExtras_INCLUDE_DIRS})
-endif()
-if(Qt5WinExtras_FOUND)
-  list(APPEND QT_LIBRARIES ${Qt5WinExtras_LIBRARIES})
-  list(APPEND QT_INCLUDE_DIRS ${Qt5WinExtras_INCLUDE_DIRS})
-endif()
-
-find_package(Qt5 ${QT_MIN_VERSION} QUIET COMPONENTS LinguistTools CONFIG)
-if (Qt5LinguistTools_FOUND)
-  set(QT_LCONVERT_EXECUTABLE Qt5::lconvert)
+if(WITH_QT6)
+  list(APPEND QT_COMPONENTS Core5Compat)
+  find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
+  set(QtCore_LIBRARIES Qt6::Core)
+  set(QtConcurrent_LIBRARIES Qt6::Concurrent)
+  set(QtWidgets_LIBRARIES Qt6::Widgets)
+  set(QtNetwork_LIBRARIES Qt6::Network)
+  set(QtSql_LIBRARIES Qt6::Sql)
+  set(QT_LIBRARIES Qt6::Core Qt6::Concurrent Qt6::Widgets Qt6::Network Qt6::Sql Qt6::Core5Compat)
+  if(Qt6DBus_FOUND)
+    set(QtDBus_LIBRARIES Qt6::DBus)
+    list(APPEND QT_LIBRARIES Qt6::DBus)
+    get_target_property(QT_DBUSXML2CPP_EXECUTABLE Qt6::qdbusxml2cpp LOCATION)
+  endif()
+  if(Qt6X11Extras_FOUND)
+    set(QtX11Extras_LIBRARIES Qt6::X11Extras)
+    list(APPEND QT_LIBRARIES Qt6::X11Extras)
+  endif()
+  if(Qt6MacExtras_FOUND)
+    set(QtMacExtras_LIBRARIES Qt6::MacExtras)
+    list(APPEND QT_LIBRARIES Qt6::MacExtras)
+  endif()
+  if(Qt6WinExtras_FOUND)
+    set(QtWinExtras_LIBRARIES Qt6::WinExtras)
+    list(APPEND QT_LIBRARIES Qt6::WinExtras)
+  endif()
+  find_package(Qt6 QUIET COMPONENTS LinguistTools CONFIG)
+  if (Qt6LinguistTools_FOUND)
+    set(QT_LCONVERT_EXECUTABLE Qt6::lconvert)
+  endif()
+else()
+  set(QT_MIN_VERSION 5.8)
+  find_package(Qt5 ${QT_MIN_VERSION} REQUIRED COMPONENTS ${QT_COMPONENTS})
+  set(QtCore_LIBRARIES ${Qt5Core_LIBRARIES})
+  set(QtConcurrent_LIBRARIES  ${Qt5Concurrent_LIBRARIES})
+  set(QtWidgets_LIBRARIES ${Qt5Widgets_LIBRARIES})
+  set(QtNetwork_LIBRARIES ${Qt5Network_LIBRARIES})
+  set(QtSql_LIBRARIES ${Qt5Sql_LIBRARIES})
+  set(QT_LIBRARIES ${QtCore_LIBRARIES} ${QtConcurrent_LIBRARIES} ${QtWidgets_LIBRARIES} ${QtNetwork_LIBRARIES} ${QtSql_LIBRARIES})
+  set(QT_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS} ${Qt5Concurrent_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Qt5Sql_INCLUDE_DIRS})
+  if(Qt5DBus_FOUND)
+    set(QtDBus_LIBRARIES ${Qt5DBus_LIBRARIES})
+    list(APPEND QT_LIBRARIES ${Qt5DBus_LIBRARIES})
+    list(APPEND QT_INCLUDE_DIRS ${Qt5DBus_INCLUDE_DIRS})
+    get_target_property(QT_DBUSXML2CPP_EXECUTABLE Qt5::qdbusxml2cpp LOCATION)
+  endif()
+  if(Qt5X11Extras_FOUND)
+    set(QtX11Extras_LIBRARIES ${Qt5X11Extras_LIBRARIES})
+    list(APPEND QT_LIBRARIES ${Qt5X11Extras_LIBRARIES})
+    list(APPEND QT_INCLUDE_DIRS ${Qt5X11Extras_INCLUDE_DIRS})
+  endif()
+  if(Qt5MacExtras_FOUND)
+    set(QtMacExtras_LIBRARIES ${Qt5MacExtras_LIBRARIES})
+    list(APPEND QT_LIBRARIES ${Qt5MacExtras_LIBRARIES})
+    list(APPEND QT_INCLUDE_DIRS ${Qt5MacExtras_INCLUDE_DIRS})
+  endif()
+  if(Qt5WinExtras_FOUND)
+    set(QtWinExtras_LIBRARIES ${Qt5WinExtras_LIBRARIES})
+    list(APPEND QT_LIBRARIES ${Qt5WinExtras_LIBRARIES})
+    list(APPEND QT_INCLUDE_DIRS ${Qt5WinExtras_INCLUDE_DIRS})
+  endif()
+  find_package(Qt5 ${QT_MIN_VERSION} QUIET COMPONENTS LinguistTools CONFIG)
+  if (Qt5LinguistTools_FOUND)
+    set(QT_LCONVERT_EXECUTABLE Qt5::lconvert)
+  endif()
 endif()
 
 if(X11_FOUND)
@@ -224,9 +255,20 @@ set(SINGLEAPPLICATION_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/singleap
 set(SINGLEAPPLICATION_LIBRARIES singleapplication)
 set(SINGLECOREAPPLICATION_LIBRARIES singlecoreapplication)
 
-if (APPLE)
-  find_library(SPARKLE Sparkle)
-endif (APPLE)
+if(APPLE)
+  find_library(SPARKLE Sparkle PATHS /usr/local/Caskroom/sparkle/1.22.0 NAMES Sparkle Sparkle.framework)
+endif(APPLE)
+
+if((NOT SPARKLE) AND (APPLE OR WIN32))
+  if(WITH_QT6)
+    pkg_check_modules(QTSPARKLE qtsparkle-qt6)
+  else()
+    pkg_check_modules(QTSPARKLE qtsparkle-qt5)
+  endif()
+  if(QTSPARKLE_FOUND)
+    set(HAVE_QTSPARKLE ON)
+  endif()
+endif()
 
 if (WIN32)
   # RC compiler
@@ -259,10 +301,6 @@ optional_component(GSTREAMER ON "Engine: GStreamer backend"
   DEPENDS "gstreamer-audio-1.0" GSTREAMER_AUDIO_FOUND
   DEPENDS "gstreamer-tag-1.0" GSTREAMER_TAG_FOUND
   DEPENDS "gstreamer-pbutils-1.0" GSTREAMER_PBUTILS_FOUND
-)
-
-optional_component(XINE ON "Engine: Xine backend"
-  DEPENDS "libxine" LIBXINE_FOUND
 )
 
 optional_component(VLC ON "Engine: VLC backend"
@@ -314,10 +352,17 @@ optional_component(SPARKLE ON "Sparkle integration"
   DEPENDS "Sparkle" SPARKLE
 )
 
-optional_component(TRANSLATIONS ON "Translations"
-  DEPENDS "gettext" GETTEXT_FOUND
-  DEPENDS "Qt5LinguistTools" Qt5LinguistTools_FOUND
-)
+if(WITH_QT6)
+  optional_component(TRANSLATIONS ON "Translations"
+    DEPENDS "gettext" GETTEXT_FOUND
+    DEPENDS "Qt6LinguistTools" Qt6LinguistTools_FOUND
+  )
+else()
+  optional_component(TRANSLATIONS ON "Translations"
+    DEPENDS "gettext" GETTEXT_FOUND
+    DEPENDS "Qt5LinguistTools" Qt5LinguistTools_FOUND
+  )
+endif()
 
 optional_component(SUBSONIC ON "Subsonic support")
 optional_component(TIDAL ON "Tidal support")
@@ -346,8 +391,8 @@ endif(USE_BUNDLE AND NOT USE_BUNDLE_DIR)
 
 if(NOT CMAKE_CROSSCOMPILING)
   set(CMAKE_REQUIRED_FLAGS "--std=c++11")
-  set(CMAKE_REQUIRED_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Sql_LIBRARIES})
-  set(CMAKE_REQUIRED_INCLUDES ${Qt5Core_INCLUDE_DIRS} ${Qt5Sql_INCLUDE_DIRS})
+  set(CMAKE_REQUIRED_LIBRARIES ${QtCore_LIBRARIES} ${QtSql_LIBRARIES})
+  set(CMAKE_REQUIRED_INCLUDES ${QtCore_INCLUDE_DIRS} ${QtSql_INCLUDE_DIRS})
   check_cxx_source_runs("
     #include <QSqlDatabase>
     #include <QSqlQuery>
@@ -362,20 +407,6 @@ if(NOT CMAKE_CROSSCOMPILING)
     "
     SQLITE3_FTS5
   )
-endif()
-
-if(HAVE_XINE)
-  check_cxx_source_compiles("
-    #define METRONOM_INTERNAL
-    #include <iostream>
-    #include <xine/metronom.h>
-    int main() {
-      metronom_t metronom;
-      std::cout << metronom.pts_per_smpls;
-      return 0;
-    }
-  "
-  XINE_ANALYZER)
 endif()
 
 # Set up definitions
@@ -418,8 +449,8 @@ add_custom_target(uninstall
 
 # Show a summary of what we have enabled
 summary_show()
-if(NOT HAVE_GSTREAMER AND NOT HAVE_XINE AND NOT HAVE_VLC)
-  message(FATAL_ERROR "You need to have either GStreamer, Xine or VLC to compile!")
+if(NOT HAVE_GSTREAMER AND NOT HAVE_VLC)
+  message(FATAL_ERROR "You need to have either GStreamer or VLC to compile!")
 elseif(NOT HAVE_GSTREAMER)
   message(WARNING "GStreamer is the only engine that is fully implemented. Using other engines is possible but not recommended.")
 endif()

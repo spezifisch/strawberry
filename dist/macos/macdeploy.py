@@ -154,12 +154,6 @@ class InstallNameToolError(Error):
 class CouldNotFindGstreamerPluginError(Error):
   pass
 
-class CouldNotFindXinePluginError(Error):
-  pass
-
-class CouldNotFindVLCPluginError(Error):
-  pass
-
 if len(sys.argv) < 2:
   print 'Usage: %s <bundle.app>' % sys.argv[0]
 
@@ -198,9 +192,11 @@ def GetBrokenLibraries(binary):
       continue  # unix style system library
     elif re.match(r'^\s*@executable_path', line) or re.match(r'^\s*@loader_path', line):
       # Potentially already fixed library
-      relative_path = os.path.join(*line.split('/')[3:])
-      if not os.path.exists(os.path.join(frameworks_dir, relative_path)):
-        broken_libs['frameworks'].append(relative_path)
+      path = line.split('/')[3:]
+      if path:
+        relative_path = os.path.join(*path)
+        if not os.path.exists(os.path.join(frameworks_dir, relative_path)):
+          broken_libs['frameworks'].append(relative_path)
     elif re.search(r'\w+\.framework', line):
       broken_libs['frameworks'].append(line)
     else:
@@ -431,15 +427,6 @@ def FixFrameworkInstallPath(library_path, library):
       break
   new_path = '@executable_path/../Frameworks/%s' % full_path
   FixInstallPath(library_path, library, new_path)
-
-
-def FindXinePlugin(name):
-  for path in XINEPLUGIN_SEARCH_PATH:
-    if os.path.exists(path):
-      for dir, dirs, files in os.walk(path):
-        if name in files:
-          return os.path.join(dir, name)
-  raise CouldNotFindXinePluginError(name)
 
 
 def FindQtPlugin(name):

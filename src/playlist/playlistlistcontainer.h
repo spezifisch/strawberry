@@ -42,7 +42,7 @@ class Application;
 class Playlist;
 class PlaylistListModel;
 class Ui_PlaylistListContainer;
-class OrganiseDialog;
+class OrganizeDialog;
 
 class PlaylistListContainer : public QWidget {
   Q_OBJECT
@@ -83,7 +83,9 @@ class PlaylistListContainer : public QWidget {
   void ActivePaused();
   void ActiveStopped();
 
-private:
+  void ItemsSelectedChanged(const bool selected);
+
+ private:
   QStandardItem *ItemForPlaylist(const QString &name, int id);
   QStandardItem *ItemForFolder(const QString &name) const;
   void RecursivelySetIcons(QStandardItem *parent) const;
@@ -109,7 +111,7 @@ private:
 
   int active_playlist_id_;
 
-  std::unique_ptr<OrganiseDialog> organise_dialog_;
+  std::unique_ptr<OrganizeDialog> organize_dialog_;
 };
 
 #endif  // PLAYLISTLISTCONTAINER_H

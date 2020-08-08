@@ -1,7 +1,6 @@
 /*
  * Strawberry Music Player
- * This file was part of Clementine.
- * Copyright 2013, David Sansome <me@davidsansome.com>
+ * Copyright 2020, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,34 +17,29 @@
  *
  */
 
-#ifndef PLAYLISTVIEW_H
-#define PLAYLISTVIEW_H
+#ifndef USERPASSDIALOG_H
+#define USERPASSDIALOG_H
 
 #include "config.h"
 
 #include <QObject>
-#include <QWidget>
+#include <QDialog>
 #include <QString>
 
-#include "widgets/autoexpandingtreeview.h"
+#include "ui_userpassdialog.h"
 
-class QPaintEvent;
-
-class PlaylistListView : public AutoExpandingTreeView {
+class UserPassDialog : public QDialog {
   Q_OBJECT
 
  public:
-  explicit PlaylistListView(QWidget *parent = nullptr);
+  explicit UserPassDialog(QWidget *parent = nullptr);
+  ~UserPassDialog() override;
 
-  bool ItemsSelected() const;
+  QString username() const { return ui_->username->text(); }
+  QString password() const { return ui_->password->text(); }
 
- signals:
-  void ItemsSelectedChanged(bool);
-
- protected:
-  // QWidget
-  void paintEvent(QPaintEvent *event) override;
-  void selectionChanged(const QItemSelection&, const QItemSelection&) override;
+ private:
+  Ui_UserPassDialog *ui_;
 };
 
-#endif  // PLAYLISTVIEW_H
+#endif  // USERPASSDIALOG_H

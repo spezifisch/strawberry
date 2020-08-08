@@ -27,11 +27,12 @@ import traceback
 
 LOGGER = logging.getLogger('macdeploy')
 
-LIBRARY_SEARCH_PATH = ['/usr/local/lib']
+LIBRARY_SEARCH_PATH = ['/usr/local/lib', '/usr/local/opt/icu4c/lib']
 
 FRAMEWORK_SEARCH_PATH = [
     '/Library/Frameworks',
-    os.path.join(os.environ['HOME'], 'Library/Frameworks')
+    os.path.join(os.environ['HOME'], 'Library/Frameworks'),
+    '/Library/Frameworks/Sparkle.framework/Versions'
 ]
 
 QT_PLUGINS = [
@@ -190,13 +191,22 @@ def GetBrokenLibraries(binary):
     elif re.match(r'^\s*/usr/lib/', line):
       #print "unix style system lib"
       continue  # unix style system library
-    elif re.match(r'^\s*@executable_path', line) or re.match(r'^\s*@loader_path', line):
+    elif re.match(r'^\s*@executable_path', line) or re.match(r'^\s*@rpath', line) or re.match(r'^\s*@loader_path', line):
       # Potentially already fixed library
-      path = line.split('/')[3:]
-      if path:
-        relative_path = os.path.join(*path)
+      if line.count('/') == 1:
+        relative_path = os.path.join(*line.split('/')[1:])
+        if not os.path.exists(os.path.join(frameworks_dir, relative_path)):
+          broken_libs['libs'].append(relative_path)
+      elif line.count('/') == 2:
+        relative_path = os.path.join(*line.split('/')[2:])
+        if not os.path.exists(os.path.join(frameworks_dir, relative_path)):
+          broken_libs['libs'].append(relative_path)
+      elif line.count('/') >= 3:
+        relative_path = os.path.join(*line.split('/')[3:])
         if not os.path.exists(os.path.join(frameworks_dir, relative_path)):
           broken_libs['frameworks'].append(relative_path)
+      else:
+          print "GetBrokenLibraries Error: %s" % line
     elif re.search(r'\w+\.framework', line):
       broken_libs['frameworks'].append(line)
     else:
@@ -257,14 +267,21 @@ def FixFramework(path):
 
 
 def FixLibrary(path):
-  if path in fixed_libraries or FindSystemLibrary(os.path.basename(path)) is not None:
+
+  if path in fixed_libraries:
     return
-  else:
-    fixed_libraries.add(path)
+
+  # Always bundle libraries provided by homebrew (/usr/local).
+  if not re.match(r'^\s*/usr/local', path) and FindSystemLibrary(os.path.basename(path)) is not None:
+    return
+
+  fixed_libraries.add(path)
+
   abs_path = FindLibrary(path)
   if abs_path == "":
     print "Could not resolve %s, not fixing!" % path
     return
+
   broken_libs = GetBrokenLibraries(abs_path)
   FixAllLibraries(broken_libs)
 
@@ -412,7 +429,7 @@ def FindSystemLibrary(library_name):
 
 def FixLibraryInstallPath(library_path, library):
   system_library = FindSystemLibrary(os.path.basename(library_path))
-  if system_library is None:
+  if system_library is None or re.match(r'^\s*/usr/local', library_path):
     new_path = '@executable_path/../Frameworks/%s' % os.path.basename(library_path)
     FixInstallPath(library_path, library, new_path)
   else:
@@ -421,12 +438,14 @@ def FixLibraryInstallPath(library_path, library):
 
 def FixFrameworkInstallPath(library_path, library):
   parts = library_path.split(os.sep)
+  full_path = ""
   for i, part in enumerate(parts):
     if re.match(r'\w+\.framework', part):
       full_path = os.path.join(*parts[i:])
       break
-  new_path = '@executable_path/../Frameworks/%s' % full_path
-  FixInstallPath(library_path, library, new_path)
+  if full_path:
+    new_path = '@executable_path/../Frameworks/%s' % full_path
+    FixInstallPath(library_path, library, new_path)
 
 
 def FindQtPlugin(name):

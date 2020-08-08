@@ -168,6 +168,7 @@ set(SOURCES
   dialogs/edittagdialog.cpp
   dialogs/trackselectiondialog.cpp
   dialogs/addstreamdialog.cpp
+  dialogs/userpassdialog.cpp
 
   widgets/autoexpandingtreeview.cpp
   widgets/busyindicator.cpp
@@ -183,8 +184,6 @@ set(SOURCES
   widgets/linetextedit.cpp
   widgets/multiloadingindicator.cpp
   widgets/playingwidget.cpp
-  widgets/osd.cpp
-  widgets/osdpretty.cpp
   widgets/renametablineedit.cpp
   widgets/volumeslider.cpp
   widgets/stickyslider.cpp
@@ -193,6 +192,9 @@ set(SOURCES
   widgets/tracksliderpopup.cpp
   widgets/tracksliderslider.cpp
   widgets/loginstatewidget.cpp
+
+  osd/osdbase.cpp
+  osd/osdpretty.cpp
 
   musicbrainz/acoustidclient.cpp
   musicbrainz/musicbrainzclient.cpp
@@ -221,10 +223,10 @@ set(SOURCES
   scrobbler/librefmscrobbler.cpp
   scrobbler/listenbrainzscrobbler.cpp
 
-  organise/organise.cpp
-  organise/organiseformat.cpp
-  organise/organisedialog.cpp
-  organise/organiseerrordialog.cpp
+  organize/organize.cpp
+  organize/organizeformat.cpp
+  organize/organizedialog.cpp
+  organize/organizeerrordialog.cpp
 
 )
 
@@ -364,6 +366,7 @@ set(HEADERS
   dialogs/edittagdialog.h
   dialogs/trackselectiondialog.h
   dialogs/addstreamdialog.h
+  dialogs/userpassdialog.h
 
   widgets/autoexpandingtreeview.h
   widgets/busyindicator.h
@@ -378,8 +381,6 @@ set(HEADERS
   widgets/linetextedit.h
   widgets/multiloadingindicator.h
   widgets/playingwidget.h
-  widgets/osd.h
-  widgets/osdpretty.h
   widgets/renametablineedit.h
   widgets/volumeslider.h
   widgets/stickyslider.h
@@ -389,6 +390,9 @@ set(HEADERS
   widgets/tracksliderslider.h
   widgets/loginstatewidget.h
   widgets/qsearchfield.h
+
+  osd/osdbase.h
+  osd/osdpretty.h
 
   musicbrainz/acoustidclient.h
   musicbrainz/musicbrainzclient.h
@@ -415,9 +419,9 @@ set(HEADERS
   scrobbler/librefmscrobbler.h
   scrobbler/listenbrainzscrobbler.h
 
-  organise/organise.h
-  organise/organisedialog.h
-  organise/organiseerrordialog.h
+  organize/organize.h
+  organize/organizedialog.h
+  organize/organizeerrordialog.h
 
 )
 
@@ -465,18 +469,20 @@ set(UI
   dialogs/edittagdialog.ui
   dialogs/trackselectiondialog.ui
   dialogs/addstreamdialog.ui
+  dialogs/userpassdialog.ui
 
   widgets/trackslider.ui
-  widgets/osdpretty.ui
   widgets/fileview.ui
   widgets/loginstatewidget.ui
+
+  osd/osdpretty.ui
 
   internet/internettabsview.ui
   internet/internetcollectionviewcontainer.ui
   internet/internetsearchview.ui
 
-  organise/organisedialog.ui
-  organise/organiseerrordialog.ui
+  organize/organizedialog.ui
+  organize/organizeerrordialog.ui
 
 )
 
@@ -521,10 +527,12 @@ optional_source(HAVE_ALSA
     engine/alsadevicefinder.cpp
 )
 
-# X11
-optional_source(X11_FOUND
+# DBUS
+optional_source(HAVE_DBUS
  SOURCES
-   widgets/osd_x11.cpp
+   osd/osddbus.cpp
+ HEADERS
+   osd/osddbus.h
 )
 
 # GStreamer
@@ -826,7 +834,7 @@ optional_source(APPLE
     core/macsystemtrayicon.mm
     core/macscreensaver.cpp
     core/macfslistener.mm
-    widgets/osd_mac.mm
+    osd/osdmac.mm
     widgets/qsearchfield_mac.mm
     engine/macosdevicefinder.cpp
     globalshortcuts/globalshortcutbackend-macos.mm
@@ -834,6 +842,7 @@ optional_source(APPLE
   HEADERS
     core/macsystemtrayicon.h
     core/macfslistener.h
+    osd/osdmac.h
     globalshortcuts/globalshortcutbackend-macos.h
 )
 
@@ -851,7 +860,6 @@ optional_source(WIN32
   SOURCES
     engine/directsounddevicefinder.cpp
     engine/mmdevicefinder.cpp
-    widgets/osd_win.cpp
     core/windows7thumbbar.cpp
   HEADERS
     core/windows7thumbbar.h
@@ -1189,11 +1197,10 @@ if(WIN32)
   target_link_libraries(strawberry_lib PRIVATE dsound)
 endif(WIN32)
 
-if(UNIX AND NOT APPLE)
+if(X11_FOUND)
   # Hack: the Gold linker pays attention to the order that libraries are specified on the link line.
   # -lX11 and -ldl are provided earlier in the link command but they're actually used by libraries that appear after them, so they end up getting ignored.
   # This appends them to the very end of the link line, ensuring they're always used.
-  find_package(X11)
   if(FREEBSD)
     target_link_libraries(strawberry_lib PRIVATE ${X11_X11_LIB})
   else()

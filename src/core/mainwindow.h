@@ -54,7 +54,7 @@
 #include "engine/enginetype.h"
 #include "engine/engine_fwd.h"
 #include "mac_startup.h"
-#include "widgets/osd.h"
+#include "osd/osdbase.h"
 #include "collection/collectionmodel.h"
 #include "playlist/playlistitem.h"
 #include "settings/settingsdialog.h"
@@ -77,7 +77,7 @@ class ErrorDialog;
 class FileView;
 class GlobalShortcuts;
 class MimeData;
-class OrganiseDialog;
+class OrganizeDialog;
 class PlaylistListContainer;
 class QueueView;
 class SystemTrayIcon;
@@ -100,7 +100,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
 
  public:
-  explicit MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, const CommandlineOptions& options, QWidget *parent = nullptr);
+  explicit MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd, const CommandlineOptions& options, QWidget *parent = nullptr);
   ~MainWindow() override;
 
   static const char *kSettingsGroup;
@@ -168,8 +168,9 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void PlaylistCopyToCollection();
   void PlaylistMoveToCollection();
   void PlaylistCopyToDevice();
-  void PlaylistOrganiseSelected(const bool copy);
+  void PlaylistOrganizeSelected(const bool copy);
   void PlaylistOpenInBrowser();
+  void PlaylistCopyUrl();
   void ShowInCollection();
 
   void ChangeCollectionQueryMode(QAction *action);
@@ -242,7 +243,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void Exit();
   void DoExit();
 
-  void HandleNotificationPreview(const OSD::Behaviour type, QString line1, QString line2);
+  void HandleNotificationPreview(const OSDBase::Behaviour type, QString line1, QString line2);
 
   void ShowConsole();
 
@@ -287,7 +288,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
   Application *app_;
   SystemTrayIcon *tray_icon_;
-  OSD *osd_;
+  OSDBase *osd_;
   Lazy<About> about_dialog_;
   Lazy<EditTagDialog> edit_tag_dialog_;
   AlbumCoverChoiceController *album_cover_choice_controller_;
@@ -307,7 +308,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   Lazy<SettingsDialog> settings_dialog_;
   Lazy<AlbumCoverManager> cover_manager_;
   std::unique_ptr<Equalizer> equalizer_;
-  Lazy<OrganiseDialog> organise_dialog_;
+  Lazy<OrganizeDialog> organize_dialog_;
 #ifdef HAVE_GSTREAMER
   Lazy<TranscodeDialog> transcode_dialog_;
 #endif
@@ -330,7 +331,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   QAction *playlist_play_pause_;
   QAction *playlist_stop_after_;
   QAction *playlist_undoredo_;
-  QAction *playlist_organise_;
+  QAction *playlist_organize_;
   QAction *playlist_show_in_collection_;
   QAction *playlist_copy_to_collection_;
   QAction *playlist_move_to_collection_;
@@ -338,14 +339,14 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   QAction *playlist_copy_to_device_;
 #endif
   QAction *playlist_open_in_browser_;
+  QAction *playlist_copy_url_;
   QAction *playlist_queue_;
   QAction* playlist_queue_play_next_;
   QAction *playlist_skip_;
   QAction *playlist_add_to_another_;
   QList<QAction*> playlistitem_actions_;
   QAction *playlistitem_actions_separator_;
-  QAction *search_for_artist_;
-  QAction *search_for_album_;
+  QAction *playlist_rescan_songs_;
 
   QModelIndex playlist_menu_index_;
 

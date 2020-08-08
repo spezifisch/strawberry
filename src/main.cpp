@@ -106,7 +106,13 @@
 #endif
 #include "settings/behavioursettingspage.h"
 
-#include "widgets/osd.h"
+#ifdef HAVE_DBUS
+#  include "osd/osddbus.h"
+#elif defined(Q_OS_MACOS)
+#  include "osd/osdmac.h"
+#else
+#  include "osd/osdbase.h"
+#endif
 
 #ifdef HAVE_DBUS
   QDBusArgument &operator<<(QDBusArgument &arg, const QImage &image);
@@ -268,7 +274,13 @@ int main(int argc, char* argv[]) {
 
   // Create the tray icon and OSD
   std::unique_ptr<SystemTrayIcon> tray_icon(new SystemTrayIcon());
-  OSD osd(tray_icon.get(), &app);
+#ifdef HAVE_DBUS
+  OSDDBus osd(tray_icon.get(), &app);
+#elif defined(Q_OS_MACOS)
+  OSDMac osd(tray_icon.get(), &app);
+#else
+  OSDBase osd(tray_icon.get(), &app);
+#endif
 
 #ifdef HAVE_DBUS
   mpris::Mpris mpris(&app);

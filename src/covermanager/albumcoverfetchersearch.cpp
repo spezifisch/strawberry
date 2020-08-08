@@ -98,8 +98,8 @@ void AlbumCoverFetcherSearch::Start(CoverProviders *cover_providers) {
       continue;
     }
 
-    // If album is missing, check if we can still use this provider by searching using artist + title.
-    if (!provider->allow_missing_album() && request_.album.isEmpty()) {
+    // If artist and album is missing, check if we can still use this provider by searching using title.
+    if (!provider->allow_missing_album() && request_.album.isEmpty() && !request_.title.isEmpty()) {
       continue;
     }
 
@@ -133,17 +133,44 @@ void AlbumCoverFetcherSearch::ProviderSearchResults(CoverProvider *provider, con
 
   CoverSearchResults results_copy(results);
   for (int i = 0 ; i < results_copy.count() ; ++i) {
+
     results_copy[i].provider = provider->name();
     results_copy[i].score = provider->quality();
-    if (results_copy[i].artist.toLower() == request_.artist.toLower()) {
+
+    QString request_artist = request_.artist.toLower();
+    QString request_album = request_.album.toLower();
+    QString result_artist = results_copy[i].artist.toLower();
+    QString result_album = results_copy[i].album.toLower();
+
+    if (result_artist == request_artist) {
       results_copy[i].score += 0.5;
     }
-    if (results_copy[i].album.toLower() == request_.album.toLower()) {
+    if (result_album == request_album) {
       results_copy[i].score += 0.5;
     }
-    if (results_copy[i].artist.toLower() != request_.artist.toLower() && results_copy[i].album.toLower() != request_.album.toLower()) {
+    if (result_artist != request_artist && result_album != request_album) {
       results_copy[i].score -= 1.5;
     }
+
+    if (request_album.isEmpty() && result_artist != request_artist) {
+      results_copy[i].score -= 1;
+    }
+
+    // Decrease score if the search was based on artist and song title, and the resulting album is a compilation or live album.
+    // This is done since we can't match the album titles, and we want to prevent compilation or live albums from being picked before studio albums for streams.
+    if (request_album.isEmpty() && (
+        result_album.contains("hits") ||
+        result_album.contains("best") ||
+        result_album.contains("collection") ||
+        result_album.contains("classics") ||
+        result_album.contains("singles") ||
+        result_album.contains("bootleg") ||
+        result_album.contains("live") ||
+        result_album.contains("concert")
+        )) {
+      results_copy[i].score -= 1;
+    }
+
   }
 
   // Add results from the current provider to our pool

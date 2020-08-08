@@ -342,6 +342,9 @@ void TagReader::ReadFile(const QString &filename, pb::tagreader::SongMetadata *s
       if (mp4_tag->item("\251grp").isValid()) {
         Decode(mp4_tag->item("\251grp").toStringList().toString(" "), nullptr, song->mutable_grouping());
       }
+      if (mp4_tag->item("\251lyr").isValid()) {
+        Decode(mp4_tag->item("\251lyr").toStringList().toString(" "), nullptr, song->mutable_lyrics());
+      }
 
       if (mp4_tag->item(kMP4_OriginalYear_ID).isValid()) {
         song->set_originalyear(TStringToQString(mp4_tag->item(kMP4_OriginalYear_ID).toStringList().toString('\n')).left(4).toInt());
@@ -354,6 +357,10 @@ void TagReader::ReadFile(const QString &filename, pb::tagreader::SongMetadata *s
   else if (TagLib::ASF::File *file_asf = dynamic_cast<TagLib::ASF::File*>(fileref->file())) {
 
     song->set_bitdepth(file_asf->audioProperties()->bitsPerSample());
+
+    if (file_asf->tag()) {
+      Decode(file_asf->tag()->comment(), nullptr, song->mutable_comment());
+    }
 
     const TagLib::ASF::AttributeListMap &attributes_map = file_asf->tag()->attributeListMap();
 
@@ -617,6 +624,7 @@ bool TagReader::SaveFile(const QString &filename, const pb::tagreader::SongMetad
     tag->setItem("disk", TagLib::MP4::Item(song.disc() <= 0 -1 ? 0 : song.disc(), 0));
     tag->setItem("\251wrt", TagLib::StringList(song.composer().c_str()));
     tag->setItem("\251grp", TagLib::StringList(song.grouping().c_str()));
+    tag->setItem("\251lyr", TagLib::StringList(song.lyrics().c_str()));
     tag->setItem("aART", TagLib::StringList(song.albumartist().c_str()));
     tag->setItem("cpil", TagLib::StringList(song.compilation() ? "1" : "0"));
   }

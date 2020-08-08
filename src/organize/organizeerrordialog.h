@@ -2,6 +2,7 @@
  * Strawberry Music Player
  * This file was part of Clementine.
  * Copyright 2010, David Sansome <me@davidsansome.com>
+ * Copyright 2018-2019, Jonas Kvinge <jonas@jkvinge.net>
  *
  * Strawberry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +19,38 @@
  *
  */
 
+#ifndef ORGANISEERRORDIALOG_H
+#define ORGANISEERRORDIALOG_H
+
 #include "config.h"
 
-#include "osd.h"
-#include "core/logging.h"
-
+#include <QObject>
+#include <QDialog>
+#include <QWidget>
 #include <QString>
-#include <QImage>
-#include <QtDebug>
+#include <QStringList>
 
-void OSD::Init() {
-}
+#include "core/song.h"
 
-bool OSD::SupportsNativeNotifications() {
-  return false;
-}
+class Ui_OrganizeErrorDialog;
 
-bool OSD::SupportsTrayPopups() {
-  return true;
-}
+class OrganizeErrorDialog : public QDialog {
+  Q_OBJECT
 
-void OSD::ShowMessageNative(const QString&, const QString&, const QString&, const QImage&) {
-  qLog(Warning) << "not implemented";
-}
+ public:
+  explicit OrganizeErrorDialog(QWidget *parent = nullptr);
+  ~OrganizeErrorDialog() override;
+
+  enum OperationType {
+    Type_Copy,
+    Type_Delete,
+  };
+
+  void Show(OperationType type, const SongList &songs_with_errors, const QStringList &log = QStringList());
+  void Show(OperationType type, const QStringList &files_with_errors, const QStringList &log = QStringList());
+
+private:
+  Ui_OrganizeErrorDialog *ui_;
+};
+
+#endif  // ORGANISEERRORDIALOG_H

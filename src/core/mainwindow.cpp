@@ -68,6 +68,7 @@
 #include <QStackedWidget>
 #include <QTabBar>
 #include <QToolButton>
+#include <QClipboard>
 
 #include "core/logging.h"
 #include "core/closure.h"
@@ -98,14 +99,14 @@
 #include "dialogs/trackselectiondialog.h"
 #include "dialogs/edittagdialog.h"
 #include "dialogs/addstreamdialog.h"
-#include "organise/organisedialog.h"
+#include "organize/organizedialog.h"
 #include "widgets/fancytabwidget.h"
 #include "widgets/playingwidget.h"
 #include "widgets/volumeslider.h"
 #include "widgets/fileview.h"
 #include "widgets/multiloadingindicator.h"
-#include "widgets/osd.h"
 #include "widgets/trackslider.h"
+#include "osd/osdbase.h"
 #include "context/contextview.h"
 #include "context/contextalbumsview.h"
 #include "collection/collection.h"
@@ -200,7 +201,7 @@ const int kTrackSliderUpdateTimeMs = 200;
 const int kTrackPositionUpdateTimeMs = 1000;
 }
 
-MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, const CommandlineOptions &options, QWidget *parent) :
+MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd, const CommandlineOptions &options, QWidget *parent) :
       QMainWindow(parent),
       ui_(new Ui_MainWindow),
 #ifdef Q_OS_WIN
@@ -232,8 +233,8 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
         return cover_manager;
       }),
       equalizer_(new Equalizer),
-      organise_dialog_([=]() {
-        OrganiseDialog *dialog = new OrganiseDialog(app->task_manager(), app->collection_backend(), this);
+      organize_dialog_([=]() {
+        OrganizeDialog *dialog = new OrganizeDialog(app->task_manager(), app->collection_backend(), this);
         dialog->SetDestinationModel(app->collection()->model()->directory_model());
         return dialog;
       }),
@@ -254,9 +255,28 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #ifdef HAVE_TIDAL
       tidal_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Tidal), TidalSettingsPage::kSettingsGroup, SettingsDialog::Page_Tidal, this)),
 #endif
+      collection_show_all_(nullptr),
+      collection_show_duplicates_(nullptr),
+      collection_show_untagged_(nullptr),
       playlist_menu_(new QMenu(this)),
+      playlist_play_pause_(nullptr),
+      playlist_stop_after_(nullptr),
+      playlist_undoredo_(nullptr),
+      playlist_organize_(nullptr),
+      playlist_show_in_collection_(nullptr),
+      playlist_copy_to_collection_(nullptr),
+      playlist_move_to_collection_(nullptr),
+#ifndef Q_OS_WIN
+      playlist_copy_to_device_(nullptr),
+#endif
+      playlist_open_in_browser_(nullptr),
+      playlist_copy_url_(nullptr),
+      playlist_queue_(nullptr),
+      playlist_queue_play_next_(nullptr),
+      playlist_skip_(nullptr),
       playlist_add_to_another_(nullptr),
       playlistitem_actions_separator_(nullptr),
+      playlist_rescan_songs_(nullptr),
       collection_sort_model_(new QSortFilterProxyModel(this)),
       track_position_timer_(new QTimer(this)),
       track_slider_timer_(new QTimer(this)),
@@ -346,7 +366,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
   playlist_list_->SetApplication(app_);
 
-  organise_dialog_->SetDestinationModel(app_->collection()->model()->directory_model());
+  organize_dialog_->SetDestinationModel(app_->collection()->model()->directory_model());
 
   // Icons
   qLog(Debug) << "Creating UI";
@@ -382,8 +402,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   ui_->action_shuffle->setIcon(IconLoader::Load("media-playlist-shuffle"));
   ui_->action_remove_duplicates->setIcon(IconLoader::Load("list-remove"));
   ui_->action_remove_unavailable->setIcon(IconLoader::Load("list-remove"));
-
-  //ui_->action_remove_from_playlist->setIcon(IconLoader::Load("list-remove"));
+  ui_->action_remove_from_playlist->setIcon(IconLoader::Load("list-remove"));
 
   // Configure
 
@@ -427,7 +446,6 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(ui_->action_remove_unavailable, SIGNAL(triggered()), app_->playlist_manager(), SLOT(RemoveUnavailableCurrent()));
   connect(ui_->action_remove_from_playlist, SIGNAL(triggered()), SLOT(PlaylistRemoveCurrent()));
   connect(ui_->action_edit_track, SIGNAL(triggered()), SLOT(EditTracks()));
-  connect(ui_->action_rescan_songs, SIGNAL(triggered()), SLOT(RescanSongs()));
   connect(ui_->action_renumber_tracks, SIGNAL(triggered()), SLOT(RenumberTracks()));
   connect(ui_->action_selection_set_value, SIGNAL(triggered()), SLOT(SelectionSetValue()));
   connect(ui_->action_edit_value, SIGNAL(triggered()), SLOT(EditValue()));
@@ -457,6 +475,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   connect(ui_->action_abort_collection_scan, SIGNAL(triggered()), app_->collection(), SLOT(AbortScan()));
 #if defined(HAVE_GSTREAMER)
   connect(ui_->action_add_files_to_transcoder, SIGNAL(triggered()), SLOT(AddFilesToTranscoder()));
+  ui_->action_add_files_to_transcoder->setIcon(IconLoader::Load("tools-wizard"));
 #else
   ui_->action_add_files_to_transcoder->setDisabled(true);
 #endif
@@ -632,8 +651,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
   playlist_menu_->addAction(ui_->action_edit_value);
   playlist_menu_->addAction(ui_->action_renumber_tracks);
   playlist_menu_->addAction(ui_->action_selection_set_value);
+#if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
   playlist_menu_->addAction(ui_->action_auto_complete_tags);
-  playlist_menu_->addAction(ui_->action_rescan_songs);
+#endif
+  playlist_rescan_songs_ = playlist_menu_->addAction(IconLoader::Load("view-refresh"), tr("Rescan song(s)..."), this, SLOT(RescanSongs()));
+  playlist_menu_->addAction(playlist_rescan_songs_);
 #ifdef HAVE_GSTREAMER
   playlist_menu_->addAction(ui_->action_add_files_to_transcoder);
 #endif
@@ -643,10 +665,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSD *osd, co
 #endif
   playlist_copy_to_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy to collection..."), this, SLOT(PlaylistCopyToCollection()));
   playlist_move_to_collection_ = playlist_menu_->addAction(IconLoader::Load("go-jump"), tr("Move to collection..."), this, SLOT(PlaylistMoveToCollection()));
-  playlist_organise_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Organise files..."), this, SLOT(PlaylistMoveToCollection()));
+  playlist_organize_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Organize files..."), this, SLOT(PlaylistMoveToCollection()));
   playlist_open_in_browser_ = playlist_menu_->addAction(IconLoader::Load("document-open-folder"), tr("Show in file browser..."), this, SLOT(PlaylistOpenInBrowser()));
   playlist_open_in_browser_->setVisible(false);
   playlist_show_in_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-find"), tr("Show in collection..."), this, SLOT(ShowInCollection()));
+  playlist_copy_url_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy URL(s)..."), this, SLOT(PlaylistCopyUrl()));
   playlist_menu_->addSeparator();
   playlistitem_actions_separator_ = playlist_menu_->addSeparator();
   playlist_menu_->addAction(ui_->action_clear_playlist);
@@ -966,6 +989,8 @@ void MainWindow::ReloadSettings() {
     }
   }
 
+  osd_->ReloadSettings();
+
   album_cover_choice_controller_->search_cover_auto_action()->setChecked(settings_.value("search_for_cover_auto", true).toBool());
 
 #ifdef HAVE_SUBSONIC
@@ -1000,7 +1025,6 @@ void MainWindow::ReloadAllSettings() {
   app_->ReloadSettings();
   app_->collection()->ReloadSettings();
   app_->player()->ReloadSettings();
-  osd_->ReloadSettings();
   collection_view_->ReloadSettings();
   ui_->playlist->view()->ReloadSettings();
   app_->playlist_manager()->playlist_container()->ReloadSettings();
@@ -1624,14 +1648,14 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   }
 
   // Are we allowed to pause?
-  if (index.isValid()) {
+  if (source_index.isValid()) {
     playlist_play_pause_->setEnabled(app_->playlist_manager()->current()->current_row() != source_index.row() || !(app_->playlist_manager()->current()->item_at(source_index.row())->options() & PlaylistItem::PauseDisabled));
   }
   else {
     playlist_play_pause_->setEnabled(false);
   }
 
-  playlist_stop_after_->setEnabled(index.isValid());
+  playlist_stop_after_->setEnabled(source_index.isValid());
 
   // Are any of the selected songs editable or queued?
   QModelIndexList selection = ui_->playlist->view()->selectionModel()->selectedRows();
@@ -1643,6 +1667,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   int in_skipped = 0;
   int not_in_skipped = 0;
   int local_songs = 0;
+  int collection_songs = 0;
 
   for (const QModelIndex &idx : selection) {
 
@@ -1653,6 +1678,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
     if (!item) continue;
 
     if (item->Metadata().url().isLocalFile()) ++local_songs;
+    if (item->Metadata().source() == Song::Source_Collection) ++collection_songs;
 
     if (item->Metadata().has_cue()) {
       cue_selected = true;
@@ -1670,29 +1696,32 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   }
 
   // this is available when we have one or many files and at least one of those is not CUE related
-  ui_->action_edit_track->setEnabled(editable);
-  ui_->action_edit_track->setVisible(editable);
+  ui_->action_edit_track->setEnabled(editable > 0);
+  ui_->action_edit_track->setVisible(editable > 0);
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
-  ui_->action_auto_complete_tags->setEnabled(editable);
-  ui_->action_auto_complete_tags->setVisible(editable);
-#else
-  ui_->action_auto_complete_tags->setEnabled(false);
-  ui_->action_auto_complete_tags->setVisible(false);
+  ui_->action_auto_complete_tags->setEnabled(editable > 0);
+  ui_->action_auto_complete_tags->setVisible(editable > 0);
 #endif
 
-  ui_->action_rescan_songs->setEnabled(editable);
-  ui_->action_rescan_songs->setVisible(editable);
+  playlist_rescan_songs_->setEnabled(editable > 0);
+  playlist_rescan_songs_->setVisible(editable > 0);
+
+#ifdef HAVE_GSTREAMER
+  ui_->action_add_files_to_transcoder->setEnabled(editable);
+  ui_->action_add_files_to_transcoder->setVisible(editable);
+#endif
 
   // the rest of the read / write actions work only when there are no CUEs involved
   if (cue_selected) editable = 0;
 
-  playlist_open_in_browser_->setVisible(local_songs == selected);
+  playlist_open_in_browser_->setVisible(selected > 0 && local_songs == selected);
 
   bool track_column = (index.column() == Playlist::Column_Track);
   ui_->action_renumber_tracks->setVisible(editable >= 2 && track_column);
   ui_->action_selection_set_value->setVisible(editable >= 2 && !track_column);
-  ui_->action_edit_value->setVisible(editable);
-  ui_->action_remove_from_playlist->setEnabled(!selection.isEmpty());
+  ui_->action_edit_value->setVisible(editable > 0);
+  ui_->action_remove_from_playlist->setEnabled(selected > 0);
+  ui_->action_remove_from_playlist->setVisible(selected > 0);
 
   playlist_show_in_collection_->setVisible(false);
   playlist_copy_to_collection_->setVisible(false);
@@ -1700,7 +1729,9 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
 #if defined(HAVE_GSTREAMER) && !defined(Q_OS_WIN)
   playlist_copy_to_device_->setVisible(false);
 #endif
-  playlist_organise_->setVisible(false);
+  playlist_organize_->setVisible(false);
+
+  playlist_copy_url_->setVisible(selected > 0);
 
   if (selected < 1) {
     playlist_queue_->setVisible(false);
@@ -1743,7 +1774,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   else {
 
     Playlist::Column column = static_cast<Playlist::Column>(index.column());
-    bool column_is_editable = Playlist::column_is_editable(column) && editable;
+    bool column_is_editable = Playlist::column_is_editable(column) && editable > 0;
 
     ui_->action_selection_set_value->setVisible(ui_->action_selection_set_value->isVisible() && column_is_editable);
     ui_->action_edit_value->setVisible(ui_->action_edit_value->isVisible() && column_is_editable);
@@ -1758,17 +1789,17 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
     // Is it a collection item?
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (item && item->IsLocalCollectionItem() && item->Metadata().id() != -1) {
-      playlist_organise_->setVisible(editable);
-      playlist_show_in_collection_->setVisible(editable);
+      playlist_organize_->setVisible(editable > 0);
+      playlist_show_in_collection_->setVisible(editable > 0);
       playlist_open_in_browser_->setVisible(true);
     }
     else {
-      playlist_copy_to_collection_->setVisible(editable);
-      playlist_move_to_collection_->setVisible(editable);
+      playlist_copy_to_collection_->setVisible(editable > 0);
+      playlist_move_to_collection_->setVisible(editable > 0);
     }
 
 #if defined(HAVE_GSTREAMER) && !defined(Q_OS_WIN)
-    playlist_copy_to_device_->setVisible(editable);
+    playlist_copy_to_device_->setVisible(editable > 0);
 #endif
 
     // Remove old item actions, if any.
@@ -1786,31 +1817,35 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   if (playlist_add_to_another_ != nullptr) {
     playlist_menu_->removeAction(playlist_add_to_another_);
     delete playlist_add_to_another_;
+    playlist_add_to_another_ = nullptr;
   }
 
-  // create the playlist submenu
-  QMenu *add_to_another_menu = new QMenu(tr("Add to another playlist"), this);
-  add_to_another_menu->setIcon(IconLoader::Load("list-add"));
+  // Create the playlist submenu if songs are selected.
+  if (selected > 0) {
+    QMenu *add_to_another_menu = new QMenu(tr("Add to another playlist"), this);
+    add_to_another_menu->setIcon(IconLoader::Load("list-add"));
 
-  for (const PlaylistBackend::Playlist &playlist : app_->playlist_backend()->GetAllOpenPlaylists()) {
-    // don't add the current playlist
-    if (playlist.id != app_->playlist_manager()->current()->id()) {
-      QAction *existing_playlist = new QAction(this);
-      existing_playlist->setText(playlist.name);
-      existing_playlist->setData(playlist.id);
-      add_to_another_menu->addAction(existing_playlist);
+    for (const PlaylistBackend::Playlist &playlist : app_->playlist_backend()->GetAllOpenPlaylists()) {
+      // don't add the current playlist
+      if (playlist.id != app_->playlist_manager()->current()->id()) {
+        QAction *existing_playlist = new QAction(this);
+        existing_playlist->setText(playlist.name);
+        existing_playlist->setData(playlist.id);
+        add_to_another_menu->addAction(existing_playlist);
+      }
     }
+
+    add_to_another_menu->addSeparator();
+    // add to a new playlist
+    QAction *new_playlist = new QAction(this);
+    new_playlist->setText(tr("New playlist"));
+    new_playlist->setData(-1);  // fake id
+    add_to_another_menu->addAction(new_playlist);
+    playlist_add_to_another_ = playlist_menu_->insertMenu(ui_->action_remove_from_playlist, add_to_another_menu);
+
+    connect(add_to_another_menu, SIGNAL(triggered(QAction*)), SLOT(AddToPlaylist(QAction*)));
+
   }
-
-  add_to_another_menu->addSeparator();
-  // add to a new playlist
-  QAction *new_playlist = new QAction(this);
-  new_playlist->setText(tr("New playlist"));
-  new_playlist->setData(-1);  // fake id
-  add_to_another_menu->addAction(new_playlist);
-  playlist_add_to_another_ = playlist_menu_->insertMenu(ui_->action_remove_from_playlist, add_to_another_menu);
-
-  connect(add_to_another_menu, SIGNAL(triggered(QAction*)), SLOT(AddToPlaylist(QAction*)));
 
   playlist_menu_->popup(global_pos);
 
@@ -1839,8 +1874,13 @@ void MainWindow::RescanSongs() {
     const QModelIndex source_index = app_->playlist_manager()->current()->proxy()->mapToSource(proxy_index);
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item(app_->playlist_manager()->current()->item_at(source_index.row()));
-    if (!item || !item->IsLocalCollectionItem()) continue;
-    songs << item->Metadata();
+    if (!item) continue;
+    if (item->IsLocalCollectionItem()) {
+      songs << item->Metadata();
+    }
+    else if (item->Metadata().source() == Song::Source_LocalFile) {
+      item->Reload();
+    }
   }
 
   if (songs.isEmpty()) return;
@@ -2280,29 +2320,29 @@ void MainWindow::PlayingWidgetPositionChanged(const bool above_status_bar) {
 
 void MainWindow::CopyFilesToCollection(const QList<QUrl> &urls) {
 
-  organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
-  organise_dialog_->SetUrls(urls);
-  organise_dialog_->SetCopy(true);
-  organise_dialog_->show();
+  organize_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
+  organize_dialog_->SetUrls(urls);
+  organize_dialog_->SetCopy(true);
+  organize_dialog_->show();
 
 }
 
 void MainWindow::MoveFilesToCollection(const QList<QUrl> &urls) {
 
-  organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
-  organise_dialog_->SetUrls(urls);
-  organise_dialog_->SetCopy(false);
-  organise_dialog_->show();
+  organize_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
+  organize_dialog_->SetUrls(urls);
+  organize_dialog_->SetCopy(false);
+  organize_dialog_->show();
 
 }
 
 void MainWindow::CopyFilesToDevice(const QList<QUrl> &urls) {
 
 #if defined(HAVE_GSTREAMER) && !defined(Q_OS_WIN)
-  organise_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
-  organise_dialog_->SetCopy(true);
-  if (organise_dialog_->SetUrls(urls))
-    organise_dialog_->show();
+  organize_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
+  organize_dialog_->SetCopy(true);
+  if (organize_dialog_->SetUrls(urls))
+    organize_dialog_->show();
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
@@ -2329,14 +2369,14 @@ void MainWindow::EditFileTags(const QList<QUrl> &urls) {
 }
 
 void MainWindow::PlaylistCopyToCollection() {
-  PlaylistOrganiseSelected(true);
+  PlaylistOrganizeSelected(true);
 }
 
 void MainWindow::PlaylistMoveToCollection() {
-  PlaylistOrganiseSelected(false);
+  PlaylistOrganizeSelected(false);
 }
 
-void MainWindow::PlaylistOrganiseSelected(const bool copy) {
+void MainWindow::PlaylistOrganizeSelected(const bool copy) {
 
   SongList songs;
   for (const QModelIndex &proxy_index : ui_->playlist->view()->selectionModel()->selectedRows()) {
@@ -2350,10 +2390,10 @@ void MainWindow::PlaylistOrganiseSelected(const bool copy) {
   }
   if (songs.isEmpty()) return;
 
-  organise_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
-  organise_dialog_->SetSongs(songs);
-  organise_dialog_->SetCopy(copy);
-  organise_dialog_->show();
+  organize_dialog_->SetDestinationModel(app_->collection_model()->directory_model());
+  organize_dialog_->SetSongs(songs);
+  organize_dialog_->SetCopy(copy);
+  organize_dialog_->show();
 
 }
 
@@ -2367,6 +2407,25 @@ void MainWindow::PlaylistOpenInBrowser() {
   }
 
   Utilities::OpenInFileBrowser(urls);
+
+}
+
+void MainWindow::PlaylistCopyUrl() {
+
+  QList<QUrl> urls;
+  for (const QModelIndex &proxy_index : ui_->playlist->view()->selectionModel()->selectedRows()) {
+    const QModelIndex source_index = app_->playlist_manager()->current()->proxy()->mapToSource(proxy_index);
+    if (!source_index.isValid()) continue;
+    PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
+    if (!item) continue;
+    urls << item->StreamUrl();
+  }
+
+  if (urls.count() > 0) {
+    QMimeData *mime_data = new QMimeData;
+    mime_data->setUrls(urls);
+    QApplication::clipboard()->setMimeData(mime_data);
+  }
 
 }
 
@@ -2421,10 +2480,10 @@ void MainWindow::PlaylistCopyToDevice() {
   }
   if (songs.isEmpty()) return;
 
-  organise_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
-  organise_dialog_->SetCopy(true);
-  if (organise_dialog_->SetSongs(songs))
-    organise_dialog_->show();
+  organize_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
+  organize_dialog_->SetCopy(true);
+  if (organize_dialog_->SetSongs(songs))
+    organize_dialog_->show();
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
@@ -2455,7 +2514,7 @@ void MainWindow::ShowCoverManager() {
 
 SettingsDialog *MainWindow::CreateSettingsDialog() {
 
-  SettingsDialog *settings_dialog = new SettingsDialog(app_, this);
+  SettingsDialog *settings_dialog = new SettingsDialog(app_, osd_, this);
 #ifdef HAVE_GLOBALSHORTCUTS
   settings_dialog->SetGlobalShortcutManager(global_shortcuts_);
 #endif
@@ -2634,7 +2693,7 @@ void MainWindow::AutoCompleteTagsAccepted() {
 
 }
 
-void MainWindow::HandleNotificationPreview(OSD::Behaviour type, QString line1, QString line2) {
+void MainWindow::HandleNotificationPreview(OSDBase::Behaviour type, QString line1, QString line2) {
 
   if (!app_->playlist_manager()->current()->GetAllSongs().isEmpty()) {
     // Show a preview notification for the first song in the current playlist

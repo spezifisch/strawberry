@@ -1902,7 +1902,7 @@ void MainWindow::EditTracks() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item(app_->playlist_manager()->current()->item_at(source_index.row()));
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (song.IsEditable()) {
       songs << song;
       items << item;
@@ -1939,7 +1939,7 @@ void MainWindow::RenumberTracks() {
 
   // if first selected song has a track number set, start from that offset
   if (!indexes.isEmpty()) {
-    const Song first_song = app_->playlist_manager()->current()->item_at(indexes[0].row())->Metadata();
+    const Song first_song = app_->playlist_manager()->current()->item_at(indexes[0].row())->OriginalMetadata();
     if (first_song.track() > 0) track = first_song.track();
   }
 
@@ -1948,7 +1948,7 @@ void MainWindow::RenumberTracks() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (song.IsEditable()) {
       song.set_track(track);
       TagReaderReply *reply = TagReaderClient::Instance()->SaveFile(song.url().toLocalFile(), song);
@@ -1978,7 +1978,7 @@ void MainWindow::SelectionSetValue() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (!song.is_valid() || !song.url().isLocalFile()) continue;
     if (Playlist::set_column_value(song, column, column_value)) {
       TagReaderReply *reply = TagReaderClient::Instance()->SaveFile(song.url().toLocalFile(), song);
@@ -2084,13 +2084,13 @@ void MainWindow::ShowInCollection() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (item && item->IsLocalCollectionItem()) {
-      songs << item->Metadata();
+      songs << item->OriginalMetadata();
       break;
     }
   }
   QString search;
   if (!songs.isEmpty()) {
-    search ="artist:" + songs.first().artist() + " album:" + songs.first().album();
+    search = "artist:" + songs.first().artist() + " album:" + songs.first().album();
   }
   collection_view_->filter()->ShowInCollection(search);
 
@@ -2281,7 +2281,7 @@ void MainWindow::AddFilesToTranscoder() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item(app_->playlist_manager()->current()->item_at(source_index.row()));
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (!song.is_valid() || !song.url().isLocalFile()) continue;
     filenames << song.url().toLocalFile();
   }
@@ -2387,7 +2387,7 @@ void MainWindow::PlaylistOrganizeSelected(const bool copy) {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (!song.is_valid() || !song.url().isLocalFile()) continue;
     songs << song;
   }
@@ -2477,7 +2477,7 @@ void MainWindow::PlaylistCopyToDevice() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_index.row());
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (!song.is_valid() || !song.url().isLocalFile()) continue;
     songs << song;
   }
@@ -2667,7 +2667,7 @@ void MainWindow::AutoCompleteTags() {
     if (!source_index.isValid()) continue;
     PlaylistItemPtr item(app_->playlist_manager()->current()->item_at(source_index.row()));
     if (!item) continue;
-    Song song = item->Metadata();
+    Song song = item->OriginalMetadata();
     if (song.IsEditable()) {
       songs << song;
       autocomplete_tag_items_ << item;

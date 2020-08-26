@@ -37,6 +37,7 @@
 #include "urlhandler.h"
 #include "engine/engine_fwd.h"
 #include "engine/enginetype.h"
+#include "playlist/playlist.h"
 #include "playlist/playlistitem.h"
 #include "settings/behavioursettingspage.h"
 
@@ -72,20 +73,20 @@ class PlayerInterface : public QObject {
   virtual void ReloadSettings() = 0;
 
   // Manual track change to the specified track
-  virtual void PlayAt(int i, Engine::TrackChangeFlags change, bool reshuffle) = 0;
+  virtual void PlayAt(const int index, Engine::TrackChangeFlags change, const Playlist::AutoScroll autoscroll, const bool reshuffle) = 0;
 
   // If there's currently a song playing, pause it, otherwise play the track that was playing last, or the first one on the playlist
-  virtual void PlayPause() = 0;
+  virtual void PlayPause(Playlist::AutoScroll autoscroll = Playlist::AutoScroll_Always) = 0;
   virtual void RestartOrPrevious() = 0;
 
   // Skips this track.  Might load more of the current radio station.
   virtual void Next() = 0;
 
   virtual void Previous() = 0;
-  virtual void SetVolume(int value) = 0;
+  virtual void SetVolume(const int value) = 0;
   virtual void VolumeUp() = 0;
   virtual void VolumeDown() = 0;
-  virtual void SeekTo(int seconds) = 0;
+  virtual void SeekTo(const int seconds) = 0;
   // Moves the position of the currently playing song five seconds forward.
   virtual void SeekForward() = 0;
   // Moves the position of the currently playing song five seconds backwards.
@@ -109,14 +110,14 @@ class PlayerInterface : public QObject {
   void PlaylistFinished();
   void VolumeEnabled(bool);
   void VolumeChanged(int volume);
-  void Error(const QString &message);
+  void Error(QString message);
   void TrackSkipped(PlaylistItemPtr old_track);
   // Emitted when there's a manual change to the current's track position.
   void Seeked(qlonglong microseconds);
 
   // Emitted when Player has processed a request to play another song.
   // This contains the URL of the song and a flag saying whether it was able to play the song.
-  void SongChangeRequestProcessed(const QUrl &url, bool valid);
+  void SongChangeRequestProcessed(QUrl url, bool valid);
 
   // The toggle parameter is true when user requests to toggle visibility for Pretty OSD
   void ForceShowOSD(Song, bool toggle);
@@ -158,15 +159,15 @@ class Player : public PlayerInterface {
  public slots:
   void ReloadSettings() override;
 
-  void PlayAt(int i, Engine::TrackChangeFlags change, bool reshuffle) override;
-  void PlayPause() override;
+  void PlayAt(const int index, Engine::TrackChangeFlags change, const Playlist::AutoScroll autoscroll, const bool reshuffle) override;
+  void PlayPause(Playlist::AutoScroll autoscroll = Playlist::AutoScroll_Always) override;
   void RestartOrPrevious() override;
   void Next() override;
   void Previous() override;
-  void SetVolume(int value) override;
+  void SetVolume(const int value) override;
   void VolumeUp() override { SetVolume(GetVolume() + 5); }
   void VolumeDown() override { SetVolume(GetVolume() - 5); }
-  void SeekTo(int seconds) override;
+  void SeekTo(const int seconds) override;
   void SeekForward() override;
   void SeekBackward() override;
 
@@ -176,7 +177,6 @@ class Player : public PlayerInterface {
   void Pause() override;
   void Stop(bool stop_after = false) override;
   void StopAfterCurrent();
-  void IntroPointReached();
   void Play() override;
   void ShowOSD() override;
   void TogglePrettyOSD();
@@ -187,15 +187,15 @@ class Player : public PlayerInterface {
   void EngineChanged(Engine::EngineType enginetype);
 
  private slots:
-  void EngineStateChanged(Engine::State);
+  void EngineStateChanged(const Engine::State);
   void EngineMetadataReceived(const Engine::SimpleMetaBundle &bundle);
   void TrackAboutToEnd();
   void TrackEnded();
   // Play the next item on the playlist - disregarding radio stations like last.fm that might have more tracks.
-  void NextItem(Engine::TrackChangeFlags change);
-  void PreviousItem(Engine::TrackChangeFlags change);
+  void NextItem(const Engine::TrackChangeFlags change, const Playlist::AutoScroll autoscroll);
+  void PreviousItem(const Engine::TrackChangeFlags change);
 
-  void NextInternal(Engine::TrackChangeFlags);
+  void NextInternal(const Engine::TrackChangeFlags, const Playlist::AutoScroll autoscroll);
 
   void FatalError();
   void ValidSongRequested(const QUrl&);
@@ -206,7 +206,7 @@ class Player : public PlayerInterface {
 
  private:
   // Returns true if we were supposed to stop after this track.
-  bool HandleStopAfter();
+  bool HandleStopAfter(const Playlist::AutoScroll autoscroll);
 
  private:
   Application *app_;
@@ -222,6 +222,7 @@ class Player : public PlayerInterface {
   PlaylistItemPtr current_item_;
 
   Engine::TrackChangeFlags stream_change_type_;
+  Playlist::AutoScroll autoscroll_;
   Engine::State last_state_;
   int nb_errors_received_;
 

@@ -66,7 +66,13 @@ bool ChartLyricsProvider::StartSearch(const QString &artist, const QString&, con
 
   QUrl url(kUrlSearch);
   url.setQuery(url_query);
-  QNetworkReply *reply = network_->get(QNetworkRequest(url));
+  QNetworkRequest req(url);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+  req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#else
+  req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+  QNetworkReply *reply = network_->get(req);
   replies_ << reply;
   connect(reply, &QNetworkReply::finished, [=] { HandleSearchReply(reply, id, artist, title); });
 
@@ -103,7 +109,7 @@ void ChartLyricsProvider::HandleSearchReply(QNetworkReply *reply, const quint64 
 
   while (!reader.atEnd()) {
     QXmlStreamReader::TokenType type = reader.readNext();
-    QStringRef name = reader.name();
+    QString name = reader.name().toString();
     if (type == QXmlStreamReader::StartElement) {
       if (name == "GetLyricResult") {
         result = LyricsSearchResult();

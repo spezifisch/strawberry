@@ -91,6 +91,8 @@
 #include "database.h"
 #include "player.h"
 #include "appearance.h"
+#include "filesystemmusicstorage.h"
+#include "deletefiles.h"
 #include "engine/enginetype.h"
 #include "engine/enginebase.h"
 #include "engine/engine_fwd.h"
@@ -100,6 +102,7 @@
 #include "dialogs/trackselectiondialog.h"
 #include "dialogs/edittagdialog.h"
 #include "dialogs/addstreamdialog.h"
+#include "dialogs/deleteconfirmationdialog.h"
 #include "organize/organizedialog.h"
 #include "widgets/fancytabwidget.h"
 #include "widgets/playingwidget.h"
@@ -261,15 +264,16 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
       playlist_play_pause_(nullptr),
       playlist_stop_after_(nullptr),
       playlist_undoredo_(nullptr),
-      playlist_organize_(nullptr),
+      playlist_copy_url_(nullptr),
       playlist_show_in_collection_(nullptr),
       playlist_copy_to_collection_(nullptr),
       playlist_move_to_collection_(nullptr),
+      playlist_open_in_browser_(nullptr),
+      playlist_organize_(nullptr),
 #ifndef Q_OS_WIN
       playlist_copy_to_device_(nullptr),
 #endif
-      playlist_open_in_browser_(nullptr),
-      playlist_copy_url_(nullptr),
+      playlist_delete_(nullptr),
       playlist_queue_(nullptr),
       playlist_queue_play_next_(nullptr),
       playlist_skip_(nullptr),
@@ -286,7 +290,8 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
       doubleclick_addmode_(BehaviourSettingsPage::AddBehaviour_Append),
       doubleclick_playmode_(BehaviourSettingsPage::PlayBehaviour_Never),
       menu_playmode_(BehaviourSettingsPage::PlayBehaviour_Never),
-      exit_count_(0)
+      exit_count_(0),
+      delete_files_(false)
       {
 
   qLog(Debug) << "Starting";
@@ -523,7 +528,6 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   connect(app_->player(), SIGNAL(Stopped()), SLOT(MediaStopped()));
   connect(app_->player(), SIGNAL(Seeked(qlonglong)), SLOT(Seeked(qlonglong)));
   connect(app_->player(), SIGNAL(TrackSkipped(PlaylistItemPtr)), SLOT(TrackSkipped(PlaylistItemPtr)));
-  connect(this, SIGNAL(IntroPointReached()), app_->player(), SLOT(IntroPointReached()));
   connect(app_->player(), SIGNAL(VolumeChanged(int)), SLOT(VolumeChanged(int)));
 
   connect(app_->player(), SIGNAL(Paused()), ui_->playlist, SLOT(ActivePaused()));
@@ -544,11 +548,11 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   connect(app_->playlist_manager(), SIGNAL(EditingFinished(QModelIndex)), SLOT(PlaylistEditFinished(QModelIndex)));
   connect(app_->playlist_manager(), SIGNAL(Error(QString)), SLOT(ShowErrorDialog(QString)));
   connect(app_->playlist_manager(), SIGNAL(SummaryTextChanged(QString)), ui_->playlist_summary, SLOT(setText(QString)));
-  connect(app_->playlist_manager(), SIGNAL(PlayRequested(QModelIndex)), SLOT(PlayIndex(QModelIndex)));
+  connect(app_->playlist_manager(), SIGNAL(PlayRequested(QModelIndex, Playlist::AutoScroll)), SLOT(PlayIndex(QModelIndex, Playlist::AutoScroll)));
 
   connect(ui_->playlist->view(), SIGNAL(doubleClicked(QModelIndex)), SLOT(PlaylistDoubleClick(QModelIndex)));
-  connect(ui_->playlist->view(), SIGNAL(PlayItem(QModelIndex)), SLOT(PlayIndex(QModelIndex)));
-  connect(ui_->playlist->view(), SIGNAL(PlayPause()), app_->player(), SLOT(PlayPause()));
+  connect(ui_->playlist->view(), SIGNAL(PlayItem(QModelIndex, Playlist::AutoScroll)), SLOT(PlayIndex(QModelIndex, Playlist::AutoScroll)));
+  connect(ui_->playlist->view(), SIGNAL(PlayPause(Playlist::AutoScroll)), app_->player(), SLOT(PlayPause(Playlist::AutoScroll)));
   connect(ui_->playlist->view(), SIGNAL(RightClicked(QPoint, QModelIndex)), SLOT(PlaylistRightClick(QPoint, QModelIndex)));
   connect(ui_->playlist->view(), SIGNAL(SeekForward()), app_->player(), SLOT(SeekForward()));
   connect(ui_->playlist->view(), SIGNAL(SeekBackward()), app_->player(), SLOT(SeekBackward()));
@@ -659,16 +663,16 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   playlist_menu_->addAction(ui_->action_add_files_to_transcoder);
 #endif
   playlist_menu_->addSeparator();
+  playlist_copy_url_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy URL(s)..."), this, SLOT(PlaylistCopyUrl()));
+  playlist_show_in_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-find"), tr("Show in collection..."), this, SLOT(ShowInCollection()));
+  playlist_open_in_browser_ = playlist_menu_->addAction(IconLoader::Load("document-open-folder"), tr("Show in file browser..."), this, SLOT(PlaylistOpenInBrowser()));
+  playlist_organize_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Organize files..."), this, SLOT(PlaylistMoveToCollection()));
+  playlist_copy_to_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy to collection..."), this, SLOT(PlaylistCopyToCollection()));
+  playlist_move_to_collection_ = playlist_menu_->addAction(IconLoader::Load("go-jump"), tr("Move to collection..."), this, SLOT(PlaylistMoveToCollection()));
 #if defined(HAVE_GSTREAMER) && !defined(Q_OS_WIN)
   playlist_copy_to_device_ = playlist_menu_->addAction(IconLoader::Load("device"), tr("Copy to device..."), this, SLOT(PlaylistCopyToDevice()));
 #endif
-  playlist_copy_to_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy to collection..."), this, SLOT(PlaylistCopyToCollection()));
-  playlist_move_to_collection_ = playlist_menu_->addAction(IconLoader::Load("go-jump"), tr("Move to collection..."), this, SLOT(PlaylistMoveToCollection()));
-  playlist_organize_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Organize files..."), this, SLOT(PlaylistMoveToCollection()));
-  playlist_open_in_browser_ = playlist_menu_->addAction(IconLoader::Load("document-open-folder"), tr("Show in file browser..."), this, SLOT(PlaylistOpenInBrowser()));
-  playlist_open_in_browser_->setVisible(false);
-  playlist_show_in_collection_ = playlist_menu_->addAction(IconLoader::Load("edit-find"), tr("Show in collection..."), this, SLOT(ShowInCollection()));
-  playlist_copy_url_ = playlist_menu_->addAction(IconLoader::Load("edit-copy"), tr("Copy URL(s)..."), this, SLOT(PlaylistCopyUrl()));
+  playlist_delete_ = playlist_menu_->addAction(IconLoader::Load("edit-delete"), tr("Delete from disk..."), this, SLOT(PlaylistDelete()));
   playlist_menu_->addSeparator();
   playlistitem_actions_separator_ = playlist_menu_->addSeparator();
   playlist_menu_->addAction(ui_->action_clear_playlist);
@@ -989,6 +993,10 @@ void MainWindow::ReloadSettings() {
       if (tray_icon_ && tray_icon_->MuteEnabled()) tray_icon_->SetMuteEnabled(false);
     }
   }
+
+  s.beginGroup(PlaylistSettingsPage::kSettingsGroup);
+  delete_files_ = s.value("delete_files", false).toBool();
+  s.endGroup();
 
   osd_->ReloadSettings();
 
@@ -1356,41 +1364,41 @@ void MainWindow::ResumePlaybackSeek(const int playback_position) {
 
 }
 
-void MainWindow::PlayIndex(const QModelIndex &index) {
+void MainWindow::PlayIndex(const QModelIndex &idx, Playlist::AutoScroll autoscroll) {
 
-  if (!index.isValid()) return;
+  if (!idx.isValid()) return;
 
-  int row = index.row();
-  if (index.model() == app_->playlist_manager()->current()->proxy()) {
+  int row = idx.row();
+  if (idx.model() == app_->playlist_manager()->current()->proxy()) {
     // The index was in the proxy model (might've been filtered), so we need to get the actual row in the source model.
-    row = app_->playlist_manager()->current()->proxy()->mapToSource(index).row();
+    row = app_->playlist_manager()->current()->proxy()->mapToSource(idx).row();
   }
 
   app_->playlist_manager()->SetActiveToCurrent();
-  app_->player()->PlayAt(row, Engine::Manual, true);
+  app_->player()->PlayAt(row, Engine::Manual, autoscroll, true);
 
 }
 
-void MainWindow::PlaylistDoubleClick(const QModelIndex &index) {
+void MainWindow::PlaylistDoubleClick(const QModelIndex &idx) {
 
-  if (!index.isValid()) return;
+  if (!idx.isValid()) return;
 
-  int row = index.row();
-  if (index.model() == app_->playlist_manager()->current()->proxy()) {
+  int row = idx.row();
+  if (idx.model() == app_->playlist_manager()->current()->proxy()) {
     // The index was in the proxy model (might've been filtered), so we need to get the actual row in the source model.
-    row = app_->playlist_manager()->current()->proxy()->mapToSource(index).row();
+    row = app_->playlist_manager()->current()->proxy()->mapToSource(idx).row();
   }
 
   switch (doubleclick_playlist_addmode_) {
     case BehaviourSettingsPage::PlaylistAddBehaviour_Play:
       app_->playlist_manager()->SetActiveToCurrent();
-      app_->player()->PlayAt(row, Engine::Manual, true);
+      app_->player()->PlayAt(row, Engine::Manual, Playlist::AutoScroll_Never, true);
       break;
 
     case BehaviourSettingsPage::PlaylistAddBehaviour_Enqueue:
-      app_->playlist_manager()->current()->queue()->ToggleTracks(QModelIndexList() << index);
+      app_->playlist_manager()->current()->queue()->ToggleTracks(QModelIndexList() << idx);
       if (app_->player()->GetState() != Engine::Playing) {
-        app_->player()->PlayAt(app_->playlist_manager()->current()->queue()->TakeNext(), Engine::Manual, true);
+        app_->player()->PlayAt(app_->playlist_manager()->current()->queue()->TakeNext(), Engine::Manual, Playlist::AutoScroll_Never, true);
       }
       break;
   }
@@ -1473,7 +1481,7 @@ void MainWindow::FilePathChanged(const QString &path) {
   settings_.setValue("file_path", path);
 }
 
-void MainWindow::Seeked(qlonglong microseconds) {
+void MainWindow::Seeked(const qlonglong microseconds) {
 
   const int position = microseconds / kUsecPerSec;
   const int length = app_->player()->GetCurrentItem()->Metadata().length_nanosec() / kNsecPerSec;
@@ -1519,7 +1527,7 @@ void MainWindow::UpdateTrackSliderPosition() {
 
 }
 
-void MainWindow::ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeData *mimedata) const {
+void MainWindow::ApplyAddBehaviour(const BehaviourSettingsPage::AddBehaviour b, MimeData *mimedata) const {
 
   switch (b) {
       case BehaviourSettingsPage::AddBehaviour_Append:
@@ -1543,7 +1551,7 @@ void MainWindow::ApplyAddBehaviour(BehaviourSettingsPage::AddBehaviour b, MimeDa
   }
 }
 
-void MainWindow::ApplyPlayBehaviour(BehaviourSettingsPage::PlayBehaviour b, MimeData *mimedata) const {
+void MainWindow::ApplyPlayBehaviour(const BehaviourSettingsPage::PlayBehaviour b, MimeData *mimedata) const {
 
   switch (b) {
     case BehaviourSettingsPage::PlayBehaviour_Always:
@@ -1733,6 +1741,7 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
   playlist_copy_to_device_->setVisible(false);
 #endif
   playlist_organize_->setVisible(false);
+  playlist_delete_->setVisible(false);
 
   playlist_copy_url_->setVisible(selected > 0);
 
@@ -1805,6 +1814,10 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
     playlist_copy_to_device_->setVisible(editable > 0);
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    playlist_delete_->setVisible(delete_files_ && editable > 0);
+#endif
+
     // Remove old item actions, if any.
     for (QAction *action : playlistitem_actions_) {
       playlist_menu_->removeAction(action);
@@ -1857,10 +1870,10 @@ void MainWindow::PlaylistRightClick(const QPoint &global_pos, const QModelIndex 
 void MainWindow::PlaylistPlay() {
 
   if (app_->playlist_manager()->current()->current_row() == playlist_menu_index_.row()) {
-    app_->player()->PlayPause();
+    app_->player()->PlayPause(Playlist::AutoScroll_Never);
   }
   else {
-    PlayIndex(playlist_menu_index_);
+    PlayIndex(playlist_menu_index_, Playlist::AutoScroll_Never);
   }
 
 }
@@ -1959,10 +1972,10 @@ void MainWindow::RenumberTracks() {
 
 }
 
-void MainWindow::SongSaveComplete(TagReaderReply *reply, const QPersistentModelIndex &index) {
+void MainWindow::SongSaveComplete(TagReaderReply *reply, const QPersistentModelIndex &idx) {
 
-  if (reply->is_successful() && index.isValid()) {
-    app_->playlist_manager()->current()->ReloadItems(QList<int>()<< index.row());
+  if (reply->is_successful() && idx.isValid()) {
+    app_->playlist_manager()->current()->ReloadItems(QList<int>()<< idx.row());
   }
   reply->deleteLater();
 
@@ -2119,8 +2132,8 @@ void MainWindow::PlaylistClearCurrent() {
 
 }
 
-void MainWindow::PlaylistEditFinished(const QModelIndex &index) {
-  if (index == playlist_menu_index_) SelectionSetValue();
+void MainWindow::PlaylistEditFinished(const QModelIndex &idx) {
+  if (idx == playlist_menu_index_) SelectionSetValue();
 }
 
 void MainWindow::CommandlineOptionsReceived(const quint32 instanceId, const QByteArray &string_options) {
@@ -2148,7 +2161,7 @@ void MainWindow::CommandlineOptionsReceived(const CommandlineOptions &options) {
       }
       break;
     case CommandlineOptions::Player_PlayPause:
-      app_->player()->PlayPause();
+      app_->player()->PlayPause(Playlist::AutoScroll_Maybe);
       break;
     case CommandlineOptions::Player_Pause:
       app_->player()->Pause();
@@ -2223,7 +2236,7 @@ void MainWindow::CommandlineOptionsReceived(const CommandlineOptions &options) {
     app_->player()->SeekTo(app_->player()->engine()->position_nanosec() / kNsecPerSec + options.seek_by());
   }
 
-  if (options.play_track_at() != -1) app_->player()->PlayAt(options.play_track_at(), Engine::Manual, true);
+  if (options.play_track_at() != -1) app_->player()->PlayAt(options.play_track_at(), Engine::Manual, Playlist::AutoScroll_Maybe, true);
 
   if (options.show_osd()) app_->player()->ShowOSD();
 
@@ -2727,7 +2740,7 @@ void MainWindow::ShowConsole() {
 void MainWindow::keyPressEvent(QKeyEvent *event) {
 
   if (event->key() == Qt::Key_Space) {
-    app_->player()->PlayPause();
+    app_->player()->PlayPause(Playlist::AutoScroll_Never);
     event->accept();
   }
   else if (event->key() == Qt::Key_Left) {
@@ -2848,5 +2861,41 @@ void MainWindow::Love() {
   ui_->button_love->setEnabled(false);
   ui_->action_love->setEnabled(false);
   if (tray_icon_) tray_icon_->LoveStateChanged(false);
+
+}
+
+void MainWindow::PlaylistDelete() {
+
+  if (!delete_files_) return;
+
+  SongList selected_songs;
+  QStringList files;
+  bool is_current_item = false;
+  for (const QModelIndex &proxy_idx : ui_->playlist->view()->selectionModel()->selectedRows()) {
+    QModelIndex source_idx = app_->playlist_manager()->current()->proxy()->mapToSource(proxy_idx);
+    PlaylistItemPtr item = app_->playlist_manager()->current()->item_at(source_idx.row());
+    if (!item || !item->Metadata().url().isLocalFile()) continue;
+    selected_songs << item->Metadata();
+    files << item->Metadata().url().toLocalFile();
+    if (item == app_->player()->GetCurrentItem()) is_current_item = true;
+  }
+  if (selected_songs.isEmpty()) return;
+
+  if (DeleteConfirmationDialog::warning(files) != QDialogButtonBox::Yes) return;
+
+  if (app_->player()->GetState() == Engine::Playing && app_->playlist_manager()->current()->rowCount() == selected_songs.count()) {
+    app_->player()->Stop();
+  }
+
+  ui_->playlist->view()->RemoveSelected();
+
+  if (app_->player()->GetState() == Engine::Playing && is_current_item) {
+    app_->player()->Next();
+  }
+
+  std::shared_ptr<MusicStorage> storage(new FilesystemMusicStorage("/"));
+  DeleteFiles *delete_files = new DeleteFiles(app_->task_manager(), storage, true);
+  connect(delete_files, SIGNAL(Finished(SongList)), SLOT(DeleteFinished(SongList)));
+  delete_files->Start(selected_songs);
 
 }

@@ -167,6 +167,7 @@ set(SOURCES
   dialogs/trackselectiondialog.cpp
   dialogs/addstreamdialog.cpp
   dialogs/userpassdialog.cpp
+  dialogs/deleteconfirmationdialog.cpp
 
   widgets/autoexpandingtreeview.cpp
   widgets/busyindicator.cpp
@@ -363,6 +364,7 @@ set(HEADERS
   dialogs/trackselectiondialog.h
   dialogs/addstreamdialog.h
   dialogs/userpassdialog.h
+  dialogs/deleteconfirmationdialog.h
 
   widgets/autoexpandingtreeview.h
   widgets/busyindicator.h
@@ -733,21 +735,6 @@ optional_source(HAVE_GIO
   HEADERS device/giolister.h
 )
 
-# imobiledevice backend and device
-optional_source(HAVE_IMOBILEDEVICE
-  SOURCES
-    device/afcdevice.cpp
-    device/afcfile.cpp
-    device/afctransfer.cpp
-    device/ilister.cpp
-    device/imobiledeviceconnection.cpp
-  HEADERS
-    device/afcdevice.h
-    device/afcfile.h
-    device/afctransfer.h
-    device/ilister.h
-)
-
 # mtp device
 optional_source(HAVE_LIBMTP
   SOURCES
@@ -1031,14 +1018,6 @@ if(HAVE_LIBMTP)
   link_directories(${LIBMTP_LIBRARY_DIRS})
 endif(HAVE_LIBMTP)
 
-if(HAVE_IMOBILEDEVICE)
-  link_directories(
-    ${LIBUSBMUXD_LIBRARY_DIRS}
-    ${LIBPLIST_LIBRARY_DIRS}
-    ${LIBIMOBILEDEVICE_LIBRARY_DIRS}
-  )
-endif(HAVE_IMOBILEDEVICE)
-
 add_library(strawberry_lib STATIC
   ${SOURCES}
   ${MOC}
@@ -1159,19 +1138,6 @@ if(HAVE_LIBMTP)
   target_link_libraries(strawberry_lib PRIVATE ${LIBMTP_LIBRARIES})
 endif(HAVE_LIBMTP)
 
-if(HAVE_IMOBILEDEVICE)
-  target_include_directories(strawberry_lib SYSTEM PRIVATE
-    ${LIBUSBMUXD_INCLUDE_DIRS}
-    ${LIBPLIST_INCLUDE_DIRS}
-    ${LIBIMOBILEDEVICE_INCLUDE_DIRS}
-  )
-  target_link_libraries(strawberry_lib PRIVATE
-    ${LIBUSBMUXD_LIBRARIES}
-    ${LIBPLIST_LIBRARIES}
-    ${LIBIMOBILEDEVICE_LIBRARIES}
-  )
-endif(HAVE_IMOBILEDEVICE)
-
 
 if(APPLE)
   target_link_libraries(strawberry_lib PRIVATE
@@ -1237,6 +1203,10 @@ add_dependencies(strawberry strawberry-tagreader)
 
 if(NOT APPLE)
   install(TARGETS strawberry RUNTIME DESTINATION bin)
+endif()
+
+if(HAVE_TRANSLATIONS AND INSTALL_TRANSLATIONS AND INSTALL_TRANSLATIONS_FILES)
+  install(FILES ${INSTALL_TRANSLATIONS_FILES} DESTINATION share/strawberry/translations)
 endif()
 
 if(APPLE)

@@ -83,6 +83,13 @@ void PlaylistSettingsPage::Load() {
   ui_->checkbox_editmetadatainline->setChecked(s.value("editmetadatainline", false).toBool());
   ui_->checkbox_writemetadata->setChecked(s.value(Playlist::kWriteMetadata, false).toBool());
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+  ui_->checkbox_delete_files->setChecked(s.value("delete_files", false).toBool());
+#else
+  ui_->checkbox_delete_files->setChecked(false);
+  ui_->checkbox_delete_files->hide();
+#endif
+
   s.endGroup();
 
   Init(ui_->layout_playlistsettingspage->parentWidget());
@@ -118,6 +125,7 @@ void PlaylistSettingsPage::Save() {
   s.setValue(Playlist::kPathType, static_cast<int>(path));
   s.setValue("editmetadatainline", ui_->checkbox_editmetadatainline->isChecked());
   s.setValue(Playlist::kWriteMetadata, ui_->checkbox_writemetadata->isChecked());
+  s.setValue("delete_files", ui_->checkbox_delete_files->isChecked());
   s.endGroup();
 
 }

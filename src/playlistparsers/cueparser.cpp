@@ -83,9 +83,7 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
     QString file;
     QString file_type;
     QString album_genre;
-    QString genre;
     QString album_date;
-    QString date;
     QString disc;
 
     // -- FILE section
@@ -150,6 +148,8 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
     QString artist;
     QString composer;
     QString title;
+    QString date;
+    QString genre;
 
     // TRACK section
     do {
@@ -169,7 +169,7 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
         // the beginning of another track's definition - we're saving the current one for later (if it's valid of course)
         // please note that the same code is repeated just after this 'do-while' loop
         if (valid_file && !index.isEmpty() && (track_type.isEmpty() || track_type == kAudioTrackType)) {
-          entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer, genre, (date.isEmpty() ? album_date : date), disc));
+          entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer, (genre.isEmpty() ? album_genre : genre), (date.isEmpty() ? album_date : date), disc));
         }
 
         // clear the state
@@ -237,7 +237,7 @@ SongList CueParser::Load(QIODevice *device, const QString &playlist_path, const 
 
     // Cue song has mtime equal to qMax(media_file_mtime, cue_sheet_mtime)
     if (cue_mtime.isValid()) {
-      song.set_mtime(qMax(static_cast<quint64>(cue_mtime.toSecsSinceEpoch()), song.mtime()));
+      song.set_mtime(qMax(cue_mtime.toSecsSinceEpoch(), song.mtime()));
     }
     song.set_cue_path(playlist_path);
 

@@ -63,9 +63,6 @@
 #include <QSettings>
 #include <QLoggingCategory>
 #include <QtDebug>
-#ifdef HAVE_DBUS
-#  include <QDBusArgument>
-#endif
 #ifdef HAVE_TRANSLATIONS
 #  include <QTranslator>
 #endif
@@ -112,11 +109,6 @@
 #  include "osd/osdmac.h"
 #else
 #  include "osd/osdbase.h"
-#endif
-
-#ifdef HAVE_DBUS
-  QDBusArgument &operator<<(QDBusArgument &arg, const QImage &image);
-  const QDBusArgument &operator>>(const QDBusArgument &arg, QImage &image);
 #endif
 
 int main(int argc, char* argv[]) {
@@ -200,14 +192,8 @@ int main(int argc, char* argv[]) {
   QCoreApplication::setLibraryPaths(QStringList() << QCoreApplication::applicationDirPath() + "/" + USE_BUNDLE_DIR);
 #endif
 
-#ifndef Q_OS_MACOS
   // Gnome on Ubuntu has menu icons disabled by default.  I think that's a bad idea, and makes some menus in Strawberry look confusing.
   QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus, false);
-#else
-  QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus, true);
-  // Fixes focus issue with NSSearchField, see QTBUG-11401
-  QCoreApplication::setAttribute(Qt::AA_NativeWindows, true);
-#endif
 
   // Set the permissions on the config file on Unix - it can contain passwords for internet services so it's important that other users can't read it.
   // On Windows these are stored in the registry instead.
@@ -229,7 +215,7 @@ int main(int argc, char* argv[]) {
   // Resources
   Q_INIT_RESOURCE(data);
   Q_INIT_RESOURCE(icons);
-#ifdef HAVE_TRANSLATIONS
+#if defined(HAVE_TRANSLATIONS) && !defined(INSTALL_TRANSLATIONS)
   Q_INIT_RESOURCE(translations);
 #endif
 
@@ -258,6 +244,7 @@ int main(int argc, char* argv[]) {
 
   translations->LoadTranslation("qt", QLibraryInfo::location(QLibraryInfo::TranslationsPath), language);
   translations->LoadTranslation("strawberry", ":/translations", language);
+  translations->LoadTranslation("strawberry", TRANSLATIONS_DIR, language);
   translations->LoadTranslation("strawberry", a.applicationDirPath(), language);
   translations->LoadTranslation("strawberry", QDir::currentPath(), language);
 

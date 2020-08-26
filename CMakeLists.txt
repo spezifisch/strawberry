@@ -126,9 +126,6 @@ pkg_check_modules(LIBPULSE libpulse)
 pkg_check_modules(CHROMAPRINT libchromaprint)
 pkg_check_modules(LIBGPOD libgpod-1.0>=0.7.92)
 pkg_check_modules(LIBMTP libmtp>=1.0)
-pkg_check_modules(LIBIMOBILEDEVICE libimobiledevice-1.0)
-pkg_search_module(LIBUSBMUXD libusbmuxd-2.0 libusbmuxd)
-pkg_search_module(LIBPLIST libplist-2.0 libplist)
 find_package(Gettext)
 find_package(FFTW3)
 
@@ -344,13 +341,6 @@ optional_component(LIBMTP ON "Devices: MTP support"
   DEPENDS "libmtp" LIBMTP_FOUND
 )
 
-optional_component(IMOBILEDEVICE ON "Devices: iPhone, iPod Touch, iPad and Apple TV support"
-  DEPENDS "libimobiledevice" LIBIMOBILEDEVICE_FOUND
-  DEPENDS "libplist" LIBPLIST_FOUND
-  DEPENDS "libusbmuxd" LIBUSBMUXD_FOUND
-  DEPENDS "libgpod" HAVE_LIBGPOD
-)
-
 optional_component(SPARKLE ON "Sparkle integration"
   DEPENDS "macOS" APPLE
   DEPENDS "Sparkle" SPARKLE
@@ -367,6 +357,8 @@ else()
     DEPENDS "Qt5LinguistTools" Qt5LinguistTools_FOUND
   )
 endif()
+
+option(INSTALL_TRANSLATIONS "Install translations" OFF)
 
 optional_component(SUBSONIC ON "Subsonic support")
 optional_component(TIDAL ON "Tidal support")

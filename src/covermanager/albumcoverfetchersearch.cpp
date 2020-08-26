@@ -171,6 +171,8 @@ void AlbumCoverFetcherSearch::ProviderSearchResults(CoverProvider *provider, con
         result_album.contains("concert") ||
         result_album.contains("essential") ||
         result_album.contains("ultimate") ||
+        result_album.contains("karaoke") ||
+        result_album.contains("mixtape") ||
         result_album.contains("country rock") ||
         result_album.contains("indie folk") ||
         result_album.contains("soft rock") ||
@@ -185,7 +187,6 @@ void AlbumCoverFetcherSearch::ProviderSearchResults(CoverProvider *provider, con
         result_album.contains("classic psychedelic") ||
         result_album.contains("playlist: acoustic") ||
         result_album.contains("90's rnb playlist") ||
-        result_album.contains("70s mixtape") ||
         result_album.contains("rock 80s") ||
         result_album.contains("classic 80s") ||
         result_album.contains("rock anthems") ||
@@ -198,7 +199,8 @@ void AlbumCoverFetcherSearch::ProviderSearchResults(CoverProvider *provider, con
         result_album.contains("70's gold") ||
         result_album.contains("rockfluence") ||
         result_album.contains("acoustic dinner accompaniment") ||
-        result_album.contains("complete studio albums")
+        result_album.contains("complete studio albums") ||
+        result_album.contains("mellow rock")
         )) {
       results_copy[i].score_match -= 1;
     }
@@ -269,7 +271,11 @@ void AlbumCoverFetcherSearch::FetchMoreImages() {
     qLog(Debug) << "Loading" << result.artist << result.album << result.image_url << "from" << result.provider << "with current score" << result.score();
 
     QNetworkRequest req(result.image_url);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#else
     req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
     QNetworkReply *image_reply = network_->get(req);
     connect(image_reply, &QNetworkReply::finished, [=] { ProviderCoverFetchFinished(image_reply); });
     pending_image_loads_[image_reply] = result;

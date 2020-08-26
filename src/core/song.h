@@ -132,6 +132,7 @@ class Song {
 
   static Source SourceFromURL(const QUrl &url);
   static QString TextForSource(Source source);
+  static Song::Source SourceFromText(const QString &source);
   static QIcon IconForSource(Source source);
   static QString TextForFiletype(FileType filetype);
   static QString ExtensionForFiletype(FileType filetype);
@@ -227,8 +228,8 @@ class Song {
   const QString &basefilename() const;
   FileType filetype() const;
   int filesize() const;
-  quint64 mtime() const;
-  quint64 ctime() const;
+  qint64 mtime() const;
+  qint64 ctime() const;
 
   int playcount() const;
   int skipcount() const;
@@ -328,8 +329,8 @@ class Song {
   void set_basefilename(const QString &v);
   void set_filetype(FileType v);
   void set_filesize(int v);
-  void set_mtime(int v);
-  void set_ctime(int v);
+  void set_mtime(qint64 v);
+  void set_ctime(qint64 v);
   void set_unavailable(bool v);
 
   void set_playcount(int v);

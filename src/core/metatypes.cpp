@@ -42,6 +42,7 @@
 #include <QItemSelection>
 #ifdef HAVE_DBUS
 #  include <QDBusMetaType>
+#  include <QDBusArgument>
 #endif
 
 #include "song.h"
@@ -62,6 +63,7 @@
 
 #ifdef HAVE_DBUS
 #  include "mpris2.h"
+#  include "osd/osddbus.h"
 #  include "dbus/metatypes.h"
 #endif
 
@@ -83,8 +85,12 @@ void RegisterMetaTypes() {
   qRegisterMetaType<QNetworkReply*>("QNetworkReply*");
   qRegisterMetaType<QNetworkReply**>("QNetworkReply**");
   qRegisterMetaType<QItemSelection>("QItemSelection");
+  qRegisterMetaType<QMap<int, Qt::Alignment>>("ColumnAlignmentMap");
+  qRegisterMetaType<QMap<int, int>>("ColumnAlignmentIntMap");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   qRegisterMetaTypeStreamOperators<QMap<int, Qt::Alignment>>("ColumnAlignmentMap");
   qRegisterMetaTypeStreamOperators<QMap<int, int>>("ColumnAlignmentIntMap");
+#endif
   qRegisterMetaType<Directory>("Directory");
   qRegisterMetaType<DirectoryList>("DirectoryList");
   qRegisterMetaType<Subdirectory>("Subdirectory");
@@ -114,9 +120,12 @@ void RegisterMetaTypes() {
   qRegisterMetaType<QList<CoverSearchResult> >("QList<CoverSearchResult>");
   qRegisterMetaType<CoverSearchResults>("CoverSearchResults");
   qRegisterMetaType<Equalizer::Params>("Equalizer::Params");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   qRegisterMetaTypeStreamOperators<Equalizer::Params>("Equalizer::Params");
+#endif
 #ifdef HAVE_DBUS
   qDBusRegisterMetaType<QList<QByteArray>>();
+  qDBusRegisterMetaType<QImage>();
   qDBusRegisterMetaType<TrackMetadata>();
   qDBusRegisterMetaType<Track_Ids>();
   qDBusRegisterMetaType<MprisPlaylist>();
@@ -124,9 +133,6 @@ void RegisterMetaTypes() {
   qDBusRegisterMetaType<MaybePlaylist>();
   qDBusRegisterMetaType<InterfacesAndProperties>();
   qDBusRegisterMetaType<ManagedObjectList>();
-#ifdef HAVE_X11
-  qDBusRegisterMetaType<QImage>();
-#endif
 #endif
 
   qRegisterMetaType<InternetSearchView::ResultList>("InternetSearchView::ResultList");

@@ -31,7 +31,6 @@
 #cmakedefine HAVE_X11
 #cmakedefine HAVE_UDISKS2
 #cmakedefine HAVE_ALSA
-#cmakedefine HAVE_IMOBILEDEVICE
 #cmakedefine HAVE_AUDIOCD
 #cmakedefine HAVE_LIBGPOD
 #cmakedefine HAVE_LIBMTP
@@ -58,9 +57,10 @@
 #cmakedefine HAVE_TAGLIB_DSDIFFFILE
 
 #cmakedefine USE_BUNDLE
-
 #define USE_BUNDLE_DIR "${USE_BUNDLE_DIR}"
 
 #cmakedefine HAVE_TRANSLATIONS
+#cmakedefine INSTALL_TRANSLATIONS
+#define TRANSLATIONS_DIR "${CMAKE_INSTALL_PREFIX}/share/strawberry/translations"
 
 #endif // CONFIG_H_IN

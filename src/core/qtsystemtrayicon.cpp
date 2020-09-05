@@ -242,7 +242,7 @@ void SystemTrayIcon::SetNowPlaying(const Song &song, const QUrl &cover_url) {
   setToolTip(song.PrettyTitleWithArtist());
 #else
 
-  if (de_ == "kde") {
+  if (de_ == "kde" || de_ == "cinnamon" || de_ == "x-cinnamon") {
     tray_->setToolTip(song.PrettyTitleWithArtist());
     return;
   }

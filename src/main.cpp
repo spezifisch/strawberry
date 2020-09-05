@@ -129,8 +129,10 @@ int main(int argc, char* argv[]) {
   QCoreApplication::setApplicationVersion(STRAWBERRY_VERSION_DISPLAY);
   QCoreApplication::setOrganizationDomain("strawberrymusicplayer.org");
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
 
   // This makes us show up nicely in gnome-volume-control
   g_set_application_name(QCoreApplication::applicationName().toLocal8Bit());

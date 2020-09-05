@@ -103,6 +103,7 @@
 #include "dialogs/edittagdialog.h"
 #include "dialogs/addstreamdialog.h"
 #include "dialogs/deleteconfirmationdialog.h"
+#include "dialogs/lastfmimportdialog.h"
 #include "organize/organizedialog.h"
 #include "widgets/fancytabwidget.h"
 #include "widgets/playingwidget.h"
@@ -169,6 +170,7 @@
 #include "internet/internetsearchview.h"
 
 #include "scrobbler/audioscrobbler.h"
+#include "scrobbler/lastfmimport.h"
 
 #if defined(HAVE_GSTREAMER) && defined(HAVE_CHROMAPRINT)
 #  include "musicbrainz/tagfetcher.h"
@@ -215,6 +217,10 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
       app_(app),
       tray_icon_(tray_icon),
       osd_(osd),
+      console_([=]() {
+        Console *console = new Console(app);
+        return console;
+      }),
       edit_tag_dialog_(std::bind(&MainWindow::CreateEditTagDialog, this)),
       album_cover_choice_controller_(new AlbumCoverChoiceController(this)),
 #ifdef HAVE_GLOBALSHORTCUTS
@@ -261,6 +267,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
 #ifdef HAVE_TIDAL
       tidal_view_(new InternetTabsView(app_, app->internet_services()->ServiceBySource(Song::Source_Tidal), TidalSettingsPage::kSettingsGroup, SettingsDialog::Page_Tidal, this)),
 #endif
+      lastfm_import_dialog_(new LastFMImportDialog(app_->lastfm_import(), this)),
       collection_show_all_(nullptr),
       collection_show_duplicates_(nullptr),
       collection_show_untagged_(nullptr),
@@ -366,7 +373,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
 
   ui_->playlist->SetManager(app_->playlist_manager());
 
-  ui_->playlist->view()->SetApplication(app_);
+  ui_->playlist->view()->Init(app_);
 
   collection_view_->view()->setModel(collection_sort_model_);
   collection_view_->view()->SetApplication(app_);
@@ -417,11 +424,14 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
 
   ui_->action_cover_manager->setIcon(IconLoader::Load("document-download"));
   ui_->action_edit_track->setIcon(IconLoader::Load("edit-rename"));
+  ui_->action_edit_value->setIcon(IconLoader::Load("edit-rename"));
+  ui_->action_selection_set_value->setIcon(IconLoader::Load("edit-rename"));
   ui_->action_equalizer->setIcon(IconLoader::Load("equalizer"));
   ui_->action_transcoder->setIcon(IconLoader::Load("tools-wizard"));
   ui_->action_update_collection->setIcon(IconLoader::Load("view-refresh"));
   ui_->action_full_collection_scan->setIcon(IconLoader::Load("view-refresh"));
   ui_->action_settings->setIcon(IconLoader::Load("configure"));
+  ui_->action_import_data_from_last_fm->setIcon(IconLoader::Load("scrobble"));
 
   // Scrobble
 
@@ -462,6 +472,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   connect(ui_->action_auto_complete_tags, SIGNAL(triggered()), SLOT(AutoCompleteTags()));
 #endif
   connect(ui_->action_settings, SIGNAL(triggered()), SLOT(OpenSettingsDialog()));
+  connect(ui_->action_import_data_from_last_fm, SIGNAL(triggered()), lastfm_import_dialog_, SLOT(show()));
   connect(ui_->action_toggle_show_sidebar, SIGNAL(toggled(bool)), SLOT(ToggleSidebar(bool)));
   connect(ui_->action_about_strawberry, SIGNAL(triggered()), SLOT(ShowAboutDialog()));
   connect(ui_->action_about_qt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
@@ -472,7 +483,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   connect(ui_->action_add_folder, SIGNAL(triggered()), SLOT(AddFolder()));
   connect(ui_->action_add_stream, SIGNAL(triggered()), SLOT(AddStream()));
   connect(ui_->action_cover_manager, SIGNAL(triggered()), SLOT(ShowCoverManager()));
-  connect(ui_->action_equalizer, SIGNAL(triggered()), equalizer_.get(), SLOT(show()));
+  connect(ui_->action_equalizer, SIGNAL(triggered()), equalizer_.get(), SLOT(ShowEqualizer()));
 #if defined(HAVE_GSTREAMER)
   connect(ui_->action_transcoder, SIGNAL(triggered()), SLOT(ShowTranscodeDialog()));
 #else
@@ -831,6 +842,12 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   LoveButtonVisibilityChanged(app_->scrobbler()->LoveButton());
   ScrobblingEnabledChanged(app_->scrobbler()->IsEnabled());
 
+  // Last.fm ImportData
+  connect(app_->lastfm_import(), SIGNAL(Finished()), lastfm_import_dialog_, SLOT(Finished()));
+  connect(app_->lastfm_import(), SIGNAL(FinishedWithError(QString)), lastfm_import_dialog_, SLOT(FinishedWithError(QString)));
+  connect(app_->lastfm_import(), SIGNAL(UpdateTotal(int, int)), lastfm_import_dialog_, SLOT(UpdateTotal(int, int)));
+  connect(app_->lastfm_import(), SIGNAL(UpdateProgress(int, int)), lastfm_import_dialog_, SLOT(UpdateProgress(int, int)));
+
   // Load settings
   qLog(Debug) << "Loading settings";
   settings_.beginGroup(kSettingsGroup);
@@ -918,7 +935,7 @@ MainWindow::MainWindow(Application *app, SystemTrayIcon *tray_icon, OSDBase *osd
   ui_->action_toggle_show_sidebar->setChecked(show_sidebar);
 
   QShortcut *close_window_shortcut = new QShortcut(this);
-  close_window_shortcut->setKey(Qt::CTRL + Qt::Key_W);
+  close_window_shortcut->setKey(Qt::CTRL | Qt::Key_W);
   connect(close_window_shortcut, SIGNAL(activated()), SLOT(SetHiddenInTray()));
 
   CheckFullRescanRevisions();
@@ -1075,7 +1092,6 @@ void MainWindow::SaveSettings() {
   SaveGeometry();
   SavePlaybackStatus();
   ui_->tabs->SaveSettings(kSettingsGroup);
-  ui_->playlist->view()->SaveGeometry();
   ui_->playlist->view()->SaveSettings();
   app_->scrobbler()->WriteCache();
 
@@ -1085,6 +1101,9 @@ void MainWindow::SaveSettings() {
 }
 
 void MainWindow::Exit() {
+
+  // Make sure Settings dialog is destroyed first.
+  settings_dialog_.reset();
 
   ++exit_count_;
 
@@ -1935,6 +1954,7 @@ void MainWindow::EditTracks() {
 
   edit_tag_dialog_->SetSongs(songs, items);
   edit_tag_dialog_->show();
+  edit_tag_dialog_->raise();
 
 }
 
@@ -2086,7 +2106,10 @@ void MainWindow::AddCDTracks() {
 
 }
 
-void MainWindow::AddStream() { add_stream_dialog_->show(); }
+void MainWindow::AddStream() {
+  add_stream_dialog_->show();
+  add_stream_dialog_->raise();
+}
 
 void MainWindow::AddStreamAccepted() {
 
@@ -2349,6 +2372,7 @@ void MainWindow::CopyFilesToCollection(const QList<QUrl> &urls) {
   organize_dialog_->SetUrls(urls);
   organize_dialog_->SetCopy(true);
   organize_dialog_->show();
+  organize_dialog_->raise();
 
 }
 
@@ -2358,6 +2382,7 @@ void MainWindow::MoveFilesToCollection(const QList<QUrl> &urls) {
   organize_dialog_->SetUrls(urls);
   organize_dialog_->SetCopy(false);
   organize_dialog_->show();
+  organize_dialog_->raise();
 
 }
 
@@ -2366,8 +2391,10 @@ void MainWindow::CopyFilesToDevice(const QList<QUrl> &urls) {
 #if defined(HAVE_GSTREAMER) && !defined(Q_OS_WIN)
   organize_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
   organize_dialog_->SetCopy(true);
-  if (organize_dialog_->SetUrls(urls))
+  if (organize_dialog_->SetUrls(urls)) {
     organize_dialog_->show();
+    organize_dialog_->raise();
+  }
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
@@ -2390,6 +2417,7 @@ void MainWindow::EditFileTags(const QList<QUrl> &urls) {
 
   edit_tag_dialog_->SetSongs(songs);
   edit_tag_dialog_->show();
+  edit_tag_dialog_->raise();
 
 }
 
@@ -2419,6 +2447,7 @@ void MainWindow::PlaylistOrganizeSelected(const bool copy) {
   organize_dialog_->SetSongs(songs);
   organize_dialog_->SetCopy(copy);
   organize_dialog_->show();
+  organize_dialog_->raise();
 
 }
 
@@ -2507,8 +2536,10 @@ void MainWindow::PlaylistCopyToDevice() {
 
   organize_dialog_->SetDestinationModel(app_->device_manager()->connected_devices_model(), true);
   organize_dialog_->SetCopy(true);
-  if (organize_dialog_->SetSongs(songs))
+  if (organize_dialog_->SetSongs(songs)) {
     organize_dialog_->show();
+    organize_dialog_->raise();
+  }
   else {
     QMessageBox::warning(this, tr("Error"), tr("None of the selected songs were suitable for copying to a device"));
   }
@@ -2534,6 +2565,14 @@ void MainWindow::ChangeCollectionQueryMode(QAction *action) {
 void MainWindow::ShowCoverManager() {
 
   cover_manager_->show();
+  cover_manager_->raise();
+
+}
+
+void MainWindow::ShowEqualizer() {
+
+  equalizer_->show();
+  equalizer_->raise();
 
 }
 
@@ -2556,6 +2595,7 @@ SettingsDialog *MainWindow::CreateSettingsDialog() {
 void MainWindow::OpenSettingsDialog() {
 
   settings_dialog_->show();
+  settings_dialog_->raise();
 
 }
 
@@ -2575,6 +2615,7 @@ EditTagDialog *MainWindow::CreateEditTagDialog() {
 void MainWindow::ShowAboutDialog() {
 
   about_dialog_->show();
+  about_dialog_->raise();
 
 }
 
@@ -2582,6 +2623,7 @@ void MainWindow::ShowTranscodeDialog() {
 
 #ifdef HAVE_GSTREAMER
   transcode_dialog_->show();
+  transcode_dialog_->raise();
 #endif
 
 }
@@ -2701,6 +2743,7 @@ void MainWindow::AutoCompleteTags() {
   track_selection_dialog_->Init(songs);
   tag_fetcher_->StartFetch(songs);
   track_selection_dialog_->show();
+  track_selection_dialog_->raise();
 
 #endif
 
@@ -2742,8 +2785,10 @@ void MainWindow::HandleNotificationPreview(OSDBase::Behaviour type, QString line
 }
 
 void MainWindow::ShowConsole() {
-  Console *console = new Console(app_, this);
-  console->show();
+
+  console_->show();
+  console_->raise();
+
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {

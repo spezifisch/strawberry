@@ -42,6 +42,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 
+#include "core/logging.h"
 #include "core/database.h"
 #include "core/scopedtransaction.h"
 #include "smartplaylists/smartplaylistsearch.h"
@@ -1000,10 +1001,8 @@ void CollectionBackend::UpdateCompilations(QSqlQuery &find_song, QSqlQuery &upda
 
 CollectionBackend::AlbumList CollectionBackend::GetAlbums(const QString &artist, const bool compilation_required, const QueryOptions &opt) {
 
-  AlbumList ret;
-
   CollectionQuery query(opt);
-  query.SetColumnSpec("album, artist, albumartist, compilation, compilation_detected, art_automatic, art_manual, url");
+  query.SetColumnSpec("url, artist, albumartist, album, compilation_effective, art_automatic, art_manual");
   query.SetOrderBy("album");
 
   if (compilation_required) {
@@ -1016,20 +1015,24 @@ CollectionBackend::AlbumList CollectionBackend::GetAlbums(const QString &artist,
 
   {
     QMutexLocker l(db_->Mutex());
-    if (!ExecQuery(&query)) return ret;
+    if (!ExecQuery(&query)) return AlbumList();
   }
 
-  QString last_album;
-  QString last_artist;
-  QString last_album_artist;
+  QMap<QString, Album> albums;
   while (query.Next()) {
-    bool is_compilation = query.Value(3).toBool() | query.Value(4).toBool();
+    bool is_compilation = query.Value(4).toBool();
 
     Album info;
-    info.artist = is_compilation ? QString() : query.Value(1).toString();
-    info.album_artist = is_compilation ? QString() : query.Value(2).toString();
-    info.album_name = query.Value(0).toString();
-    info.first_url = QUrl::fromEncoded(query.Value(7).toByteArray());
+    QString directory;
+    info.first_url = QUrl::fromEncoded(query.Value(0).toByteArray());
+    if (is_compilation) {
+      directory = info.first_url.toString(QUrl::PreferLocalFile|QUrl::RemoveFilename);
+    }
+    else {
+      info.artist = query.Value(1).toString();
+      info.album_artist = query.Value(2).toString();
+    }
+    info.album_name = query.Value(3).toString();
 
     QString art_automatic = query.Value(5).toString();
     if (art_automatic.contains(QRegularExpression("..+:.*"))) {
@@ -1047,17 +1050,27 @@ CollectionBackend::AlbumList CollectionBackend::GetAlbums(const QString &artist,
       info.art_manual = QUrl::fromLocalFile(art_manual);
     }
 
-    if ((info.artist == last_artist || info.album_artist == last_album_artist) && info.album_name == last_album)
-      continue;
+    QString effective_albumartist = info.album_artist.isEmpty() ? info.artist : info.album_artist;
+    QString key;
+    if (!effective_albumartist.isEmpty()) {
+      key.append(effective_albumartist);
+    }
+    if (!directory.isEmpty()) {
+      if (!key.isEmpty()) key.append("-");
+      key.append(directory);
+    }
+    if (!info.album_name.isEmpty()) {
+      if (!key.isEmpty()) key.append("-");
+      key.append(info.album_name);
+    }
 
-    ret << info;
+    if (key.isEmpty()) continue;
 
-    last_album = info.album_name;
-    last_artist = info.artist;
-    last_album_artist = info.album_artist;
+    if (!albums.contains(key)) albums.insert(key, info);
+
   }
 
-  return ret;
+  return albums.values();
 
 }
 
@@ -1331,3 +1344,78 @@ SongList CollectionBackend::GetAllSongs() {
 
 }
 
+SongList CollectionBackend::GetSongsBy(const QString &artist, const QString &album, const QString &title) {
+
+  QMutexLocker l(db_->Mutex());
+  QSqlDatabase db(db_->Connect());
+
+  SongList songs;
+  QSqlQuery q(db);
+  if (album.isEmpty()) {
+    q.prepare(QString("SELECT ROWID, " + Song::kColumnSpec + " FROM %1 WHERE artist = :artist COLLATE NOCASE AND title = :title COLLATE NOCASE").arg(songs_table_));
+  }
+  else {
+    q.prepare(QString("SELECT ROWID, " + Song::kColumnSpec + " FROM %1 WHERE artist = :artist COLLATE NOCASE AND album = :album COLLATE NOCASE AND title = :title COLLATE NOCASE").arg(songs_table_));
+  }
+  q.bindValue(":artist", artist);
+  if (!album.isEmpty()) q.bindValue(":album", album);
+  q.bindValue(":title", title);
+  q.exec();
+  if (db_->CheckErrors(q)) return SongList();
+  while (q.next()) {
+    Song song(source_);
+    song.InitFromQuery(q, true);
+    songs << song;
+  }
+
+  return songs;
+
+}
+
+void CollectionBackend::UpdateLastPlayed(const QString &artist, const QString &album, const QString &title, const int lastplayed) {
+
+  SongList songs = GetSongsBy(artist, album, title);
+  if (songs.isEmpty()) {
+    qLog(Debug) << "Could not find a matching song in the database for" << artist << album << title;
+    return;
+  }
+
+  QMutexLocker l(db_->Mutex());
+  QSqlDatabase db(db_->Connect());
+
+  for (const Song &song : songs) {
+    QSqlQuery q(db);
+    q.prepare(QString("UPDATE %1 SET lastplayed = :lastplayed WHERE ROWID = :id").arg(songs_table_));
+    q.bindValue(":lastplayed", lastplayed);
+    q.bindValue(":id", song.id());
+    q.exec();
+    if (db_->CheckErrors(q)) continue;
+  }
+
+  emit SongsStatisticsChanged(SongList() << songs);
+
+}
+
+void CollectionBackend::UpdatePlayCount(const QString &artist, const QString &title, const int playcount) {
+
+  SongList songs = GetSongsBy(artist, QString(), title);
+  if (songs.isEmpty()) {
+    qLog(Debug) << "Could not find a matching song in the database for" << artist << title;
+    return;
+  }
+
+  QMutexLocker l(db_->Mutex());
+  QSqlDatabase db(db_->Connect());
+
+  for (const Song &song : songs) {
+    QSqlQuery q(db);
+    q.prepare(QString("UPDATE %1 SET playcount = :playcount WHERE ROWID = :id").arg(songs_table_));
+    q.bindValue(":playcount", playcount);
+    q.bindValue(":id", song.id());
+    q.exec();
+    if (db_->CheckErrors(q)) continue;
+  }
+
+  emit SongsStatisticsChanged(SongList() << songs);
+
+}

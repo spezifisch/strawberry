@@ -691,13 +691,14 @@ void Playlist::InsertDynamicItems(int count) {
 
 Qt::ItemFlags Playlist::flags(const QModelIndex &idx) const {
 
-  Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-
-  if (column_is_editable(static_cast<Column>(idx.column()))) flags |= Qt::ItemIsEditable;
-
-  if (idx.isValid()) return flags | Qt::ItemIsDragEnabled;
-
-  return Qt::ItemIsDropEnabled;
+  if (idx.isValid()) {
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled;
+    if (item_at(idx.row())->Metadata().IsEditable() && column_is_editable(static_cast<Column>(idx.column()))) flags |= Qt::ItemIsEditable;
+    return flags;
+  }
+  else {
+    return Qt::ItemIsDropEnabled;
+  }
 
 }
 

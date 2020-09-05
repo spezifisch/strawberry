@@ -99,7 +99,7 @@ class PlaylistView : public QTreeView {
 
   static ColumnAlignmentMap DefaultColumnAlignment();
 
-  void SetApplication(Application *app);
+  void Init(Application *app);
   void SetItemDelegates();
   void SetPlaylist(Playlist *playlist);
   void RemoveSelected();
@@ -110,14 +110,13 @@ class PlaylistView : public QTreeView {
   AppearanceSettingsPage::BackgroundImageType background_image_type() const { return background_image_type_; }
   Qt::Alignment column_alignment(int section) const;
 
-  void ResetColumns();
+  void ResetHeaderState();
 
   // QTreeView
   void setModel(QAbstractItemModel *model) override;
 
  public slots:
   void ReloadSettings();
-  void SaveGeometry();
   void SaveSettings();
   void SetColumnAlignment(const int section, const Qt::Alignment alignment);
   void JumpToCurrentlyPlayingTrack();
@@ -165,6 +164,7 @@ class PlaylistView : public QTreeView {
   void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint) override;
 
  private slots:
+  void SetHeaderState();
   void InhibitAutoscrollTimeout();
   void MaybeAutoscroll(const Playlist::AutoScroll autoscroll);
   void InvalidateCachedCurrentPixmap();
@@ -182,7 +182,9 @@ class PlaylistView : public QTreeView {
   void DynamicModeChanged(bool dynamic);
 
  private:
-  void LoadGeometry();
+  void LoadHeaderState();
+  void RestoreHeaderState();
+
   void ReloadBarPixmaps();
   QList<QPixmap> LoadBarPixmap(const QString &filename);
   void UpdateCachedCurrentRowPixmap(QStyleOptionViewItem option, const QModelIndex &idx);
@@ -224,11 +226,12 @@ class PlaylistView : public QTreeView {
   int blur_radius_;
   int opacity_level_;
 
-  bool initialized_;
   bool background_initialized_;
-  bool setting_initial_header_layout_;
+  bool set_initial_header_layout_;
   bool read_only_settings_;
-  bool state_loaded_;
+  bool header_state_loaded_;
+  bool header_state_restored_;
+  bool header_state_readonly_;
 
   QImage background_image_;
   QImage current_song_cover_art_;
@@ -277,9 +280,8 @@ class PlaylistView : public QTreeView {
   int drop_indicator_row_;
   bool drag_over_;
 
+  QByteArray header_state_;
   ColumnAlignmentMap column_alignment_;
-
-  QByteArray state_;
 
   Song song_playing_;
 

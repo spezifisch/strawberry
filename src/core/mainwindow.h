@@ -63,6 +63,7 @@
 #include "covermanager/albumcoverloaderresult.h"
 
 class About;
+class Console;
 class AlbumCoverManager;
 class Application;
 class ContextView;
@@ -97,6 +98,7 @@ class SmartPlaylistsViewContainer;
 class Windows7ThumbBar;
 #endif
 class AddStreamDialog;
+class LastFMImportDialog;
 
 class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
@@ -220,6 +222,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void SongSaveComplete(TagReaderReply *reply, const QPersistentModelIndex &idx);
 
   void ShowCoverManager();
+  void ShowEqualizer();
 
   void ShowAboutDialog();
   void ShowErrorDialog(const QString &message);
@@ -292,6 +295,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   SystemTrayIcon *tray_icon_;
   OSDBase *osd_;
   Lazy<About> about_dialog_;
+  Lazy<Console> console_;
   Lazy<EditTagDialog> edit_tag_dialog_;
   AlbumCoverChoiceController *album_cover_choice_controller_;
 
@@ -326,6 +330,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
   InternetSongsView *subsonic_view_;
   InternetTabsView *tidal_view_;
+
+  LastFMImportDialog *lastfm_import_dialog_;
 
   QAction *collection_show_all_;
   QAction *collection_show_duplicates_;

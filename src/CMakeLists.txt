@@ -162,6 +162,7 @@ set(SOURCES
   lyrics/geniuslyricsprovider.cpp
   lyrics/musixmatchlyricsprovider.cpp
   lyrics/chartlyricsprovider.cpp
+  lyrics/fandomlyricsprovider.cpp
 
   settings/settingsdialog.cpp
   settings/settingspage.cpp
@@ -185,6 +186,7 @@ set(SOURCES
   dialogs/addstreamdialog.cpp
   dialogs/userpassdialog.cpp
   dialogs/deleteconfirmationdialog.cpp
+  dialogs/lastfmimportdialog.cpp
 
   widgets/autoexpandingtreeview.cpp
   widgets/busyindicator.cpp
@@ -238,6 +240,7 @@ set(SOURCES
   scrobbler/lastfmscrobbler.cpp
   scrobbler/librefmscrobbler.cpp
   scrobbler/listenbrainzscrobbler.cpp
+  scrobbler/lastfmimport.cpp
 
   organize/organize.cpp
   organize/organizeformat.cpp
@@ -374,6 +377,7 @@ set(HEADERS
   lyrics/geniuslyricsprovider.h
   lyrics/musixmatchlyricsprovider.h
   lyrics/chartlyricsprovider.h
+  lyrics/fandomlyricsprovider.h
 
   settings/settingsdialog.h
   settings/settingspage.h
@@ -397,6 +401,7 @@ set(HEADERS
   dialogs/addstreamdialog.h
   dialogs/userpassdialog.h
   dialogs/deleteconfirmationdialog.h
+  dialogs/lastfmimportdialog.h
 
   widgets/autoexpandingtreeview.h
   widgets/busyindicator.h
@@ -448,6 +453,7 @@ set(HEADERS
   scrobbler/lastfmscrobbler.h
   scrobbler/librefmscrobbler.h
   scrobbler/listenbrainzscrobbler.h
+  scrobbler/lastfmimport.h
 
   organize/organize.h
   organize/organizedialog.h
@@ -508,6 +514,7 @@ set(UI
   dialogs/trackselectiondialog.ui
   dialogs/addstreamdialog.ui
   dialogs/userpassdialog.ui
+  dialogs/lastfmimportdialog.ui
 
   widgets/trackslider.ui
   widgets/fileview.ui
@@ -1051,7 +1058,8 @@ if(HAVE_AUDIOCD)
 endif(HAVE_AUDIOCD)
 
 if(HAVE_LIBGPOD)
-  link_directories(${LIBGPOD_LIBRARIES})
+  link_directories(${LIBGPOD_LIBRARY_DIRS})
+  link_directories(${GDK_PIXBUF_LIBRARY_DIRS})
 endif(HAVE_LIBGPOD)
 
 if(HAVE_LIBMTP)
@@ -1169,8 +1177,8 @@ if(HAVE_AUDIOCD)
 endif(HAVE_AUDIOCD)
 
 if(HAVE_LIBGPOD)
-  target_include_directories(strawberry_lib SYSTEM PRIVATE ${LIBGPOD_INCLUDE_DIRS})
-  target_link_libraries(strawberry_lib PRIVATE ${LIBGPOD_LIBRARIES})
+  target_include_directories(strawberry_lib SYSTEM PRIVATE ${LIBGPOD_INCLUDE_DIRS} ${GDK_PIXBUF_INCLUDE_DIRS})
+  target_link_libraries(strawberry_lib PRIVATE ${LIBGPOD_LIBRARIES} ${GDK_PIXBUF_LIBRARIES})
 endif(HAVE_LIBGPOD)
 
 if(HAVE_LIBMTP)

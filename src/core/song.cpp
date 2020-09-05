@@ -26,6 +26,15 @@
 #include <taglib/fileref.h>
 #include <taglib/id3v1genres.h>
 
+#ifdef HAVE_LIBGPOD
+#  include <gdk-pixbuf/gdk-pixbuf.h>
+#  include <gpod/itdb.h>
+#endif
+
+#ifdef HAVE_LIBMTP
+#  include <libmtp.h>
+#endif
+
 #include <QtGlobal>
 #include <QObject>
 #include <QFile>
@@ -46,14 +55,6 @@
 #include <QStandardPaths>
 #include <QtDebug>
 
-#ifdef HAVE_LIBGPOD
-#include <gpod/itdb.h>
-#endif
-
-#ifdef HAVE_LIBMTP
-#include <libmtp.h>
-#endif
-
 #include "core/logging.h"
 #include "core/messagehandler.h"
 #include "core/iconloader.h"
@@ -65,7 +66,6 @@
 #include "application.h"
 #include "mpris_common.h"
 #include "collection/sqlrow.h"
-#include "covermanager/albumcoverloader.h"
 #include "tagreadermessages.pb.h"
 
 #ifndef USE_SYSTEM_TAGLIB
@@ -684,9 +684,10 @@ QString Song::ImageCacheDir(const Song::Source source) {
       return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/tidalalbumcovers";
     case Song::Source_Qobuz:
       return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/qobuzalbumcovers";
+    case Song::Source_Device:
+      return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/devicealbumcovers";
     case Song::Source_LocalFile:
     case Song::Source_CDDA:
-    case Song::Source_Device:
     case Song::Source_Stream:
     case Song::Source_Unknown:
       return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/albumcovers";
@@ -1061,7 +1062,7 @@ void Song::InitArtManual() {
 }
 
 #ifdef HAVE_LIBGPOD
-void Song::InitFromItdb(const Itdb_Track *track, const QString &prefix) {
+void Song::InitFromItdb(Itdb_Track *track, const QString &prefix) {
 
   d->valid_ = true;
 
@@ -1103,6 +1104,21 @@ void Song::InitFromItdb(const Itdb_Track *track, const QString &prefix) {
   d->playcount_ = track->playcount;
   d->skipcount_ = track->skipcount;
   d->lastplayed_ = track->time_played;
+
+  if (itdb_track_has_thumbnails(track) && !d->artist_.isEmpty() && !d->title_.isEmpty()) {
+    GdkPixbuf *pixbuf = static_cast<GdkPixbuf*>(itdb_track_get_thumbnail(track, -1, -1));
+    if (pixbuf) {
+      QString cover_path = ImageCacheDir(Source_Device);
+      QDir dir(cover_path);
+      if (!dir.exists()) dir.mkpath(cover_path);
+      QString cover_file = cover_path + "/" + Utilities::Sha1CoverHash(effective_albumartist(), effective_album()).toHex() + ".jpg";
+      GError *error = nullptr;
+      if (dir.exists() && gdk_pixbuf_save(pixbuf, cover_file.toUtf8().constData(), "jpeg", &error, nullptr)) {
+        d->art_manual_ = QUrl::fromLocalFile(cover_file);
+      }
+      g_object_unref(pixbuf);
+    }
+  }
 
 }
 
@@ -1529,5 +1545,7 @@ void Song::MergeUserSetData(const Song &other) {
   set_skipcount(other.skipcount());
   set_lastplayed(other.lastplayed());
   set_art_manual(other.art_manual());
+  set_compilation_on(other.compilation_on());
+  set_compilation_off(other.compilation_off());
 
 }

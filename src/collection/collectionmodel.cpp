@@ -98,7 +98,7 @@ CollectionModel::CollectionModel(CollectionBackend *backend, Application *app, Q
       artist_icon_(IconLoader::Load("folder-sound")),
       album_icon_(IconLoader::Load("cdcase")),
       init_task_id_(-1),
-      use_pretty_covers_(false),
+      use_pretty_covers_(true),
       show_dividers_(true),
       use_disk_cache_(false) {
 
@@ -1250,6 +1250,7 @@ CollectionItem *CollectionModel::ItemFromSong(const GroupBy type, const bool sig
       int year = qMax(0, s.year());
       item->metadata.set_year(year);
       item->metadata.set_album(s.album());
+      item->metadata.set_grouping(s.grouping());
       item->key = PrettyYearAlbum(year, s.album());
       item->sort_text = SortTextForNumber(year) + s.grouping() + s.album();
       break;
@@ -1261,6 +1262,7 @@ CollectionItem *CollectionModel::ItemFromSong(const GroupBy type, const bool sig
       item->metadata.set_year(year);
       item->metadata.set_originalyear(originalyear);
       item->metadata.set_album(s.album());
+      item->metadata.set_grouping(s.grouping());
       item->key = PrettyYearAlbum(effective_originalyear, s.album());
       item->sort_text = SortTextForNumber(effective_originalyear) + s.grouping() + s.album();
       break;

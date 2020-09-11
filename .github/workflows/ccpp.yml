@@ -590,13 +590,7 @@ jobs:
             libcdio-dev
             libmtp-dev
             libgpod-dev
-<<<<<<< HEAD
-            libimobiledevice-dev
-            libplist-dev
-            libusbmuxd-dev
             libtag1-dev
-=======
->>>>>>> master
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -653,13 +647,7 @@ jobs:
             libcdio-dev
             libmtp-dev
             libgpod-dev
-<<<<<<< HEAD
-            libimobiledevice-dev
-            libplist-dev
-            libusbmuxd-dev
             libtag1-dev
-=======
->>>>>>> master
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -721,13 +709,7 @@ jobs:
             libcdio-dev
             libmtp-dev
             libgpod-dev
-<<<<<<< HEAD
-            libimobiledevice-dev
-            libplist-dev
-            libusbmuxd-dev
             libtag1-dev
-=======
->>>>>>> master
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -789,13 +771,7 @@ jobs:
             libcdio-dev
             libmtp-dev
             libgpod-dev
-<<<<<<< HEAD
-            libimobiledevice-dev
-            libplist-dev
-            libusbmuxd-dev
             libtag1-dev
-=======
->>>>>>> master
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
@@ -857,13 +833,7 @@ jobs:
             libcdio-dev
             libmtp-dev
             libgpod-dev
-<<<<<<< HEAD
-            libimobiledevice-dev
-            libplist-dev
-            libusbmuxd-dev
             libtag1-dev
-=======
->>>>>>> master
       - name: Create Build Environment
         shell: bash
         run: cmake -E make_directory build
